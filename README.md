@@ -62,6 +62,29 @@ Optional arguments:
 - [Rollback runbook](docs/rollback-runbook.md)
 - [SEO checklist](docs/seo-checklist.md)
 
+## CI
+
+GitHub Actions workflow:
+
+- [.github/workflows/ci.yml](.github/workflows/ci.yml)
+
+Jobs:
+
+- quality: runs lint and production build
+- seo-pagination: runs pagination SEO checks after build
+
+Repository variables for CI:
+
+- API_BASE_URL
+- NEXT_PUBLIC_ASSET_HOST
+- NEXT_PUBLIC_SITE_URL (optional)
+
+Repository secret for CI:
+
+- AKHBAR_PREVIEW_SHARED_SECRET (optional for this workflow)
+
+Note: seo-pagination job is skipped automatically when required API variables are not configured.
+
 ## Notes
 
 - Search pages are intentionally noindex,follow.
