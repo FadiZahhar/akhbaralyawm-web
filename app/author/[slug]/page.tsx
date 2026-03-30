@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { getArticlesByAuthor, getAssetUrl, getAuthorBySlugOrId } from "@/src/lib/api";
+import { AuthorArchiveList } from "@/src/components/author/author-archive-list";
 
 type PageParams = {
   slug: string;
@@ -11,10 +12,37 @@ type PageParams = {
 
 type PageProps = {
   params: Promise<PageParams>;
+  searchParams: Promise<{
+    page?: string;
+  }>;
 };
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+const DEFAULT_AUTHOR_ARCHIVE_PAGE_SIZE = 12;
+
+function getAuthorArchivePageSize(): number {
+  const rawValue = process.env.AUTHOR_ARCHIVE_PAGE_SIZE;
+  const parsedValue = rawValue ? Number.parseInt(rawValue, 10) : DEFAULT_AUTHOR_ARCHIVE_PAGE_SIZE;
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+    return DEFAULT_AUTHOR_ARCHIVE_PAGE_SIZE;
+  }
+
+  return Math.min(parsedValue, 50);
+}
+
+function parsePageValue(rawPage: string | undefined): number {
+  const parsedPage = rawPage ? Number.parseInt(rawPage, 10) : 1;
+  if (!Number.isFinite(parsedPage) || parsedPage < 1) {
+    return 1;
+  }
+
+  return parsedPage;
+}
+
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug } = await params;
+  const { page: rawPage } = await searchParams;
+  const page = parsePageValue(rawPage);
   const author = await getAuthorBySlugOrId(slug);
 
   if (!author) {
@@ -27,13 +55,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: author.title,
     description: `صفحة الكاتب ${author.title}`,
     alternates: {
-      canonical: `/author/${author.link}`,
+      canonical: page > 1 ? `/author/${author.link}?page=${page}` : `/author/${author.link}`,
     },
   };
 }
 
-export default async function AuthorPage({ params }: PageProps) {
+export default async function AuthorPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const { page: rawPage } = await searchParams;
+  const page = parsePageValue(rawPage);
+  const pageSize = getAuthorArchivePageSize();
   const author = await getAuthorBySlugOrId(slug);
 
   if (!author) {
@@ -45,7 +76,7 @@ export default async function AuthorPage({ params }: PageProps) {
   }
 
   const imageUrl = getAssetUrl(author.photoPath);
-  const articles = await getArticlesByAuthor(author.link, 1, 12);
+  const articles = await getArticlesByAuthor(String(author.id), page, pageSize);
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
@@ -83,8 +114,7 @@ export default async function AuthorPage({ params }: PageProps) {
               />
             ) : (
               <p className="text-sm leading-7 text-zinc-600">
-                سيتم ربط أرشيف المقالات الخاص بهذا الكاتب في المرحلة التالية بعد استكمال
-                توسيع واجهات الـ API العامة.
+                لا توجد نبذة متاحة لهذا الكاتب حالياً.
               </p>
             )}
           </div>
@@ -93,31 +123,14 @@ export default async function AuthorPage({ params }: PageProps) {
 
       <section className="space-y-4 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
         <h2 className="text-2xl font-bold text-zinc-900">أرشيف الكاتب</h2>
-
-        {articles?.items.length ? (
-          <div className="space-y-3">
-            {articles.items.map((item) => (
-              <article
-                key={item.id}
-                className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4"
-              >
-                <h3 className="text-lg font-semibold leading-8 text-zinc-900">
-                  <Link href={`/news/${item.slugId}`} className="hover:text-emerald-700">
-                    {item.title}
-                  </Link>
-                </h3>
-                {item.summary ? (
-                  <p className="mt-2 text-sm leading-7 text-zinc-600">{item.summary}</p>
-                ) : null}
-              </article>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm leading-7 text-zinc-600">
-            أرشيف المقالات غير متاح حالياً من خلال الـ API العام. سيتم عرضه تلقائياً فور
-            تفعيل endpoint مخصص للمقالات حسب الكاتب.
-          </p>
-        )}
+        <AuthorArchiveList
+          authorId={String(author.id)}
+          authorLink={author.link}
+          initialItems={articles?.items ?? []}
+          initialPage={page}
+          pageSize={pageSize}
+          totalPages={articles?.pagination?.totalPages ?? 1}
+        />
       </section>
     </main>
   );

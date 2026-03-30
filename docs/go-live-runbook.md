@@ -20,6 +20,8 @@ Release the Next.js frontend safely with controlled risk and clear rollback crit
 - robots and sitemap endpoints reachable.
 - Preview flow validated in production-like environment.
 - Lint/build pass in CI.
+- Automated pagination SEO check pass:
+   - npm run seo:pagination-check -- --base https://<release-domain>
 
 ## Deployment Steps
 1. Deploy backend API changes first (if any).
@@ -49,6 +51,11 @@ Release the Next.js frontend safely with controlled risk and clear rollback crit
 - Canonical tags on article/category pages.
 - Structured data present in page source.
 - Legacy URLs redirect correctly.
+- Category and search pagination previous/next links exist.
+- Category CollectionPage ItemList positions continue across pages.
+- Run automated check:
+   - npm run seo:pagination-check -- --base https://<release-domain>
+   - Optional overrides: --category /category/{slug}, --search /search?q={term}
 
 ## Functional Smoke Tests
 - Home page renders live feed.
@@ -63,8 +70,11 @@ Proceed to full traffic only when:
 - No critical errors in monitoring window.
 - No broken canonical redirects.
 - No major route-level regressions.
+- Automated pagination SEO check reports pass.
 
 ## Post-Launch (first 24h)
 - Recheck key dashboards hourly.
 - Validate crawl behavior in Search Console (if available).
 - Capture incident notes and follow-up tasks.
+- Re-run:
+   - npm run seo:pagination-check -- --base https://<release-domain>

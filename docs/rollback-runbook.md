@@ -36,11 +36,15 @@ Provide a clear and fast rollback path if production stability or SEO integrity 
 - Core user journeys work.
 - Redirects no longer causing error spikes.
 - Monitoring trends return to baseline.
+- Pagination SEO check passes on rollback target:
+	- npm run seo:pagination-check -- --base https://<rollback-domain>
 
 ## SEO Safety During Rollback
 - Ensure canonical URLs remain deterministic.
 - Avoid redirect loops between old/new systems.
 - Preserve robots and sitemap availability.
+- Ensure category/search pagination links remain crawlable.
+- Ensure search keeps robots noindex,follow.
 
 ## Communication Template
 - Incident started:

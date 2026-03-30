@@ -9,6 +9,9 @@ Define frontend-consumed DTO contracts and endpoint mappings so implementation a
 ## Environment
 - API_BASE_URL: expected to end with /v1/
 - NEXT_PUBLIC_ASSET_HOST: asset host for relative media paths
+- AUTHOR_ARCHIVE_PAGE_SIZE: number of author articles loaded per page/request
+- CATEGORY_ARCHIVE_PAGE_SIZE: number of category articles loaded per page/request
+- SEARCH_PAGE_SIZE: number of search results loaded per page/request
 
 ## Frontend DTOs
 

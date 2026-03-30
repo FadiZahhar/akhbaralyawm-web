@@ -9,6 +9,7 @@ Phase: 7
 - Category canonical uses /category/{slug}.
 - Author canonical uses /author/{slug}.
 - /about and /contact are canonical static routes.
+- Category/search paginated pages keep canonical with ?page={n} for n > 1.
 
 ## Redirect Validation
 - Default.aspx redirects to /
@@ -48,6 +49,12 @@ Phase: 7
 - No internal links to .aspx endpoints.
 - Header and footer links point to canonical routes.
 - Card/story links point to canonical article URLs.
+- Category and search pages expose crawlable links to page 2+.
+- Category/search page 2+ expose a previous-page link back to prior pages.
+
+## Pagination Schema
+- Category CollectionPage ItemList positions continue across pages.
+- Page 2 first ItemList position should be > 1.
 
 ## Performance and UX Signals
 - Largest contentful elements load without major delay.
@@ -59,6 +66,9 @@ Phase: 7
 - Lighthouse SEO and Performance categories.
 - Rich Results test for schema validation.
 - Search Console URL inspection (post-deploy).
+- Automated pagination check command:
+	- npm run seo:pagination-check
+	- Optional args: --base, --category, --search, --query
 
 ## Sign-off
 - Environment:

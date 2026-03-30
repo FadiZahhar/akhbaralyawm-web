@@ -129,6 +129,8 @@ type RawListResponse<T> = {
   data: T[];
 };
 
+type RawSearchResponse = RawPaginatedFeed | RawListResponse<RawFeedItem>;
+
 type RawCmsPage = {
   id: number;
   title: string;
@@ -367,13 +369,55 @@ export async function getArticlesBySection(
 }
 
 export async function searchArticles(query: string, limit = 12): Promise<FeedItemDto[]> {
+  const response = await searchArticlesPaginated(query, 1, limit);
+  return response.items;
+}
+
+export async function searchArticlesPaginated(
+  query: string,
+  page = 1,
+  limit = 12,
+): Promise<PaginatedFeedDto> {
   const url = createUrl("/v1/search.ashx", { q: query, limit });
-  const response = await fetchJson<RawListResponse<RawFeedItem>>(url);
-  return response.data.map(normalizeFeedItem);
+  url.searchParams.set("page", String(page));
+
+  const response = await fetchJson<RawSearchResponse>(url);
+
+  if ("pagination" in response || "data" in response) {
+    const list = response.data.map(normalizeFeedItem);
+    const pagination = "pagination" in response && response.pagination
+      ? {
+          page: response.pagination.page,
+          limit: response.pagination.limit,
+          total: response.pagination.total,
+          totalPages: response.pagination.total_pages,
+        }
+      : {
+          page,
+          limit,
+          total: page * limit + (list.length < limit ? 0 : limit),
+          totalPages: page + (list.length === limit ? 1 : 0),
+        };
+
+    return {
+      items: list,
+      pagination,
+    };
+  }
+
+  return {
+    items: [],
+    pagination: {
+      page,
+      limit,
+      total: 0,
+      totalPages: 1,
+    },
+  };
 }
 
 export async function getAuthorBySlugOrId(slugOrId: string): Promise<AuthorDto | null> {
-  const params = /^\d+$/.test(slugOrId) ? { id: slugOrId } : { link: slugOrId };
+  const params: Record<string, string> = /^\d+$/.test(slugOrId) ? { id: slugOrId } : { link: slugOrId };
   const url = createUrl("/v1/authors.ashx", params);
   const response = await fetchOptionalJson<RawAuthor>(url);
   return response ? normalizeAuthor(response) : null;

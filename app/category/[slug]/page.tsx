@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound, permanentRedirect } from "next/navigation";
 
-import { getArticlesBySection, getAssetUrl, getSectionBySlugOrId } from "@/src/lib/api";
+import { getArticlesBySection, getSectionBySlugOrId } from "@/src/lib/api";
+import { CategoryArchiveList } from "@/src/components/category/category-archive-list";
 
 type PageParams = {
   slug: string;
@@ -11,7 +11,12 @@ type PageParams = {
 
 type PageProps = {
   params: Promise<PageParams>;
+  searchParams: Promise<{
+    page?: string;
+  }>;
 };
+
+const DEFAULT_CATEGORY_ARCHIVE_PAGE_SIZE = 12;
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.akhbaralyawm.com").replace(/\/+$/, "");
 
@@ -24,23 +29,30 @@ function absoluteUrl(pathOrUrl: string): string {
   return `${SITE_URL}${path}`;
 }
 
-function formatDate(value: string): string {
-  if (!value) {
-    return "";
+function getCategoryArchivePageSize(): number {
+  const rawValue = process.env.CATEGORY_ARCHIVE_PAGE_SIZE;
+  const parsedValue = rawValue ? Number.parseInt(rawValue, 10) : DEFAULT_CATEGORY_ARCHIVE_PAGE_SIZE;
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+    return DEFAULT_CATEGORY_ARCHIVE_PAGE_SIZE;
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("ar-LB", {
-    dateStyle: "medium",
-  }).format(date);
+  return Math.min(parsedValue, 50);
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+function parsePageValue(rawPage: string | undefined): number {
+  const parsedPage = rawPage ? Number.parseInt(rawPage, 10) : 1;
+  if (!Number.isFinite(parsedPage) || parsedPage < 1) {
+    return 1;
+  }
+
+  return parsedPage;
+}
+
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug } = await params;
+  const { page: rawPage } = await searchParams;
+  const page = parsePageValue(rawPage);
   const section = await getSectionBySlugOrId(slug);
 
   if (!section) {
@@ -53,13 +65,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: section.title,
     description: `آخر الأخبار ضمن قسم ${section.title}`,
     alternates: {
-      canonical: `/category/${section.link}`,
+      canonical: page > 1 ? `/category/${section.link}?page=${page}` : `/category/${section.link}`,
     },
   };
 }
 
-export default async function CategoryPage({ params }: PageProps) {
+export default async function CategoryPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const { page: rawPage } = await searchParams;
+  const page = parsePageValue(rawPage);
+  const pageSize = getCategoryArchivePageSize();
   const section = await getSectionBySlugOrId(slug);
 
   if (!section) {
@@ -70,9 +85,15 @@ export default async function CategoryPage({ params }: PageProps) {
     permanentRedirect(`/category/${section.link}`);
   }
 
-  const feed = await getArticlesBySection(section.link, 1, 12);
+  const feed = await getArticlesBySection(section.link, page, pageSize);
   const categoryPath = `/category/${section.link}`;
-  const categoryUrl = absoluteUrl(categoryPath);
+  const categoryUrl = absoluteUrl(page > 1 ? `${categoryPath}?page=${page}` : categoryPath);
+  const totalPages = feed.pagination?.totalPages ?? 1;
+  const hasPrev = page > 1;
+  const hasNext = page < totalPages;
+  const prevHref = page - 1 <= 1 ? categoryPath : `${categoryPath}?page=${page - 1}`;
+  const nextHref = `${categoryPath}?page=${page + 1}`;
+  const itemPositionStart = ((page - 1) * (feed.pagination?.limit ?? pageSize)) + 1;
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -102,7 +123,7 @@ export default async function CategoryPage({ params }: PageProps) {
       "@type": "ItemList",
       itemListElement: feed.items.map((item, index) => ({
         "@type": "ListItem",
-        position: index + 1,
+        position: itemPositionStart + index,
         url: absoluteUrl(`/news/${item.slugId}`),
         name: item.title,
       })),
@@ -127,55 +148,37 @@ export default async function CategoryPage({ params }: PageProps) {
             ? `يعرض هذا القسم ${feed.pagination.total} مادة منشورة حتى الآن.`
             : "أحدث المواد المنشورة ضمن هذا القسم."}
         </p>
+        {(hasPrev || hasNext) ? (
+          <nav className="flex flex-wrap items-center gap-3 text-sm" aria-label="تنقل صفحات القسم">
+            {hasPrev ? (
+              <Link
+                href={prevHref}
+                className="rounded-full border border-zinc-300 px-4 py-2 font-semibold text-zinc-700 transition hover:border-zinc-400"
+              >
+                الصفحة السابقة
+              </Link>
+            ) : null}
+            {hasNext ? (
+              <Link
+                href={nextHref}
+                className="rounded-full border border-zinc-300 px-4 py-2 font-semibold text-zinc-700 transition hover:border-zinc-400"
+              >
+                الصفحة التالية
+              </Link>
+            ) : null}
+          </nav>
+        ) : null}
       </header>
 
-      {feed.items.length === 0 ? (
-        <section className="rounded-2xl border border-dashed border-zinc-300 px-6 py-10 text-center text-zinc-600">
-          لا توجد مواد منشورة في هذا القسم حالياً.
-        </section>
-      ) : (
-        <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {feed.items.map((item) => {
-            const imageUrl = getAssetUrl(item.photoPath);
-
-            return (
-              <article
-                key={item.id}
-                className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm"
-              >
-                {imageUrl ? (
-                  <Image
-                    src={imageUrl}
-                    alt=""
-                    width={1200}
-                    height={675}
-                    className="aspect-[16/10] w-full bg-zinc-100 object-cover"
-                  />
-                ) : (
-                  <div className="aspect-[16/10] w-full bg-zinc-100" />
-                )}
-
-                <div className="space-y-4 p-5">
-                  <div className="flex items-center justify-between gap-4 text-xs text-zinc-500">
-                    <span>{item.sectionTitle}</span>
-                    <span>{formatDate(item.disdate)}</span>
-                  </div>
-
-                  <h2 className="text-lg font-semibold leading-8 text-zinc-900">
-                    <Link href={`/news/${item.slugId}`} className="hover:text-emerald-700">
-                      {item.title}
-                    </Link>
-                  </h2>
-
-                  {item.summary ? (
-                    <p className="line-clamp-3 text-sm leading-7 text-zinc-600">{item.summary}</p>
-                  ) : null}
-                </div>
-              </article>
-            );
-          })}
-        </section>
-      )}
+      <CategoryArchiveList
+        sectionLink={section.link}
+        sectionTitle={section.title}
+        basePath={categoryPath}
+        initialItems={feed.items}
+        initialPage={page}
+        pageSize={pageSize}
+        totalPages={totalPages}
+      />
     </main>
   );
 }

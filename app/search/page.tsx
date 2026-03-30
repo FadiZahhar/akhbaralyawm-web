@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { searchArticles } from "@/src/lib/api";
+import { searchArticlesPaginated } from "@/src/lib/api";
+import { SearchResultsList } from "@/src/components/search/search-results-list";
 
 type SearchValue = string | string[] | undefined;
 
 type PageProps = {
   searchParams: Promise<{
     q?: SearchValue;
+    page?: SearchValue;
   }>;
 };
+
+const DEFAULT_SEARCH_PAGE_SIZE = 12;
 
 function readQuery(value: SearchValue): string {
   if (Array.isArray(value)) {
@@ -19,30 +23,41 @@ function readQuery(value: SearchValue): string {
   return value?.trim() ?? "";
 }
 
-function formatDate(value: string): string {
-  if (!value) {
-    return "";
+function parsePage(value: SearchValue): number {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const parsed = raw ? Number.parseInt(raw, 10) : 1;
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return 1;
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
+  return parsed;
+}
+
+function getSearchPageSize(): number {
+  const rawValue = process.env.SEARCH_PAGE_SIZE;
+  const parsedValue = rawValue ? Number.parseInt(rawValue, 10) : DEFAULT_SEARCH_PAGE_SIZE;
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+    return DEFAULT_SEARCH_PAGE_SIZE;
   }
 
-  return new Intl.DateTimeFormat("ar-LB", {
-    dateStyle: "medium",
-  }).format(date);
+  return Math.min(parsedValue, 50);
 }
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const params = await searchParams;
   const query = readQuery(params.q);
+  const page = parsePage(params.page);
 
   return {
     title: query ? `نتائج البحث عن ${query}` : "البحث",
     description: query ? `نتائج البحث عن ${query}` : "ابحث ضمن محتوى أخبار اليوم",
     alternates: {
-      canonical: query ? `/search?q=${encodeURIComponent(query)}` : "/search",
+      canonical: query
+        ? page > 1
+          ? `/search?q=${encodeURIComponent(query)}&page=${page}`
+          : `/search?q=${encodeURIComponent(query)}`
+        : "/search",
     },
     robots: {
       index: false,
@@ -54,7 +69,15 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 export default async function SearchPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const query = readQuery(params.q);
-  const items = query ? await searchArticles(query, 12) : [];
+  const page = parsePage(params.page);
+  const pageSize = getSearchPageSize();
+  const feed = query ? await searchArticlesPaginated(query, page, pageSize) : null;
+  const basePath = query ? `/search?q=${encodeURIComponent(query)}` : "/search";
+  const totalPages = feed?.pagination?.totalPages ?? 1;
+  const hasPrev = query && page > 1;
+  const hasNext = query && page < totalPages;
+  const prevHref = page - 1 <= 1 ? basePath : `${basePath}&page=${page - 1}`;
+  const nextHref = `${basePath}&page=${page + 1}`;
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
@@ -65,41 +88,40 @@ export default async function SearchPage({ searchParams }: PageProps) {
         </h1>
         <p className="text-sm leading-7 text-zinc-600">
           {query
-            ? `تم العثور على ${items.length} نتيجة ضمن الطبقة الحالية من واجهات API العامة.`
+            ? `يعرض البحث النتائج لعبارة ${query} مع دعم التصفح على صفحات متعددة.`
             : "استخدم قيمة q في الرابط مثل /search?q=لبنان لعرض النتائج."}
         </p>
+        {(hasPrev || hasNext) ? (
+          <nav className="flex flex-wrap items-center gap-3 text-sm" aria-label="تنقل صفحات نتائج البحث">
+            {hasPrev ? (
+              <Link
+                href={prevHref}
+                className="rounded-full border border-zinc-300 px-4 py-2 font-semibold text-zinc-700 transition hover:border-zinc-400"
+              >
+                الصفحة السابقة
+              </Link>
+            ) : null}
+            {hasNext ? (
+              <Link
+                href={nextHref}
+                className="rounded-full border border-zinc-300 px-4 py-2 font-semibold text-zinc-700 transition hover:border-zinc-400"
+              >
+                الصفحة التالية
+              </Link>
+            ) : null}
+          </nav>
+        ) : null}
       </header>
 
       {query ? (
-        items.length > 0 ? (
-          <section className="space-y-4">
-            {items.map((item) => (
-              <article
-                key={item.id}
-                className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm"
-              >
-                <div className="mb-3 flex items-center justify-between gap-3 text-xs text-zinc-500">
-                  <span>{item.sectionTitle}</span>
-                  <span>{formatDate(item.disdate)}</span>
-                </div>
-
-                <h2 className="text-xl font-semibold leading-8 text-zinc-900">
-                  <Link href={`/news/${item.slugId}`} className="hover:text-emerald-700">
-                    {item.title}
-                  </Link>
-                </h2>
-
-                {item.summary ? (
-                  <p className="mt-3 text-sm leading-7 text-zinc-600">{item.summary}</p>
-                ) : null}
-              </article>
-            ))}
-          </section>
-        ) : (
-          <section className="rounded-2xl border border-dashed border-zinc-300 px-6 py-10 text-center text-zinc-600">
-            لا توجد نتائج مطابقة لعبارة البحث الحالية.
-          </section>
-        )
+        <SearchResultsList
+          query={query}
+          basePath={basePath}
+          initialItems={feed?.items ?? []}
+          initialPage={page}
+          pageSize={pageSize}
+          totalPages={totalPages}
+        />
       ) : (
         <section className="rounded-2xl border border-dashed border-zinc-300 px-6 py-10 text-center text-zinc-600">
           أضف قيمة البحث إلى الرابط ثم أعد المحاولة.

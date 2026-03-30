@@ -47,7 +47,8 @@ Legacy source:
 
 Current status:
 - Author profile endpoint exists (/v1/authors.ashx)
-- No author-articles endpoint exposed publicly for archive listing
+- Archive is now reachable via /v1/news.ashx?author={id|slug}&page={n}&limit={m}
+- Status: resolved for frontend integration
 
 Required endpoint contract:
 - GET /v1/authors/articles.ashx?link={slug}&page={n}&limit={m}
@@ -81,9 +82,8 @@ Frontend target route:
 
 ## Why these gaps matter
 - Without CMS page endpoint, /read/[id] cannot render real legacy page content.
-- Without author archive endpoint, author pages can only show profile metadata, not content lists.
+- Author archive is no longer blocking and is now rendered on /author/[slug].
 
 ## Recommended backend priority
 1. Add pages-by-id endpoint
-2. Add author article listing endpoint
-3. Keep response format aligned with existing /v1/news.ashx pagination keys
+2. Keep response format aligned with existing /v1/news.ashx pagination keys for consistency

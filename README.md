@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Akhbar Al Youm Web
 
-## Getting Started
+Next.js App Router frontend for the Akhbar Al Youm migration from legacy ASP.NET Web Forms.
 
-First, run the development server:
+## Requirements
+
+- Node.js 20+
+- npm 10+
+
+## Environment
+
+Create and configure local environment values using:
+
+- [env.example](env.example)
+- [.env.local](.env.local)
+
+Key variables:
+
+- API_BASE_URL
+- NEXT_PUBLIC_ASSET_HOST
+- NEXT_PUBLIC_SITE_URL
+- AKHBAR_PREVIEW_SHARED_SECRET
+- API_CMS_PAGE_PATH
+- API_AUTHOR_ARTICLES_PATH
+- API_AUTHOR_QUERY_KEY
+- AUTHOR_ARCHIVE_PAGE_SIZE
+- CATEGORY_ARCHIVE_PAGE_SIZE
+- SEARCH_PAGE_SIZE
+
+## Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App runs on http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quality Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+## SEO Pagination Validation
 
-To learn more about Next.js, take a look at the following resources:
+Run the automated checker against a running deployment:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run seo:pagination-check -- --base http://localhost:3000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Optional arguments:
 
-## Deploy on Vercel
+- --category /category/{slug}
+- --search /search?q={term}
+- --query {term}
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Runbooks
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Go-live runbook](docs/go-live-runbook.md)
+- [Rollback runbook](docs/rollback-runbook.md)
+- [SEO checklist](docs/seo-checklist.md)
+
+## Notes
+
+- Search pages are intentionally noindex,follow.
+- Category, author, and search archives use SSR pagination with load-more UX and crawlable page links.

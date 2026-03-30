@@ -27,7 +27,7 @@ function formatToday() {
 export async function SiteHeader() {
   const sections = await getSections();
   const navItems = PRIMARY_SECTION_IDS.map((id) => sections.find((section) => section.id === id)).filter(
-    (section) => section && section.link !== "/",
+    (section): section is NonNullable<(typeof sections)[number]> => Boolean(section && section.link !== "/"),
   );
 
   return (
