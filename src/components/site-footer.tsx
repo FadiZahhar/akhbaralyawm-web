@@ -14,11 +14,11 @@ export function SiteFooter() {
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-3 lg:px-8">
         <section className="space-y-4">
           <h2 className="text-lg font-bold">أخبار اليوم</h2>
-          <p className="text-sm leading-7 text-white/75">
+          <p className="text-sm leading-7 text-white/90">
             تجربة قراءة عربية حديثة مبنية على هيكلية Headless تضمن السرعة، الوضوح،
             والانسيابية عبر جميع الصفحات.
           </p>
-          <div className="flex flex-wrap gap-2 text-sm text-white/80">
+          <div className="flex flex-wrap gap-2 text-sm text-white/95">
             {SOCIAL_LINKS.map((link) => (
               <a
                 key={link.label}
@@ -35,7 +35,7 @@ export function SiteFooter() {
 
         <section className="space-y-4">
           <h2 className="text-lg font-bold">روابط سريعة</h2>
-          <div className="grid gap-2 text-sm text-white/75">
+          <div className="grid gap-2 text-sm text-white/90">
             <Link href="/about" className="transition hover:text-white">
               من نحن
             </Link>
@@ -53,10 +53,10 @@ export function SiteFooter() {
 
         <section className="space-y-4">
           <h2 className="text-lg font-bold">تطبيقات ومجتمع</h2>
-          <p className="text-sm leading-7 text-white/75">
+          <p className="text-sm leading-7 text-white/90">
             تابع النشر اليومي عبر واتساب والتطبيقات والمنصات الاجتماعية الرسمية.
           </p>
-          <div className="grid gap-2 text-sm text-white/75">
+          <div className="grid gap-2 text-sm text-white/90">
             <a
               href="https://apps.apple.com/us/app/akhbar-al-yawm-news/id1578481588"
               target="_blank"
@@ -86,7 +86,7 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 text-sm text-white/65 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 text-sm text-white/90 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <p>أخبار اليوم. جميع الحقوق محفوظة.</p>
           <div className="flex items-center gap-3">
             <Link href="/about" className="transition hover:text-white">

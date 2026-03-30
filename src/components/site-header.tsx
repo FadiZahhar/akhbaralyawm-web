@@ -81,7 +81,7 @@ export async function SiteHeader() {
               </span>
               <span className="text-3xl font-extrabold tracking-tight">أخبار اليوم</span>
             </Link>
-            <p className="max-w-2xl text-sm leading-7 text-zinc-600">
+            <p className="max-w-2xl text-sm leading-7 text-zinc-700">
               منصة إخبارية عربية سريعة الإيقاع تركّز على الخبر، السياق، وسهولة الوصول من أي جهاز.
             </p>
           </div>
@@ -91,7 +91,7 @@ export async function SiteHeader() {
               type="search"
               name="q"
               placeholder="ابحث في الأخبار"
-              className="h-12 w-full rounded-full border border-[color:var(--border-soft)] bg-[color:var(--panel)] px-5 text-sm outline-none ring-0 placeholder:text-zinc-400 focus:border-[color:var(--accent)]"
+              className="h-12 w-full rounded-full border border-[color:var(--border-soft)] bg-[color:var(--panel)] px-5 text-sm outline-none ring-0 placeholder:text-zinc-600 focus:border-[color:var(--accent)]"
             />
             <button
               type="submit"

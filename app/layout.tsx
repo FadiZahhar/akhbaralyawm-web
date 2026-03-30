@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Geist_Mono, Noto_Kufi_Arabic } from "next/font/google";
 
+import { PreviewModeBanner } from "@/src/components/preview-mode-banner";
 import { SiteFooter } from "@/src/components/site-footer";
 import { SiteHeader } from "@/src/components/site-header";
 
@@ -42,6 +44,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const isPreviewMode = Boolean(cookieStore.get("previewToken")?.value);
+
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -86,6 +91,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         <div className="min-h-full">
+          {isPreviewMode ? <PreviewModeBanner /> : null}
           <SiteHeader />
           <div className="flex min-h-[calc(100vh-12rem)] flex-col">{children}</div>
           <SiteFooter />

@@ -21,7 +21,7 @@ export function HomeSidebar({ feed }: HomeSidebarProps) {
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
             href="/mix"
-            className="rounded-full bg-[color:var(--accent)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[color:var(--accent-strong)]"
+            className="rounded-full border border-[color:var(--accent-strong)] bg-white px-5 py-3 text-sm font-bold text-[color:var(--accent-strong)] transition hover:bg-[color:var(--panel)]"
           >
             تصفح من كل شي
           </Link>
@@ -37,7 +37,7 @@ export function HomeSidebar({ feed }: HomeSidebarProps) {
       <section className="rounded-[2rem] border border-[color:var(--border-soft)] bg-white p-6 shadow-[0_18px_60px_rgba(13,35,77,0.08)]">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2 className="text-xl font-extrabold text-[color:var(--ink)]">سريع القراءة</h2>
-          <span className="text-xs font-bold text-zinc-400">Top 5</span>
+          <span className="text-xs font-bold text-zinc-600">Top 5</span>
         </div>
         <div className="space-y-3">
           {feed.slice(0, 5).map((item, index) => (

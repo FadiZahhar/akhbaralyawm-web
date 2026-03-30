@@ -145,6 +145,63 @@ const CMS_PAGE_PATH = process.env.API_CMS_PAGE_PATH || "/v1/pages/by-id.ashx";
 const AUTHOR_ARTICLES_PATH = process.env.API_AUTHOR_ARTICLES_PATH || "/v1/news.ashx";
 const AUTHOR_QUERY_KEY = process.env.API_AUTHOR_QUERY_KEY || "author";
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function assertDataArray(
+  payload: unknown,
+  context: string,
+): asserts payload is { data: unknown[] } {
+  if (!isRecord(payload) || !Array.isArray(payload.data)) {
+    throw new Error(`Malformed API payload for ${context}: expected { data: [] }`);
+  }
+}
+
+function assertRawArticle(raw: RawArticle, context: string): void {
+  if (!isFiniteNumber(raw.id) || typeof raw.title !== "string") {
+    throw new Error(`Malformed ${context}: missing required article fields`);
+  }
+}
+
+function assertRawFeedItem(raw: RawFeedItem, context: string): void {
+  if (!isFiniteNumber(raw.id) || typeof raw.title !== "string") {
+    throw new Error(`Malformed ${context}: missing required feed item fields`);
+  }
+}
+
+function assertRawSection(raw: RawSection, context: string): void {
+  if (
+    !isFiniteNumber(raw.id)
+    || typeof raw.title !== "string"
+    || typeof raw.link !== "string"
+    || !isFiniteNumber(raw.orderorder)
+  ) {
+    throw new Error(`Malformed ${context}: missing required section fields`);
+  }
+}
+
+function assertRawAuthor(raw: RawAuthor, context: string): void {
+  if (
+    !isFiniteNumber(raw.id)
+    || typeof raw.title !== "string"
+    || typeof raw.link !== "string"
+    || !isFiniteNumber(raw.orderorder)
+  ) {
+    throw new Error(`Malformed ${context}: missing required author fields`);
+  }
+}
+
+function assertRawCmsPage(raw: RawCmsPage, context: string): void {
+  if (!isFiniteNumber(raw.id) || typeof raw.title !== "string") {
+    throw new Error(`Malformed ${context}: missing required CMS page fields`);
+  }
+}
+
 function requireEnv(name: string, value: string | undefined): string {
   if (!value) {
     throw new Error(`Missing required env var: ${name}`);
@@ -201,6 +258,8 @@ async function fetchOptionalJson<T>(input: URL, init?: RequestInit): Promise<T |
 }
 
 function normalizeArticle(raw: RawArticle): ArticleDto {
+  assertRawArticle(raw, "article");
+
   return {
     id: raw.id,
     title: raw.title,
@@ -216,6 +275,8 @@ function normalizeArticle(raw: RawArticle): ArticleDto {
 }
 
 function normalizeFeedItem(raw: RawFeedItem): FeedItemDto {
+  assertRawFeedItem(raw, "feed item");
+
   return {
     id: raw.id,
     title: raw.title,
@@ -230,6 +291,8 @@ function normalizeFeedItem(raw: RawFeedItem): FeedItemDto {
 }
 
 function normalizeSection(raw: RawSection): SectionDto {
+  assertRawSection(raw, "section");
+
   return {
     id: raw.id,
     title: raw.title,
@@ -240,6 +303,8 @@ function normalizeSection(raw: RawSection): SectionDto {
 }
 
 function normalizeAuthor(raw: RawAuthor): AuthorDto {
+  assertRawAuthor(raw, "author");
+
   return {
     id: raw.id,
     title: raw.title,
@@ -251,6 +316,10 @@ function normalizeAuthor(raw: RawAuthor): AuthorDto {
 }
 
 function normalizePaginatedFeed(raw: RawPaginatedFeed): PaginatedFeedDto {
+  if (!Array.isArray(raw.data)) {
+    throw new Error("Malformed paginated feed payload: data must be an array");
+  }
+
   return {
     items: raw.data.map(normalizeFeedItem),
     pagination: raw.pagination
@@ -265,6 +334,8 @@ function normalizePaginatedFeed(raw: RawPaginatedFeed): PaginatedFeedDto {
 }
 
 function normalizeCmsPage(raw: RawCmsPage): CmsPageDto {
+  assertRawCmsPage(raw, "CMS page");
+
   return {
     id: raw.id,
     title: raw.title,
@@ -333,14 +404,16 @@ export async function mintPreviewToken(id: number): Promise<string> {
 
 export async function getHomeFeed(limit = 12): Promise<FeedItemDto[]> {
   const url = createUrl("/v1/home/feed.ashx", { limit });
-  const response = await fetchJson<RawListResponse<RawFeedItem>>(url);
-  return response.data.map(normalizeFeedItem);
+  const response = await fetchJson<unknown>(url);
+  assertDataArray(response, "home feed");
+  return response.data.map((item) => normalizeFeedItem(item as RawFeedItem));
 }
 
 export async function getSections(): Promise<SectionDto[]> {
   const url = createUrl("/v1/sections.ashx");
-  const response = await fetchJson<RawListResponse<RawSection>>(url);
-  return response.data.map(normalizeSection);
+  const response = await fetchJson<unknown>(url);
+  assertDataArray(response, "sections");
+  return response.data.map((item) => normalizeSection(item as RawSection));
 }
 
 export async function getSectionBySlugOrId(slugOrId: string): Promise<SectionDto | null> {
@@ -382,6 +455,8 @@ export async function searchArticlesPaginated(
   url.searchParams.set("page", String(page));
 
   const response = await fetchJson<RawSearchResponse>(url);
+
+  assertDataArray(response, "search");
 
   if ("pagination" in response || "data" in response) {
     const list = response.data.map(normalizeFeedItem);

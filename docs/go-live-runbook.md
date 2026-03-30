@@ -22,6 +22,9 @@ Release the Next.js frontend safely with controlled risk and clear rollback crit
 - Lint/build pass in CI.
 - Automated pagination SEO check pass:
    - npm run seo:pagination-check -- --base https://<release-domain>
+   - or CI workflow_dispatch with:
+     - target_environment=production
+     - check_base_url=https://<release-domain>
 
 ## Deployment Steps
 1. Deploy backend API changes first (if any).
@@ -56,6 +59,8 @@ Release the Next.js frontend safely with controlled risk and clear rollback crit
 - Run automated check:
    - npm run seo:pagination-check -- --base https://<release-domain>
    - Optional overrides: --category /category/{slug}, --search /search?q={term}
+   - CI live gate alternative:
+     - Trigger CI workflow_dispatch with production environment and release URL
 
 ## Functional Smoke Tests
 - Home page renders live feed.

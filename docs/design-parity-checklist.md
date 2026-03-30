@@ -10,6 +10,7 @@ Measure visual/behavior parity between legacy Web Forms pages and Next.js pages 
 - Legacy screenshots: docs/visual-baseline/
 - Legacy mapping: docs/legacy-route-map.md
 - Component map: docs/component-inventory.md
+- Latest Next baseline run: docs/visual-baseline/2026-03-30-222543/
 
 ## Scoring Model
 - Pass: indistinguishable or acceptable modernization with no UX regression.

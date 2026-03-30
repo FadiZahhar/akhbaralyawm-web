@@ -71,7 +71,8 @@ GitHub Actions workflow:
 Jobs:
 
 - quality: runs lint and production build
-- seo-pagination: runs pagination SEO checks after build
+- seo-pagination-staging: runs pagination SEO checks automatically on push/PR
+- seo-pagination-live-gate: runs via manual workflow dispatch against a live URL
 
 Repository variables for CI:
 
@@ -83,7 +84,17 @@ Repository secret for CI:
 
 - AKHBAR_PREVIEW_SHARED_SECRET (optional for this workflow)
 
-Note: seo-pagination job is skipped automatically when required API variables are not configured.
+Manual production gate:
+
+- Run workflow with:
+	- target_environment=staging or production
+	- check_base_url=https://<target-domain>
+- Configure GitHub Environment protection rules for production to require approval
+
+Notes:
+
+- Automatic staging SEO job is skipped when required API vars are not configured.
+- Live gate job runs only when check_base_url is provided.
 
 ## Notes
 
