@@ -1,4 +1,5 @@
 import { getArticlesBySection, getAssetUrl, getHomeFeed, getSectionBySlugOrId } from "@/src/lib/api";
+import { BreakingTicker } from "@/src/components/home/breaking-ticker";
 import { HomeHero } from "@/src/components/home/home-hero";
 import { HomeSectionBlock } from "@/src/components/home/home-section-block";
 import { HomeSidebar } from "@/src/components/home/home-sidebar";
@@ -22,10 +23,16 @@ function formatDate(value: string): string {
 }
 
 export default async function Home() {
-  const feed = await getHomeFeed(10);
+  const feed = await getHomeFeed(12);
   const [lead, ...rest] = feed;
   const highlighted = rest.slice(0, 4);
-  const updates = feed.slice(0, 6);
+  const updates = feed.slice(0, 8);
+  const tickerItems = feed.slice(0, 6).map((item) => ({
+    id: item.id,
+    slugId: item.slugId,
+    title: item.title,
+    photoUrl: getAssetUrl(item.photoPath),
+  }));
   const sections = await Promise.all(
     HOME_SECTION_IDS.map(async (id) => {
       const section = await getSectionBySlugOrId(String(id));
@@ -45,6 +52,8 @@ export default async function Home() {
   const homeSections = sections.filter((section) => section !== null);
 
   return (
+    <>
+    <BreakingTicker items={tickerItems} />
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-4 py-8 sm:px-6 lg:px-8">
       <section className="grid gap-6 lg:grid-cols-[1.35fr_0.9fr]">
         <div className="space-y-6">
@@ -79,5 +88,6 @@ export default async function Home() {
         ))}
       </section>
     </main>
+    </>
   );
 }

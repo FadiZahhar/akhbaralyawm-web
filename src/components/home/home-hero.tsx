@@ -1,61 +1,81 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import type { FeedItemDto } from "@/src/lib/api";
 import { getAssetUrl } from "@/src/lib/api";
 
-import { StoryCard } from "./story-card";
-
 type HomeHeroProps = {
   lead: FeedItemDto | undefined;
   updates: FeedItemDto[];
+  formatDate: (value: string) => string;
 };
 
-type FormatDate = (value: string) => string;
+export function HomeHero({ lead, updates, formatDate }: HomeHeroProps) {
+  const heroImage = lead ? getAssetUrl(lead.photoPath) : null;
 
-export function HomeHero({ lead, updates, formatDate }: HomeHeroProps & { formatDate: FormatDate }) {
   return (
-    <div className="rounded-sm border border-zinc-300 bg-white px-6 py-5 text-[color:var(--ink)] shadow-[0_20px_50px_rgba(13,35,77,0.08)]">
-      <div className="flex items-center justify-between gap-4 border-b border-zinc-200 pb-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[color:var(--accent)]">واجهة اليوم</p>
-          <h1 className="mt-2 text-3xl font-extrabold leading-tight text-[color:var(--ink)]">أبرز ما يحدث الآن</h1>
-        </div>
-        <span className="rounded-sm bg-[color:var(--accent)] px-4 py-2 text-xs font-bold text-white">Live</span>
-      </div>
-
-      {lead ? (
-        <div className="mt-6 grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
-          <StoryCard
+    <div className="overflow-hidden rounded-sm border border-[color:var(--border-soft)] bg-white shadow-[0_20px_50px_rgba(13,35,77,0.08)]">
+      <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
+        {/* Lead story — large image with overlay */}
+        {lead ? (
+          <Link
             href={`/news/${lead.slugId}`}
-            title={lead.title}
-            summary={lead.summary}
-            imageUrl={getAssetUrl(lead.photoPath)}
-            eyebrow={lead.sectionTitle || "آخر الأخبار"}
-          />
+            className="group relative block aspect-[16/11] overflow-hidden lg:aspect-auto"
+          >
+            {heroImage ? (
+              <Image
+                src={heroImage}
+                alt={lead.title}
+                fill
+                className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                priority
+              />
+            ) : (
+              <div className="h-full w-full bg-[color:var(--panel)]" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 space-y-2 p-5 sm:p-6">
+              {lead.sectionTitle ? (
+                <span className="inline-flex rounded-sm bg-[color:var(--accent)] px-2.5 py-1 text-xs font-black text-white">
+                  {lead.sectionTitle}
+                </span>
+              ) : null}
+              <h2 className="text-xl font-black leading-[1.7] text-white sm:text-2xl">
+                {lead.title}
+              </h2>
+            </div>
+          </Link>
+        ) : null}
 
-          <div className="space-y-3 rounded-sm border border-zinc-200 bg-[color:var(--panel)] p-4">
-            <div className="flex items-center justify-between gap-3 border-b border-zinc-200 pb-3">
-              <h2 className="text-base font-bold text-[color:var(--ink)]">لحظة بلحظة</h2>
-              <span className="text-xs text-zinc-600">تحديثات سريعة</span>
+        {/* Timestamped updates — اللحظة الأخيرة */}
+        <div className="flex flex-col border-r border-[color:var(--border-soft)] lg:border-r-0 lg:border-l">
+          <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border-soft)] px-5 py-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-4 w-1 rounded-sm bg-[color:var(--accent)]" />
+              <h2 className="text-base font-black text-[color:var(--ink)]">اللحظة الأخيرة</h2>
             </div>
-            <div className="space-y-2">
-              {updates.map((item, index) => (
-                <Link
-                  key={item.id}
-                  href={`/news/${item.slugId}`}
-                  className="block rounded-sm border border-zinc-200 bg-white px-4 py-3 transition hover:border-[color:var(--accent)] hover:bg-zinc-50"
-                >
-                  <div className="mb-1 flex items-center justify-between gap-2 text-xs text-zinc-600">
-                    <span>{formatDate(item.disdate)}</span>
-                    <span className="font-bold text-[color:var(--accent)]">{index + 1}</span>
-                  </div>
-                  <div className="text-sm font-bold leading-7 text-[color:var(--ink)]">{item.title}</div>
-                </Link>
-              ))}
-            </div>
+            <span className="rounded-sm bg-[color:var(--accent)] px-2.5 py-0.5 text-[10px] font-black text-white">
+              Live
+            </span>
+          </div>
+          <div className="flex-1 divide-y divide-[color:var(--border-soft)] overflow-y-auto">
+            {updates.slice(0, 8).map((item) => (
+              <Link
+                key={item.id}
+                href={`/news/${item.slugId}`}
+                className="flex items-start gap-3 px-5 py-3 transition hover:bg-[color:var(--panel)]"
+              >
+                <span className="mt-1 shrink-0 text-xs font-bold tabular-nums text-[color:var(--accent)]">
+                  {formatDate(item.disdate).split(" ").slice(0, 1).join("")}
+                </span>
+                <span className="text-sm font-bold leading-7 text-[color:var(--ink)]">
+                  {item.title}
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
