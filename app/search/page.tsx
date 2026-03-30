@@ -81,22 +81,22 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="space-y-3 border-b border-zinc-200 pb-6">
-        <p className="text-sm font-medium text-emerald-700">البحث</p>
-        <h1 className="text-3xl font-bold text-zinc-900">
+      <header className="space-y-3 rounded-sm border border-[color:var(--border-soft)] bg-white px-5 py-6 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:px-6">
+        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">Search</p>
+        <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">
           {query ? `نتائج البحث عن: ${query}` : "ابحث في الموقع"}
         </h1>
-        <p className="text-sm leading-7 text-zinc-600">
+        <p className="text-sm leading-8 text-zinc-600">
           {query
             ? `يعرض البحث النتائج لعبارة ${query} مع دعم التصفح على صفحات متعددة.`
             : "استخدم قيمة q في الرابط مثل /search?q=لبنان لعرض النتائج."}
         </p>
         {(hasPrev || hasNext) ? (
-          <nav className="flex flex-wrap items-center gap-3 text-sm" aria-label="تنقل صفحات نتائج البحث">
+          <nav className="flex flex-wrap items-center gap-2.5 border-t border-[color:var(--border-soft)] pt-4 text-sm" aria-label="تنقل صفحات نتائج البحث">
             {hasPrev ? (
               <Link
                 href={prevHref}
-                className="rounded-full border border-zinc-300 px-4 py-2 font-semibold text-zinc-700 transition hover:border-zinc-400"
+                className="rounded-sm border border-[color:var(--border-soft)] bg-white px-4 py-2 font-extrabold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent-strong)]"
               >
                 الصفحة السابقة
               </Link>
@@ -104,7 +104,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
             {hasNext ? (
               <Link
                 href={nextHref}
-                className="rounded-full border border-zinc-300 px-4 py-2 font-semibold text-zinc-700 transition hover:border-zinc-400"
+                className="rounded-sm border border-[color:var(--border-soft)] bg-white px-4 py-2 font-extrabold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent-strong)]"
               >
                 الصفحة التالية
               </Link>
@@ -123,7 +123,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
           totalPages={totalPages}
         />
       ) : (
-        <section className="rounded-2xl border border-dashed border-zinc-300 px-6 py-10 text-center text-zinc-600">
+        <section className="rounded-sm border border-dashed border-[color:var(--border-soft)] bg-white px-6 py-10 text-center text-zinc-600">
           أضف قيمة البحث إلى الرابط ثم أعد المحاولة.
         </section>
       )}

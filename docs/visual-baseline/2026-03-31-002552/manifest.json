@@ -1,0 +1,170 @@
+[
+  {
+    "route": "home",
+    "path": "/",
+    "viewport": "desktop",
+    "file": "home-desktop.png",
+    "capturedAt": "2026-03-30T21:26:02.349Z"
+  },
+  {
+    "route": "mix",
+    "path": "/mix",
+    "viewport": "desktop",
+    "file": "mix-desktop.png",
+    "capturedAt": "2026-03-30T21:26:04.241Z"
+  },
+  {
+    "route": "about",
+    "path": "/about-us",
+    "viewport": "desktop",
+    "file": "about-desktop.png",
+    "capturedAt": "2026-03-30T21:26:06.310Z"
+  },
+  {
+    "route": "contact",
+    "path": "/contact-us",
+    "viewport": "desktop",
+    "file": "contact-desktop.png",
+    "capturedAt": "2026-03-30T21:26:08.247Z"
+  },
+  {
+    "route": "search",
+    "path": "/search?q=%D9%84%D8%A8%D9%86%D8%A7%D9%86",
+    "viewport": "desktop",
+    "file": "search-desktop.png",
+    "capturedAt": "2026-03-30T21:26:09.734Z"
+  },
+  {
+    "route": "category",
+    "path": "/category/36",
+    "viewport": "desktop",
+    "file": "category-desktop.png",
+    "capturedAt": "2026-03-30T21:26:12.267Z"
+  },
+  {
+    "route": "article",
+    "path": "/news/420777",
+    "viewport": "desktop",
+    "file": "article-desktop.png",
+    "capturedAt": "2026-03-30T21:26:14.329Z"
+  },
+  {
+    "route": "author",
+    "path": "/author/11",
+    "viewport": "desktop",
+    "file": "author-desktop.png",
+    "capturedAt": "2026-03-30T21:26:16.465Z"
+  },
+  {
+    "route": "home",
+    "path": "/",
+    "viewport": "tablet",
+    "file": "home-tablet.png",
+    "capturedAt": "2026-03-30T21:26:23.486Z"
+  },
+  {
+    "route": "mix",
+    "path": "/mix",
+    "viewport": "tablet",
+    "file": "mix-tablet.png",
+    "capturedAt": "2026-03-30T21:26:25.271Z"
+  },
+  {
+    "route": "about",
+    "path": "/about-us",
+    "viewport": "tablet",
+    "file": "about-tablet.png",
+    "capturedAt": "2026-03-30T21:26:27.155Z"
+  },
+  {
+    "route": "contact",
+    "path": "/contact-us",
+    "viewport": "tablet",
+    "file": "contact-tablet.png",
+    "capturedAt": "2026-03-30T21:26:28.994Z"
+  },
+  {
+    "route": "search",
+    "path": "/search?q=%D9%84%D8%A8%D9%86%D8%A7%D9%86",
+    "viewport": "tablet",
+    "file": "search-tablet.png",
+    "capturedAt": "2026-03-30T21:26:30.439Z"
+  },
+  {
+    "route": "category",
+    "path": "/category/36",
+    "viewport": "tablet",
+    "file": "category-tablet.png",
+    "capturedAt": "2026-03-30T21:26:32.659Z"
+  },
+  {
+    "route": "article",
+    "path": "/news/420777",
+    "viewport": "tablet",
+    "file": "article-tablet.png",
+    "capturedAt": "2026-03-30T21:26:34.750Z"
+  },
+  {
+    "route": "author",
+    "path": "/author/11",
+    "viewport": "tablet",
+    "file": "author-tablet.png",
+    "capturedAt": "2026-03-30T21:26:36.730Z"
+  },
+  {
+    "route": "home",
+    "path": "/",
+    "viewport": "mobile",
+    "file": "home-mobile.png",
+    "capturedAt": "2026-03-30T21:26:43.220Z"
+  },
+  {
+    "route": "mix",
+    "path": "/mix",
+    "viewport": "mobile",
+    "file": "mix-mobile.png",
+    "capturedAt": "2026-03-30T21:26:44.898Z"
+  },
+  {
+    "route": "about",
+    "path": "/about-us",
+    "viewport": "mobile",
+    "file": "about-mobile.png",
+    "capturedAt": "2026-03-30T21:26:46.730Z"
+  },
+  {
+    "route": "contact",
+    "path": "/contact-us",
+    "viewport": "mobile",
+    "file": "contact-mobile.png",
+    "capturedAt": "2026-03-30T21:26:48.592Z"
+  },
+  {
+    "route": "search",
+    "path": "/search?q=%D9%84%D8%A8%D9%86%D8%A7%D9%86",
+    "viewport": "mobile",
+    "file": "search-mobile.png",
+    "capturedAt": "2026-03-30T21:26:50.045Z"
+  },
+  {
+    "route": "category",
+    "path": "/category/36",
+    "viewport": "mobile",
+    "file": "category-mobile.png",
+    "capturedAt": "2026-03-30T21:26:52.349Z"
+  },
+  {
+    "route": "article",
+    "path": "/news/420777",
+    "viewport": "mobile",
+    "file": "article-mobile.png",
+    "capturedAt": "2026-03-30T21:26:54.180Z"
+  },
+  {
+    "route": "author",
+    "path": "/author/11",
+    "viewport": "mobile",
+    "file": "author-mobile.png",
+    "capturedAt": "2026-03-30T21:26:56.355Z"
+  }
+]

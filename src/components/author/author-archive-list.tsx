@@ -73,16 +73,16 @@ export function AuthorArchiveList({
   }
 
   if (!items.length) {
-    return <p className="text-sm leading-7 text-zinc-600">لا توجد مقالات منشورة لهذا الكاتب حالياً.</p>;
+    return <p className="text-sm leading-8 text-zinc-600">لا توجد مقالات منشورة لهذا الكاتب حالياً.</p>;
   }
 
   return (
     <div className="space-y-4">
       <div className="space-y-3">
         {items.map((item) => (
-          <article key={item.id} className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4">
-            <h3 className="text-lg font-semibold leading-8 text-zinc-900">
-              <Link href={`/news/${item.slugId}`} className="hover:text-emerald-700">
+          <article key={item.id} className="rounded-sm border border-[color:var(--border-soft)] bg-[color:var(--panel)] px-4 py-4">
+            <h3 className="text-lg font-black leading-8 text-[color:var(--ink)]">
+              <Link href={`/news/${item.slugId}`} className="transition hover:text-[color:var(--accent-strong)]">
                 {item.title}
               </Link>
             </h3>
@@ -97,7 +97,7 @@ export function AuthorArchiveList({
             type="button"
             onClick={handleLoadMore}
             disabled={isLoading}
-            className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-700 px-6 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center rounded-sm bg-[color:var(--accent)] px-6 text-sm font-black text-white transition hover:bg-[color:var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isLoading ? "جاري التحميل..." : "تحميل المزيد"}
           </button>
@@ -106,17 +106,17 @@ export function AuthorArchiveList({
       ) : null}
 
       {crawlablePages.length ? (
-        <nav className="border-t border-zinc-200 pt-4" aria-label="صفحات أرشيف الكاتب">
-          <p className="mb-2 text-xs font-bold tracking-wide text-zinc-500">روابط الأرشيف</p>
+        <nav className="border-t border-[color:var(--border-soft)] pt-4" aria-label="صفحات أرشيف الكاتب">
+          <p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">روابط الأرشيف</p>
           <div className="flex flex-wrap gap-2">
             {crawlablePages.map((page) => (
               <Link
                 key={page}
                 href={page === 1 ? `/author/${authorLink}` : `/author/${authorLink}?page=${page}`}
-                className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                className={`rounded-sm border px-3 py-1 text-xs font-extrabold transition ${
                   page === currentPage
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300"
+                    ? "border-[color:var(--accent)] bg-[color:var(--panel)] text-[color:var(--accent-strong)]"
+                    : "border-[color:var(--border-soft)] bg-white text-zinc-600 hover:border-[color:var(--accent)]"
                 }`}
               >
                 صفحة {page}

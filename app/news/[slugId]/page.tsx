@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import {
   getArticleById,
   getAssetUrl,
+  getHomeFeed,
   getPreviewArticleById,
   type ArticleDto,
 } from "@/src/lib/api";
+import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
 
 type PageParams = {
   slugId: string;
@@ -106,6 +109,8 @@ export default async function NewsArticlePage({ params }: PageProps) {
     permanentRedirect(`/news/${article.slugId}`);
   }
 
+  const [mostRead] = await Promise.all([getHomeFeed(5)]);
+
   const imageUrl = getAssetUrl(article.photoPath);
   const articlePath = `/news/${article.slugId}`;
   const articleUrl = absoluteUrl(articlePath);
@@ -161,7 +166,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
   };
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
@@ -170,13 +175,25 @@ export default async function NewsArticlePage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(newsArticleJsonLd) }}
       />
-      <article className="space-y-6">
-        <header className="space-y-2">
-          <p className="text-sm text-zinc-500">
-            {article.sectionTitle}
-            {article.disdate ? ` - ${article.disdate}` : ""}
-          </p>
-          <h1 className="text-3xl font-bold leading-tight text-zinc-900">{article.title}</h1>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <article className="space-y-6 rounded-sm border border-[color:var(--border-soft)] bg-white p-5 shadow-[0_16px_46px_rgba(13,35,77,0.07)] sm:p-7">
+        <header className="space-y-3 border-b border-[color:var(--border-soft)] pb-5">
+          <div className="flex flex-wrap items-center gap-2.5 text-xs">
+            {article.sectionTitle ? (
+              <Link
+                href={sectionPath}
+                className="inline-flex items-center rounded-sm bg-[color:var(--panel)] px-2.5 py-1 font-black uppercase tracking-[0.2em] text-[color:var(--accent)]"
+              >
+                {article.sectionTitle}
+              </Link>
+            ) : null}
+            {article.disdate ? (
+              <span className="text-zinc-600">{article.disdate}</span>
+            ) : null}
+          </div>
+          <h1 className="text-[1.95rem] font-black leading-[1.6] text-[color:var(--ink)] sm:text-[2.2rem]">
+            {article.title}
+          </h1>
         </header>
 
         {imageUrl ? (
@@ -185,15 +202,17 @@ export default async function NewsArticlePage({ params }: PageProps) {
             alt={article.title}
             width={1200}
             height={675}
-            className="h-auto w-full rounded-lg object-cover"
+            className="h-auto w-full rounded-sm border border-[color:var(--border-soft)] object-cover"
           />
         ) : null}
 
         <section
-          className="prose prose-zinc max-w-none leading-8"
+          className="prose prose-zinc max-w-none text-[1.04rem] leading-9"
           dangerouslySetInnerHTML={{ __html: article.bodyHtml }}
         />
       </article>
+      <PageSidebar mostRead={mostRead} />
+      </div>
     </main>
   );
 }

@@ -1,0 +1,149 @@
+[
+  {
+    "route": "home",
+    "path": "/",
+    "viewport": "desktop",
+    "file": "home-desktop.png",
+    "capturedAt": "2026-03-30T20:54:31.627Z"
+  },
+  {
+    "route": "mix",
+    "path": "/mix",
+    "viewport": "desktop",
+    "file": "mix-desktop.png",
+    "capturedAt": "2026-03-30T20:54:33.044Z"
+  },
+  {
+    "route": "about",
+    "path": "/about",
+    "viewport": "desktop",
+    "file": "about-desktop.png",
+    "capturedAt": "2026-03-30T20:54:34.510Z"
+  },
+  {
+    "route": "contact",
+    "path": "/contact",
+    "viewport": "desktop",
+    "file": "contact-desktop.png",
+    "capturedAt": "2026-03-30T20:54:35.897Z"
+  },
+  {
+    "route": "search",
+    "path": "/search?q=%D9%84%D8%A8%D9%86%D8%A7%D9%86",
+    "viewport": "desktop",
+    "file": "search-desktop.png",
+    "capturedAt": "2026-03-30T20:54:37.711Z"
+  },
+  {
+    "route": "category",
+    "path": "/category/36",
+    "viewport": "desktop",
+    "file": "category-desktop.png",
+    "capturedAt": "2026-03-30T20:54:39.853Z"
+  },
+  {
+    "route": "article",
+    "path": "/news/420777",
+    "viewport": "desktop",
+    "file": "article-desktop.png",
+    "capturedAt": "2026-03-30T20:54:42.178Z"
+  },
+  {
+    "route": "home",
+    "path": "/",
+    "viewport": "tablet",
+    "file": "home-tablet.png",
+    "capturedAt": "2026-03-30T20:54:45.660Z"
+  },
+  {
+    "route": "mix",
+    "path": "/mix",
+    "viewport": "tablet",
+    "file": "mix-tablet.png",
+    "capturedAt": "2026-03-30T20:54:47.060Z"
+  },
+  {
+    "route": "about",
+    "path": "/about",
+    "viewport": "tablet",
+    "file": "about-tablet.png",
+    "capturedAt": "2026-03-30T20:54:48.420Z"
+  },
+  {
+    "route": "contact",
+    "path": "/contact",
+    "viewport": "tablet",
+    "file": "contact-tablet.png",
+    "capturedAt": "2026-03-30T20:54:49.798Z"
+  },
+  {
+    "route": "search",
+    "path": "/search?q=%D9%84%D8%A8%D9%86%D8%A7%D9%86",
+    "viewport": "tablet",
+    "file": "search-tablet.png",
+    "capturedAt": "2026-03-30T20:54:51.658Z"
+  },
+  {
+    "route": "category",
+    "path": "/category/36",
+    "viewport": "tablet",
+    "file": "category-tablet.png",
+    "capturedAt": "2026-03-30T20:54:53.767Z"
+  },
+  {
+    "route": "article",
+    "path": "/news/420777",
+    "viewport": "tablet",
+    "file": "article-tablet.png",
+    "capturedAt": "2026-03-30T20:54:56.014Z"
+  },
+  {
+    "route": "home",
+    "path": "/",
+    "viewport": "mobile",
+    "file": "home-mobile.png",
+    "capturedAt": "2026-03-30T20:54:59.337Z"
+  },
+  {
+    "route": "mix",
+    "path": "/mix",
+    "viewport": "mobile",
+    "file": "mix-mobile.png",
+    "capturedAt": "2026-03-30T20:55:00.718Z"
+  },
+  {
+    "route": "about",
+    "path": "/about",
+    "viewport": "mobile",
+    "file": "about-mobile.png",
+    "capturedAt": "2026-03-30T20:55:02.104Z"
+  },
+  {
+    "route": "contact",
+    "path": "/contact",
+    "viewport": "mobile",
+    "file": "contact-mobile.png",
+    "capturedAt": "2026-03-30T20:55:03.471Z"
+  },
+  {
+    "route": "search",
+    "path": "/search?q=%D9%84%D8%A8%D9%86%D8%A7%D9%86",
+    "viewport": "mobile",
+    "file": "search-mobile.png",
+    "capturedAt": "2026-03-30T20:55:05.245Z"
+  },
+  {
+    "route": "category",
+    "path": "/category/36",
+    "viewport": "mobile",
+    "file": "category-mobile.png",
+    "capturedAt": "2026-03-30T20:55:07.356Z"
+  },
+  {
+    "route": "article",
+    "path": "/news/420777",
+    "viewport": "mobile",
+    "file": "article-mobile.png",
+    "capturedAt": "2026-03-30T20:55:09.561Z"
+  }
+]

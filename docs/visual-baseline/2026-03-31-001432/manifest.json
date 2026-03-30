@@ -1,0 +1,170 @@
+[
+  {
+    "route": "home",
+    "path": "/",
+    "viewport": "desktop",
+    "file": "home-desktop.png",
+    "capturedAt": "2026-03-30T21:14:40.329Z"
+  },
+  {
+    "route": "mix",
+    "path": "/mix",
+    "viewport": "desktop",
+    "file": "mix-desktop.png",
+    "capturedAt": "2026-03-30T21:14:41.737Z"
+  },
+  {
+    "route": "about",
+    "path": "/about",
+    "viewport": "desktop",
+    "file": "about-desktop.png",
+    "capturedAt": "2026-03-30T21:14:43.161Z"
+  },
+  {
+    "route": "contact",
+    "path": "/contact",
+    "viewport": "desktop",
+    "file": "contact-desktop.png",
+    "capturedAt": "2026-03-30T21:14:44.627Z"
+  },
+  {
+    "route": "search",
+    "path": "/search?q=%D9%84%D8%A8%D9%86%D8%A7%D9%86",
+    "viewport": "desktop",
+    "file": "search-desktop.png",
+    "capturedAt": "2026-03-30T21:14:46.437Z"
+  },
+  {
+    "route": "category",
+    "path": "/category/36",
+    "viewport": "desktop",
+    "file": "category-desktop.png",
+    "capturedAt": "2026-03-30T21:14:48.675Z"
+  },
+  {
+    "route": "article",
+    "path": "/news/420777",
+    "viewport": "desktop",
+    "file": "article-desktop.png",
+    "capturedAt": "2026-03-30T21:14:50.938Z"
+  },
+  {
+    "route": "author",
+    "path": "/author/11",
+    "viewport": "desktop",
+    "file": "author-desktop.png",
+    "capturedAt": "2026-03-30T21:14:53.912Z"
+  },
+  {
+    "route": "home",
+    "path": "/",
+    "viewport": "tablet",
+    "file": "home-tablet.png",
+    "capturedAt": "2026-03-30T21:14:57.117Z"
+  },
+  {
+    "route": "mix",
+    "path": "/mix",
+    "viewport": "tablet",
+    "file": "mix-tablet.png",
+    "capturedAt": "2026-03-30T21:14:58.477Z"
+  },
+  {
+    "route": "about",
+    "path": "/about",
+    "viewport": "tablet",
+    "file": "about-tablet.png",
+    "capturedAt": "2026-03-30T21:14:59.844Z"
+  },
+  {
+    "route": "contact",
+    "path": "/contact",
+    "viewport": "tablet",
+    "file": "contact-tablet.png",
+    "capturedAt": "2026-03-30T21:15:01.256Z"
+  },
+  {
+    "route": "search",
+    "path": "/search?q=%D9%84%D8%A8%D9%86%D8%A7%D9%86",
+    "viewport": "tablet",
+    "file": "search-tablet.png",
+    "capturedAt": "2026-03-30T21:15:03.084Z"
+  },
+  {
+    "route": "category",
+    "path": "/category/36",
+    "viewport": "tablet",
+    "file": "category-tablet.png",
+    "capturedAt": "2026-03-30T21:15:05.190Z"
+  },
+  {
+    "route": "article",
+    "path": "/news/420777",
+    "viewport": "tablet",
+    "file": "article-tablet.png",
+    "capturedAt": "2026-03-30T21:15:07.489Z"
+  },
+  {
+    "route": "author",
+    "path": "/author/11",
+    "viewport": "tablet",
+    "file": "author-tablet.png",
+    "capturedAt": "2026-03-30T21:15:09.721Z"
+  },
+  {
+    "route": "home",
+    "path": "/",
+    "viewport": "mobile",
+    "file": "home-mobile.png",
+    "capturedAt": "2026-03-30T21:15:17.875Z"
+  },
+  {
+    "route": "mix",
+    "path": "/mix",
+    "viewport": "mobile",
+    "file": "mix-mobile.png",
+    "capturedAt": "2026-03-30T21:15:19.252Z"
+  },
+  {
+    "route": "about",
+    "path": "/about",
+    "viewport": "mobile",
+    "file": "about-mobile.png",
+    "capturedAt": "2026-03-30T21:15:20.598Z"
+  },
+  {
+    "route": "contact",
+    "path": "/contact",
+    "viewport": "mobile",
+    "file": "contact-mobile.png",
+    "capturedAt": "2026-03-30T21:15:21.981Z"
+  },
+  {
+    "route": "search",
+    "path": "/search?q=%D9%84%D8%A8%D9%86%D8%A7%D9%86",
+    "viewport": "mobile",
+    "file": "search-mobile.png",
+    "capturedAt": "2026-03-30T21:15:23.752Z"
+  },
+  {
+    "route": "category",
+    "path": "/category/36",
+    "viewport": "mobile",
+    "file": "category-mobile.png",
+    "capturedAt": "2026-03-30T21:15:25.879Z"
+  },
+  {
+    "route": "article",
+    "path": "/news/420777",
+    "viewport": "mobile",
+    "file": "article-mobile.png",
+    "capturedAt": "2026-03-30T21:15:27.993Z"
+  },
+  {
+    "route": "author",
+    "path": "/author/11",
+    "viewport": "mobile",
+    "file": "author-mobile.png",
+    "capturedAt": "2026-03-30T21:15:30.124Z"
+  }
+]

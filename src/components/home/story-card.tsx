@@ -12,7 +12,7 @@ type StoryCardProps = {
 
 export function StoryCard({ href, title, summary, imageUrl, eyebrow, compact = false }: StoryCardProps) {
   return (
-    <article className="overflow-hidden rounded-[2rem] border border-[color:var(--border-soft)] bg-white shadow-[0_18px_60px_rgba(13,35,77,0.08)]">
+    <article className="overflow-hidden rounded-sm border border-zinc-200 bg-white shadow-[0_12px_30px_rgba(13,35,77,0.07)]">
       {imageUrl ? (
         <Image
           src={imageUrl}
@@ -32,7 +32,7 @@ export function StoryCard({ href, title, summary, imageUrl, eyebrow, compact = f
       )}
       <div className="space-y-3 p-5">
         {eyebrow ? (
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--accent)]">
+          <p className="inline-flex rounded-sm bg-[color:var(--accent)]/10 px-2 py-1 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
             {eyebrow}
           </p>
         ) : null}

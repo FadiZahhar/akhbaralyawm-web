@@ -31,10 +31,10 @@ export async function SiteHeader() {
   );
 
   return (
-    <header className="border-b border-[color:var(--border-soft)] bg-white/92 backdrop-blur-sm">
-      <div className="border-b border-[color:var(--border-soft)] bg-[color:var(--ink)] text-white">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-3 text-sm sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-white/85">
+    <header className="border-b border-zinc-300 bg-white">
+      <div className="border-b border-zinc-300 bg-zinc-900 text-white">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-2 text-xs sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-white/90">
             {TOP_LINKS.map((link) =>
               link.external ? (
                 <a
@@ -54,8 +54,8 @@ export async function SiteHeader() {
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-white/85">
-            <span>{formatToday()}</span>
+          <div className="flex flex-wrap items-center gap-3 text-white/90">
+            <span className="font-bold">{formatToday()}</span>
             <div className="h-4 w-px bg-white/20" />
             {SOCIAL_LINKS.map((link) => (
               <a
@@ -76,12 +76,12 @@ export async function SiteHeader() {
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <Link href="/" className="inline-flex items-center gap-3 text-[color:var(--ink)]">
-              <span className="rounded-full bg-[color:var(--accent)]/12 px-3 py-1 text-xs font-bold text-[color:var(--accent)]">
+              <span className="rounded-sm bg-[color:var(--accent)]/10 px-3 py-1 text-xs font-bold text-[color:var(--accent)]">
                 Akhbar Al Youm
               </span>
-              <span className="text-3xl font-extrabold tracking-tight">أخبار اليوم</span>
+              <span className="text-4xl font-extrabold tracking-tight">أخبار اليوم</span>
             </Link>
-            <p className="max-w-2xl text-sm leading-7 text-zinc-700">
+            <p className="max-w-2xl text-sm leading-7 text-zinc-800">
               منصة إخبارية عربية سريعة الإيقاع تركّز على الخبر، السياق، وسهولة الوصول من أي جهاز.
             </p>
           </div>
@@ -95,19 +95,19 @@ export async function SiteHeader() {
             />
             <button
               type="submit"
-              className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-[color:var(--accent)] px-5 text-sm font-bold text-white transition hover:bg-[color:var(--accent-strong)]"
+              className="inline-flex h-12 shrink-0 items-center justify-center rounded-sm bg-[color:var(--accent)] px-5 text-sm font-bold text-white transition hover:bg-[color:var(--accent-strong)]"
             >
               بحث
             </button>
           </form>
         </div>
 
-        <nav className="overflow-x-auto">
+        <nav className="overflow-x-auto border-y border-zinc-300 py-2">
           <ul className="flex min-w-max items-center gap-2 text-sm font-bold text-[color:var(--ink)]">
             <li>
               <Link
                 href="/"
-                className="inline-flex rounded-full border border-transparent px-4 py-2 transition hover:border-[color:var(--border-soft)] hover:bg-[color:var(--panel)]"
+                className="inline-flex border-b-2 border-transparent px-4 py-2 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
               >
                 الرئيسية
               </Link>
@@ -116,7 +116,7 @@ export async function SiteHeader() {
               <li key={item.id}>
                 <Link
                   href={`/category/${item.link}`}
-                  className="inline-flex rounded-full border border-transparent px-4 py-2 transition hover:border-[color:var(--border-soft)] hover:bg-[color:var(--panel)]"
+                  className="inline-flex border-b-2 border-transparent px-4 py-2 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
                 >
                   {item.title}
                 </Link>
@@ -125,7 +125,7 @@ export async function SiteHeader() {
             <li>
               <Link
                 href="/mix"
-                className="inline-flex rounded-full border border-transparent px-4 py-2 transition hover:border-[color:var(--border-soft)] hover:bg-[color:var(--panel)]"
+                className="inline-flex border-b-2 border-transparent px-4 py-2 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
               >
                 من كل شي
               </Link>

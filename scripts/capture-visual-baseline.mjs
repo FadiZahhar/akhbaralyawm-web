@@ -7,6 +7,10 @@ import { chromium } from "playwright";
 
 const DEFAULT_BASE_URL = process.env.VISUAL_BASE_URL || "http://localhost:3000";
 const DEFAULT_SEARCH_QUERY = process.env.VISUAL_SEARCH_QUERY || "لبنان";
+const DEFAULT_ABOUT_PATH = process.env.VISUAL_ABOUT_PATH || "/about";
+const DEFAULT_CONTACT_PATH = process.env.VISUAL_CONTACT_PATH || "/contact";
+const DEFAULT_CATEGORY_PATH = process.env.VISUAL_CATEGORY_PATH || "";
+const DEFAULT_ARTICLE_PATH = process.env.VISUAL_ARTICLE_PATH || "";
 const DEFAULT_AUTHOR_PATH = process.env.VISUAL_AUTHOR_PATH || "";
 
 const VIEWPORTS = [
@@ -67,12 +71,12 @@ async function discoverRouteCandidates(baseUrl) {
   };
 }
 
-function buildRouteList({ category, article }, searchQuery, authorPath) {
+function buildRouteList({ category, article }, searchQuery, authorPath, aboutPath, contactPath) {
   const routes = [
     { key: "home", path: "/" },
     { key: "mix", path: "/mix" },
-    { key: "about", path: "/about" },
-    { key: "contact", path: "/contact" },
+    { key: "about", path: aboutPath.startsWith("/") ? aboutPath : `/${aboutPath}` },
+    { key: "contact", path: contactPath.startsWith("/") ? contactPath : `/${contactPath}` },
     { key: "search", path: `/search?q=${encodeURIComponent(searchQuery)}` },
   ];
 
@@ -141,7 +145,16 @@ async function captureScreenshots(baseUrl, routes, outputDir) {
 async function main() {
   const baseUrl = normalizeBaseUrl(DEFAULT_BASE_URL);
   const discovered = await discoverRouteCandidates(baseUrl);
-  const routes = buildRouteList(discovered, DEFAULT_SEARCH_QUERY, DEFAULT_AUTHOR_PATH);
+  const routes = buildRouteList(
+    {
+      category: DEFAULT_CATEGORY_PATH || discovered.category,
+      article: DEFAULT_ARTICLE_PATH || discovered.article,
+    },
+    DEFAULT_SEARCH_QUERY,
+    DEFAULT_AUTHOR_PATH,
+    DEFAULT_ABOUT_PATH,
+    DEFAULT_CONTACT_PATH,
+  );
 
   const outputDir = path.join(process.cwd(), "docs", "visual-baseline", timestampFolder());
   await fs.mkdir(outputDir, { recursive: true });

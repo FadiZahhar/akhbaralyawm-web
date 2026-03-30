@@ -81,15 +81,15 @@ export default async function AuthorPage({ params, searchParams }: PageProps) {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
       <nav className="text-sm text-zinc-500">
-        <Link href="/" className="hover:text-emerald-700">
+        <Link href="/" className="transition hover:text-[color:var(--accent-strong)]">
           الرئيسية
         </Link>
         <span className="px-2">/</span>
         <span>الكتّاب</span>
       </nav>
 
-      <section className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
-        <div className="grid gap-6 p-6 md:grid-cols-[220px_minmax(0,1fr)] md:p-8">
+      <section className="overflow-hidden rounded-sm border border-[color:var(--border-soft)] bg-white shadow-[0_16px_46px_rgba(13,35,77,0.07)]">
+        <div className="grid gap-6 p-5 md:grid-cols-[220px_minmax(0,1fr)] md:p-7">
           <div>
             {imageUrl ? (
               <Image
@@ -97,23 +97,23 @@ export default async function AuthorPage({ params, searchParams }: PageProps) {
                 alt={author.title}
                 width={800}
                 height={800}
-                className="aspect-square w-full rounded-2xl bg-zinc-100 object-cover"
+                className="aspect-square w-full rounded-sm border border-[color:var(--border-soft)] bg-zinc-100 object-cover"
               />
             ) : (
-              <div className="aspect-square w-full rounded-2xl bg-zinc-100" />
+              <div className="aspect-square w-full rounded-sm border border-[color:var(--border-soft)] bg-zinc-100" />
             )}
           </div>
 
           <div className="space-y-4">
-            <p className="text-sm font-medium text-emerald-700">كاتب</p>
-            <h1 className="text-3xl font-bold text-zinc-900">{author.title}</h1>
+            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">Author</p>
+            <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">{author.title}</h1>
             {author.bodyHtml ? (
               <section
-                className="prose prose-zinc max-w-none leading-8"
+                className="prose prose-zinc max-w-none text-[1.02rem] leading-9"
                 dangerouslySetInnerHTML={{ __html: author.bodyHtml }}
               />
             ) : (
-              <p className="text-sm leading-7 text-zinc-600">
+              <p className="text-sm leading-8 text-zinc-600">
                 لا توجد نبذة متاحة لهذا الكاتب حالياً.
               </p>
             )}
@@ -121,8 +121,8 @@ export default async function AuthorPage({ params, searchParams }: PageProps) {
         </div>
       </section>
 
-      <section className="space-y-4 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-2xl font-bold text-zinc-900">أرشيف الكاتب</h2>
+      <section className="space-y-4 rounded-sm border border-[color:var(--border-soft)] bg-white p-5 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:p-6">
+        <h2 className="border-b border-[color:var(--border-soft)] pb-3 text-[1.45rem] font-black text-[color:var(--ink)]">أرشيف الكاتب</h2>
         <AuthorArchiveList
           authorId={String(author.id)}
           authorLink={author.link}

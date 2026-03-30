@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
-import { getArticlesBySection, getSectionBySlugOrId } from "@/src/lib/api";
+import { getArticlesBySection, getHomeFeed, getSectionBySlugOrId } from "@/src/lib/api";
 import { CategoryArchiveList } from "@/src/components/category/category-archive-list";
+import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
 
 type PageParams = {
   slug: string;
@@ -86,6 +87,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   }
 
   const feed = await getArticlesBySection(section.link, page, pageSize);
+  const mostRead = await getHomeFeed(5);
   const categoryPath = `/category/${section.link}`;
   const categoryUrl = absoluteUrl(page > 1 ? `${categoryPath}?page=${page}` : categoryPath);
   const totalPages = feed.pagination?.totalPages ?? 1;
@@ -140,20 +142,22 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
       />
-      <header className="space-y-3 border-b border-zinc-200 pb-6">
-        <p className="text-sm font-medium text-emerald-700">القسم</p>
-        <h1 className="text-3xl font-bold text-zinc-900">{section.title}</h1>
-        <p className="max-w-3xl text-sm leading-7 text-zinc-600">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="flex flex-col gap-8">
+      <header className="space-y-3 rounded-sm border border-[color:var(--border-soft)] bg-white px-5 py-6 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:px-6">
+        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">Section</p>
+        <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">{section.title}</h1>
+        <p className="max-w-3xl text-sm leading-8 text-zinc-600">
           {feed.pagination
             ? `يعرض هذا القسم ${feed.pagination.total} مادة منشورة حتى الآن.`
             : "أحدث المواد المنشورة ضمن هذا القسم."}
         </p>
         {(hasPrev || hasNext) ? (
-          <nav className="flex flex-wrap items-center gap-3 text-sm" aria-label="تنقل صفحات القسم">
+          <nav className="flex flex-wrap items-center gap-2.5 border-t border-[color:var(--border-soft)] pt-4 text-sm" aria-label="تنقل صفحات القسم">
             {hasPrev ? (
               <Link
                 href={prevHref}
-                className="rounded-full border border-zinc-300 px-4 py-2 font-semibold text-zinc-700 transition hover:border-zinc-400"
+                className="rounded-sm border border-[color:var(--border-soft)] bg-white px-4 py-2 font-extrabold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent-strong)]"
               >
                 الصفحة السابقة
               </Link>
@@ -161,7 +165,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             {hasNext ? (
               <Link
                 href={nextHref}
-                className="rounded-full border border-zinc-300 px-4 py-2 font-semibold text-zinc-700 transition hover:border-zinc-400"
+                className="rounded-sm border border-[color:var(--border-soft)] bg-white px-4 py-2 font-extrabold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent-strong)]"
               >
                 الصفحة التالية
               </Link>
@@ -179,6 +183,9 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         pageSize={pageSize}
         totalPages={totalPages}
       />
+      </div>
+      <PageSidebar mostRead={mostRead} />
+      </div>
     </main>
   );
 }

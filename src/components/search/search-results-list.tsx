@@ -89,7 +89,7 @@ export function SearchResultsList({
 
   if (!items.length) {
     return (
-      <section className="rounded-2xl border border-dashed border-zinc-300 px-6 py-10 text-center text-zinc-600">
+      <section className="rounded-sm border border-dashed border-[color:var(--border-soft)] bg-white px-6 py-10 text-center text-zinc-600">
         لا توجد نتائج مطابقة لعبارة البحث الحالية.
       </section>
     );
@@ -99,14 +99,14 @@ export function SearchResultsList({
     <div className="space-y-5">
       <section className="space-y-4">
         {items.map((item) => (
-          <article key={item.id} className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <article key={item.id} className="rounded-sm border border-[color:var(--border-soft)] bg-white p-5 shadow-[0_12px_30px_rgba(13,35,77,0.06)]">
             <div className="mb-3 flex items-center justify-between gap-3 text-xs text-zinc-500">
-              <span>{item.sectionTitle}</span>
+              <span className="font-black uppercase tracking-[0.16em] text-[color:var(--accent)]">{item.sectionTitle}</span>
               <span>{formatDate(item.disdate)}</span>
             </div>
 
-            <h2 className="text-xl font-semibold leading-8 text-zinc-900">
-              <Link href={`/news/${item.slugId}`} className="hover:text-emerald-700">
+            <h2 className="text-xl font-black leading-8 text-[color:var(--ink)]">
+              <Link href={`/news/${item.slugId}`} className="transition hover:text-[color:var(--accent-strong)]">
                 {item.title}
               </Link>
             </h2>
@@ -122,7 +122,7 @@ export function SearchResultsList({
             type="button"
             onClick={handleLoadMore}
             disabled={isLoading}
-            className="inline-flex h-11 items-center justify-center rounded-full bg-emerald-700 px-6 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center rounded-sm bg-[color:var(--accent)] px-6 text-sm font-black text-white transition hover:bg-[color:var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isLoading ? "جاري التحميل..." : "تحميل المزيد"}
           </button>
@@ -131,17 +131,17 @@ export function SearchResultsList({
       ) : null}
 
       {crawlablePages.length ? (
-        <nav className="border-t border-zinc-200 pt-4" aria-label="صفحات نتائج البحث">
-          <p className="mb-2 text-xs font-bold tracking-wide text-zinc-500">روابط النتائج</p>
+        <nav className="border-t border-[color:var(--border-soft)] pt-4" aria-label="صفحات نتائج البحث">
+          <p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">روابط النتائج</p>
           <div className="flex flex-wrap gap-2">
             {crawlablePages.map((page) => (
               <Link
                 key={page}
                 href={page === 1 ? basePath : `${basePath}&page=${page}`}
-                className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                className={`rounded-sm border px-3 py-1 text-xs font-extrabold transition ${
                   page === currentPage
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300"
+                    ? "border-[color:var(--accent)] bg-[color:var(--panel)] text-[color:var(--accent-strong)]"
+                    : "border-[color:var(--border-soft)] bg-white text-zinc-600 hover:border-[color:var(--accent)]"
                 }`}
               >
                 صفحة {page}
