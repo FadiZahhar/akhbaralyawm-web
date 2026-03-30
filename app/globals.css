@@ -1,26 +1,63 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --page-bg: #f4f1e8;
+  --background: #fffdf8;
+  --panel: #fff8ec;
+  --foreground: #132864;
+  --ink: #0d234d;
+  --accent: #2fa14b;
+  --accent-strong: #247d3a;
+  --border-soft: rgba(19, 40, 100, 0.12);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-noto-kufi-arabic);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at top right, rgba(47, 161, 75, 0.08), transparent 28%),
+    linear-gradient(180deg, #fffef9 0%, var(--page-bg) 100%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-noto-kufi-arabic), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(47, 161, 75, 0.18);
+}
+
+.prose {
+  color: var(--ink);
+}
+
+.prose a {
+  color: var(--accent-strong);
+}
+
+.prose img {
+  border-radius: 1rem;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

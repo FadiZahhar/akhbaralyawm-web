@@ -1,0 +1,23 @@
+legacy_pattern,target_pattern,redirect_type,notes
+/Default.aspx,/,permanent,Home legacy endpoint
+/Newsdet.aspx?id={id},/news/{resolved-slug}-{id},permanent,Resolve article title slug by id before redirect
+/news/{id},/news/{resolved-slug}-{id},permanent,Legacy numeric article path
+/news/{id}/{legacy-slug},/news/{resolved-slug}-{id},permanent,Legacy article path with old slug segment
+/News.aspx?id={slugOrId},/category/{resolved-slug},permanent,Resolve section slug if id was used
+/category/{idOrLink},/category/{resolved-slug},permanent,Keep only canonical category slug
+/Author.aspx?id={slugOrId},/author/{resolved-slug},permanent,Resolve author slug if needed
+/author/{idOrLink},/author/{resolved-slug},permanent,Keep only canonical author slug
+/Search.aspx?id={term},/search?q={term},permanent,Normalize legacy search term param
+/tag/{term},/search?q={term},permanent,Tag route becomes search query route
+/search,/search,none,Canonical search entry point
+/Read.aspx?id=1,/about,permanent,Named CMS page
+/read/1,/about,permanent,Named CMS page alias
+/about-us,/about,permanent,Consolidate duplicate static page route
+/about,/about,none,Canonical static route
+/Read.aspx?id=2,/contact,permanent,Named CMS page
+/read/2,/contact,permanent,Named CMS page alias
+/contact-us,/contact,permanent,Consolidate duplicate static page route
+/contact,/contact,none,Canonical static route
+/Read.aspx?id={id},/read/{id},permanent,Generic CMS page fallback
+/Mix.aspx,/mix,permanent,Legacy mix endpoint
+/mix,/mix,none,Canonical mix route

@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   const redirectPath = safePath(slugId ? `/news/${slugId}` : null, `/news/article-${id}`);
 
   try {
-    const token = await mintPreviewToken();
+    const token = await mintPreviewToken(id);
     const response = NextResponse.redirect(new URL(redirectPath, request.url));
 
     response.cookies.set({
