@@ -15,6 +15,16 @@ export function getHtmlLang(locale: Locale): string {
   return locale;
 }
 
+const OG_LOCALE_MAP: Record<Locale, string> = {
+  ar: "ar_AR",
+  en: "en_US",
+  fr: "fr_FR",
+};
+
+export function getOgLocale(locale: Locale): string {
+  return OG_LOCALE_MAP[locale];
+}
+
 const dictionaries = {
   ar: () => import("@/dictionaries/ar.json").then((m) => m.default),
   en: () => import("@/dictionaries/en.json").then((m) => m.default),

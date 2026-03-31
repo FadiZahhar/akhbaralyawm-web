@@ -7,7 +7,7 @@ export const revalidate = 120;
 
 import { getArticlesByAuthor, getAssetUrl, getAuthorBySlugOrId } from "@/src/lib/api";
 import { AuthorArchiveList } from "@/src/components/author/author-archive-list";
-import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 
 type PageParams = {
   locale: string;
@@ -62,6 +62,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     alternates: {
       canonical: page > 1 ? `/${locale}/author/${author.link}?page=${page}` : `/${locale}/author/${author.link}`,
     },
+    openGraph: { locale: getOgLocale(locale) },
   };
 }
 
@@ -112,7 +113,7 @@ export default async function AuthorPage({ params, searchParams }: PageProps) {
           </div>
 
           <div className="space-y-4">
-            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">Author</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">{dict.author.label}</p>
             <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">{author.title}</h1>
             {author.bodyHtml ? (
               <section
@@ -131,12 +132,21 @@ export default async function AuthorPage({ params, searchParams }: PageProps) {
       <section className="space-y-4 rounded-sm border border-[color:var(--border-soft)] bg-white p-5 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:p-6">
         <h2 className="border-b border-[color:var(--border-soft)] pb-3 text-[1.45rem] font-black text-[color:var(--ink)]">{dict.author.archive}</h2>
         <AuthorArchiveList
+          locale={locale}
           authorId={String(author.id)}
           authorLink={author.link}
           initialItems={articles?.items ?? []}
           initialPage={page}
           pageSize={pageSize}
           totalPages={articles?.pagination?.totalPages ?? 1}
+          dict={{
+            loadMore: dict.archive.loadMore,
+            loading: dict.archive.loading,
+            loadError: dict.archive.loadError,
+            noAuthorArticles: dict.archive.noAuthorArticles,
+            archiveLinks: dict.archive.archiveLinks,
+            page: dict.archive.page,
+          }}
         />
       </section>
     </main>

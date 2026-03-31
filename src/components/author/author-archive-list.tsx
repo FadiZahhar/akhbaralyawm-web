@@ -6,21 +6,32 @@ import { useMemo, useState } from "react";
 import type { FeedItemDto } from "@/src/lib/api";
 
 type AuthorArchiveListProps = {
+  locale: string;
   authorId: string;
   authorLink: string;
   initialItems: FeedItemDto[];
   initialPage: number;
   pageSize: number;
   totalPages: number;
+  dict: {
+    loadMore: string;
+    loading: string;
+    loadError: string;
+    noAuthorArticles: string;
+    archiveLinks: string;
+    page: string;
+  };
 };
 
 export function AuthorArchiveList({
+  locale,
   authorId,
   authorLink,
   initialItems,
   initialPage,
   pageSize,
   totalPages,
+  dict,
 }: AuthorArchiveListProps) {
   const [items, setItems] = useState<FeedItemDto[]>(initialItems);
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -49,7 +60,7 @@ export function AuthorArchiveList({
 
     try {
       const response = await fetch(
-        `/api/author/articles?author=${encodeURIComponent(authorId)}&page=${nextPage}&limit=${pageSize}`,
+        `/api/author/articles?author=${encodeURIComponent(authorId)}&page=${nextPage}&limit=${pageSize}&lang=${locale}`,
         { cache: "no-store" },
       );
 
@@ -66,14 +77,14 @@ export function AuthorArchiveList({
       });
       setCurrentPage(nextPage);
     } catch {
-      setErrorMessage("تعذر تحميل المزيد الآن. حاول مرة أخرى بعد قليل.");
+      setErrorMessage(dict.loadError);
     } finally {
       setIsLoading(false);
     }
   }
 
   if (!items.length) {
-    return <p className="text-sm leading-8 text-zinc-600">لا توجد مقالات منشورة لهذا الكاتب حالياً.</p>;
+    return <p className="text-sm leading-8 text-zinc-600">{dict.noAuthorArticles}</p>;
   }
 
   return (
@@ -82,7 +93,7 @@ export function AuthorArchiveList({
         {items.map((item) => (
           <article key={item.id} className="rounded-sm border border-[color:var(--border-soft)] bg-[color:var(--panel)] px-4 py-4">
             <h3 className="text-lg font-black leading-8 text-[color:var(--ink)]">
-              <Link href={`/news/${item.slugId}`} className="transition hover:text-[color:var(--accent-strong)]">
+              <Link href={`/${locale}/news/${item.slugId}`} className="transition hover:text-[color:var(--accent-strong)]">
                 {item.title}
               </Link>
             </h3>
@@ -99,27 +110,27 @@ export function AuthorArchiveList({
             disabled={isLoading}
             className="inline-flex h-11 items-center justify-center rounded-sm bg-[color:var(--accent)] px-6 text-sm font-black text-white transition hover:bg-[color:var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isLoading ? "جاري التحميل..." : "تحميل المزيد"}
+            {isLoading ? dict.loading : dict.loadMore}
           </button>
           {errorMessage ? <p className="text-sm text-rose-700">{errorMessage}</p> : null}
         </div>
       ) : null}
 
       {crawlablePages.length ? (
-        <nav className="border-t border-[color:var(--border-soft)] pt-4" aria-label="صفحات أرشيف الكاتب">
-          <p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">روابط الأرشيف</p>
+        <nav className="border-t border-[color:var(--border-soft)] pt-4" aria-label={dict.archiveLinks}>
+          <p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">{dict.archiveLinks}</p>
           <div className="flex flex-wrap gap-2">
             {crawlablePages.map((page) => (
               <Link
                 key={page}
-                href={page === 1 ? `/author/${authorLink}` : `/author/${authorLink}?page=${page}`}
+                href={page === 1 ? `/${locale}/author/${authorLink}` : `/${locale}/author/${authorLink}?page=${page}`}
                 className={`rounded-sm border px-3 py-1 text-xs font-extrabold transition ${
                   page === currentPage
                     ? "border-[color:var(--accent)] bg-[color:var(--panel)] text-[color:var(--accent-strong)]"
                     : "border-[color:var(--border-soft)] bg-white text-zinc-600 hover:border-[color:var(--accent)]"
                 }`}
               >
-                صفحة {page}
+                {dict.page} {page}
               </Link>
             ))}
           </div>

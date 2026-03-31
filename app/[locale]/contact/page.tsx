@@ -5,7 +5,7 @@ export const revalidate = 120;
 import { getCmsPageById, getHomeFeed } from "@/src/lib/api";
 import { FallbackNotice } from "@/src/components/fallback-notice";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
-import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 
 type PageParams = {
   locale: string;
@@ -26,6 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: {
       canonical: `/${locale}/contact`,
     },
+    openGraph: { locale: getOgLocale(locale) },
   };
 }
 
@@ -44,12 +45,12 @@ export default async function ContactPage({ params }: PageProps) {
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex flex-col gap-8">
       <header className="space-y-3 rounded-sm border border-[color:var(--border-soft)] bg-white px-5 py-6 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:px-6">
-        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">Contact</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">{dict.contact.title}</p>
         <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">{dict.contact.title}</h1>
         <p className="max-w-3xl text-sm leading-8 text-zinc-600">
           {dict.contact.description}
         </p>
-        {cmsPage ? <FallbackNotice langMeta={cmsPage.langMeta} locale={locale} /> : null}
+        {cmsPage ? <FallbackNotice langMeta={cmsPage.langMeta} locale={locale} message={dict.fallback.notice} /> : null}
       </header>
 
       {cmsPage ? (
@@ -72,7 +73,7 @@ export default async function ContactPage({ params }: PageProps) {
         </section>
       )}
       </div>
-      <PageSidebar mostRead={mostRead} />
+      <PageSidebar locale={locale} label={dict.sidebar.mostRead} mostRead={mostRead} />
       </div>
     </main>
   );

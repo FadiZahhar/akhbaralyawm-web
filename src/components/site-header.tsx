@@ -18,15 +18,23 @@ function formatToday(locale: Locale) {
   }).format(new Date());
 }
 
-export async function SiteHeader({ locale = "ar" as Locale }: { locale?: Locale } = {}) {
+type SiteHeaderProps = {
+  locale?: Locale;
+  dict: {
+    nav: { home: string; about: string; contact: string; mix: string };
+    site: { name: string; tagline: string; searchPlaceholder: string; searchButton: string };
+  };
+};
+
+export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderProps) {
   const sections = await getSections(locale);
   const navItems = PRIMARY_SECTION_IDS.map((id) => sections.find((section) => section.id === id)).filter(
     (section): section is NonNullable<(typeof sections)[number]> => Boolean(section && section.link !== "/"),
   );
 
   const topLinks = [
-    { href: `/${locale}/about`, label: locale === "ar" ? "من نحن" : locale === "fr" ? "À propos" : "About" },
-    { href: `/${locale}/contact`, label: locale === "ar" ? "اتصل بنا" : locale === "fr" ? "Contact" : "Contact" },
+    { href: `/${locale}/about`, label: dict.nav.about },
+    { href: `/${locale}/contact`, label: dict.nav.contact },
   ];
 
   const langLinks = (["ar", "en", "fr"] as const)
@@ -76,10 +84,10 @@ export async function SiteHeader({ locale = "ar" as Locale }: { locale?: Locale 
               <span className="rounded-sm bg-[color:var(--accent)]/10 px-3 py-1 text-xs font-bold text-[color:var(--accent)]">
                 Akhbar Al Youm
               </span>
-              <span className="text-4xl font-extrabold tracking-tight">أخبار اليوم</span>
+              <span className="text-4xl font-extrabold tracking-tight">{dict.site.name}</span>
             </Link>
             <p className="max-w-2xl text-sm leading-7 text-zinc-800">
-              منصة إخبارية عربية سريعة الإيقاع تركّز على الخبر، السياق، وسهولة الوصول من أي جهاز.
+              {dict.site.tagline}
             </p>
           </div>
 
@@ -87,14 +95,14 @@ export async function SiteHeader({ locale = "ar" as Locale }: { locale?: Locale 
             <input
               type="search"
               name="q"
-              placeholder={locale === "ar" ? "ابحث في الأخبار" : locale === "fr" ? "Rechercher" : "Search"}
+              placeholder={dict.site.searchPlaceholder}
               className="h-12 w-full rounded-full border border-[color:var(--border-soft)] bg-[color:var(--panel)] px-5 text-sm outline-none ring-0 placeholder:text-zinc-600 focus:border-[color:var(--accent)]"
             />
             <button
               type="submit"
               className="inline-flex h-12 shrink-0 items-center justify-center rounded-sm bg-[color:var(--accent)] px-5 text-sm font-bold text-white transition hover:bg-[color:var(--accent-strong)]"
             >
-              {locale === "ar" ? "بحث" : locale === "fr" ? "Chercher" : "Search"}
+              {dict.site.searchButton}
             </button>
           </form>
         </div>
@@ -106,7 +114,7 @@ export async function SiteHeader({ locale = "ar" as Locale }: { locale?: Locale 
                 href={`/${locale}`}
                 className="inline-flex border-b-2 border-transparent px-4 py-2 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
               >
-                {locale === "ar" ? "الرئيسية" : locale === "fr" ? "Accueil" : "Home"}
+                {dict.nav.home}
               </Link>
             </li>
             {navItems.map((item) => (
@@ -124,7 +132,7 @@ export async function SiteHeader({ locale = "ar" as Locale }: { locale?: Locale 
                 href={`/${locale}/mix`}
                 className="inline-flex border-b-2 border-transparent px-4 py-2 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
               >
-                {locale === "ar" ? "من كل شي" : "Mix"}
+                {dict.nav.mix}
               </Link>
             </li>
           </ul>

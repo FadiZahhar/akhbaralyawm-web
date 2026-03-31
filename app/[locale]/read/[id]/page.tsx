@@ -6,7 +6,7 @@ export const revalidate = 120;
 
 import { ApiError, getCmsPageById } from "@/src/lib/api";
 import { FallbackNotice } from "@/src/components/fallback-notice";
-import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 
 type PageParams = {
   locale: string;
@@ -31,6 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: {
       canonical: `/${locale}/read/${id}`,
     },
+    openGraph: { locale: getOgLocale(locale) },
   };
 }
 
@@ -101,7 +102,7 @@ export default async function ReadPage({ params }: PageProps) {
           {dict.read.label}
         </p>
         <h1 className="text-3xl font-extrabold text-[color:var(--ink)]">{page.title}</h1>
-        <FallbackNotice langMeta={page.langMeta} locale={locale} />
+        <FallbackNotice langMeta={page.langMeta} locale={locale} message={dict.fallback.notice} />
       </header>
 
       <section className="rounded-[1.75rem] border border-[color:var(--border-soft)] bg-white p-6 shadow-[0_16px_50px_rgba(13,35,77,0.08)] sm:p-8">

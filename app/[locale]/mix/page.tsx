@@ -4,7 +4,7 @@ import Link from "next/link";
 export const revalidate = 120;
 
 import { getArticlesBySection, getSectionBySlugOrId } from "@/src/lib/api";
-import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 
 const MIX_SECTION_IDS = [68, 80, 58];
 
@@ -22,12 +22,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: {
       canonical: `/${locale}/mix`,
     },
+    openGraph: { locale: getOgLocale(locale) },
   };
 }
 
 export default async function MixPage({ params }: PageProps) {
   const { locale: rawLocale } = await params;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const dict = await getDictionary(locale);
 
   function formatDate(value: string): string {
     if (!value) {
@@ -65,10 +67,10 @@ export default async function MixPage({ params }: PageProps) {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-4 py-8 sm:px-6 lg:px-8">
       <header className="space-y-3 border-b border-zinc-200 pb-6">
-        <p className="text-sm font-medium text-emerald-700">Mix</p>
-        <h1 className="text-3xl font-bold text-zinc-900">من كل شي</h1>
+        <p className="text-sm font-medium text-emerald-700">{dict.mix.label}</p>
+        <h1 className="text-3xl font-bold text-zinc-900">{dict.mix.title}</h1>
         <p className="max-w-3xl text-sm leading-7 text-zinc-600">
-          مساحة جامعة لعرض أحدث المواد من مجموعة أقسام تحريرية مختارة.
+          {dict.mix.description}
         </p>
       </header>
 
@@ -80,7 +82,7 @@ export default async function MixPage({ params }: PageProps) {
               href={`/${locale}/category/${group.section.link}`}
               className="text-sm font-medium text-emerald-700 hover:text-emerald-800"
             >
-              {locale === "ar" ? "عرض المزيد" : "Show more"}
+              {dict.common.showMore}
             </Link>
           </div>
 

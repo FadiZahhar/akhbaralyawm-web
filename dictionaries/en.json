@@ -1,7 +1,10 @@
 {
   "site": {
     "name": "Akhbar Alyawm",
-    "description": "A modern Arabic news platform"
+    "description": "A modern Arabic news platform",
+    "tagline": "A fast-paced Arabic news platform focused on news, context, and accessibility from any device.",
+    "searchPlaceholder": "Search the news",
+    "searchButton": "Search"
   },
   "nav": {
     "home": "Home",
@@ -10,6 +13,11 @@
     "contact": "Contact",
     "mix": "Mix",
     "authors": "Authors"
+  },
+  "mix": {
+    "label": "Mix",
+    "title": "Mix",
+    "description": "A curated space showcasing the latest content from selected editorial sections."
   },
   "common": {
     "readMore": "Read more",
@@ -32,17 +40,23 @@
     "title": "Search",
     "placeholder": "Search the site",
     "resultsFor": "Search results for",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "label": "Search",
+    "searchDescription": "Showing results for {query} with pagination support.",
+    "searchNoQueryDescription": "Use the search field to display results."
   },
   "article": {
     "notFound": "Article not found"
   },
   "category": {
     "notFound": "Section not found",
-    "label": "Section"
+    "label": "Section",
+    "totalArticles": "This section shows {count} published articles.",
+    "latestArticles": "Latest articles in this section."
   },
   "author": {
     "notFound": "Author not found",
+    "label": "Author",
     "archive": "Author archive",
     "noBio": "No biography available for this author."
   },
@@ -55,10 +69,51 @@
   },
   "about": {
     "title": "About Us",
-    "description": "Learn about Akhbar Alyawm and its editorial mission."
+    "description": "Learn about Akhbar Alyawm and its editorial mission.",
+    "fallbackBody": "Akhbar Alyawm is an Arabic news platform aiming to deliver fast, clear content while maintaining accuracy and context."
   },
   "contact": {
     "title": "Contact Us",
     "description": "Ways to reach the Akhbar Alyawm team."
+  },
+  "archive": {
+    "loadMore": "Load more",
+    "loading": "Loading...",
+    "loadError": "Unable to load more right now. Please try again shortly.",
+    "noArticles": "No articles published in this section yet.",
+    "noAuthorArticles": "No articles published by this author yet.",
+    "noResults": "No results match the current search query.",
+    "archiveLinks": "Archive links",
+    "resultLinks": "Result links",
+    "page": "Page"
+  },
+  "sidebar": {
+    "mostRead": "Most read",
+    "editorial": "Editorial",
+    "editorialBody": "This page is now connected to the public API endpoints and serves as the implementation base for the new design before migrating from Web Forms.",
+    "browseMix": "Browse Mix",
+    "searchContent": "Search content",
+    "lastMoment": "Latest updates",
+    "section": "Section",
+    "live": "Live",
+    "editorialTitle": "Transitional version ready for editorial build"
+  },
+  "ticker": {
+    "breaking": "Breaking"
+  },
+  "preview": {
+    "active": "Preview mode enabled: you are viewing unpublished content.",
+    "exit": "Exit preview"
+  },
+  "footer": {
+    "brand": "Akhbar Alyawm",
+    "brandDescription": "A modern Arabic reading experience built on a Headless architecture ensuring speed, clarity, and fluidity across all pages.",
+    "quickLinks": "Quick links",
+    "appsAndCommunity": "Apps & Community",
+    "appsDescription": "Follow daily publishing through WhatsApp, apps, and official social platforms.",
+    "iphoneApp": "iPhone app",
+    "androidApp": "Android app",
+    "whatsappGroup": "WhatsApp group",
+    "allRights": "Akhbar Alyawm. All rights reserved."
   }
 }

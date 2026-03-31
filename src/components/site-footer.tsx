@@ -10,15 +10,35 @@ const SOCIAL_LINKS = [
   { href: "https://nabd.com/akhbaralyawm", label: "Nabd" },
 ];
 
-export function SiteFooter({ locale = "ar" as Locale }: { locale?: Locale } = {}) {
+type SiteFooterProps = {
+  locale?: Locale;
+  dict: {
+    brand: string;
+    brandDescription: string;
+    quickLinks: string;
+    appsAndCommunity: string;
+    appsDescription: string;
+    iphoneApp: string;
+    androidApp: string;
+    whatsappGroup: string;
+    allRights: string;
+  };
+  navDict: {
+    about: string;
+    contact: string;
+    mix: string;
+    search: string;
+  };
+};
+
+export function SiteFooter({ locale = "ar" as Locale, dict, navDict }: SiteFooterProps) {
   return (
     <footer className="mt-16 border-t-2 border-[color:var(--accent)] bg-[color:var(--ink)] text-white">
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-3 lg:px-8">
         <section className="space-y-4 border-b border-white/10 pb-6 lg:border-b-0 lg:border-e lg:pb-0 lg:pe-6">
-          <h2 className="text-base font-black uppercase tracking-[0.14em] text-white/95">أخبار اليوم</h2>
+          <h2 className="text-base font-black uppercase tracking-[0.14em] text-white/95">{dict.brand}</h2>
           <p className="text-sm leading-8 text-white/90">
-            تجربة قراءة عربية حديثة مبنية على هيكلية Headless تضمن السرعة، الوضوح،
-            والانسيابية عبر جميع الصفحات.
+            {dict.brandDescription}
           </p>
           <div className="flex flex-wrap gap-2 text-sm text-white/95">
             {SOCIAL_LINKS.map((link) => (
@@ -36,27 +56,27 @@ export function SiteFooter({ locale = "ar" as Locale }: { locale?: Locale } = {}
         </section>
 
         <section className="space-y-4 border-b border-white/10 pb-6 lg:border-b-0 lg:border-e lg:pb-0 lg:pe-6">
-          <h2 className="text-base font-black uppercase tracking-[0.14em] text-white/95">روابط سريعة</h2>
+          <h2 className="text-base font-black uppercase tracking-[0.14em] text-white/95">{dict.quickLinks}</h2>
           <div className="grid gap-2.5 text-sm text-white/90">
             <Link href={`/${locale}/about`} className="font-semibold transition hover:text-white">
-              من نحن
+              {navDict.about}
             </Link>
             <Link href={`/${locale}/contact`} className="font-semibold transition hover:text-white">
-              اتصل بنا
+              {navDict.contact}
             </Link>
             <Link href={`/${locale}/mix`} className="font-semibold transition hover:text-white">
-              من كل شي
+              {navDict.mix}
             </Link>
             <Link href={`/${locale}/search`} className="font-semibold transition hover:text-white">
-              البحث
+              {navDict.search}
             </Link>
           </div>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-base font-black uppercase tracking-[0.14em] text-white/95">تطبيقات ومجتمع</h2>
+          <h2 className="text-base font-black uppercase tracking-[0.14em] text-white/95">{dict.appsAndCommunity}</h2>
           <p className="text-sm leading-8 text-white/90">
-            تابع النشر اليومي عبر واتساب والتطبيقات والمنصات الاجتماعية الرسمية.
+            {dict.appsDescription}
           </p>
           <div className="grid gap-2.5 text-sm text-white/90">
             <a
@@ -65,7 +85,7 @@ export function SiteFooter({ locale = "ar" as Locale }: { locale?: Locale } = {}
               rel="noreferrer"
               className="font-semibold transition hover:text-white"
             >
-              تطبيق iPhone
+              {dict.iphoneApp}
             </a>
             <a
               href="https://play.google.com/store/apps/details?id=com.akhbaralyawm.ios"
@@ -73,7 +93,7 @@ export function SiteFooter({ locale = "ar" as Locale }: { locale?: Locale } = {}
               rel="noreferrer"
               className="font-semibold transition hover:text-white"
             >
-              تطبيق Android
+              {dict.androidApp}
             </a>
             <a
               href="https://chat.whatsapp.com/FOKLu6Psx3R4erpuDjDZIF"
@@ -81,7 +101,7 @@ export function SiteFooter({ locale = "ar" as Locale }: { locale?: Locale } = {}
               rel="noreferrer"
               className="font-semibold transition hover:text-white"
             >
-              مجموعة واتساب
+              {dict.whatsappGroup}
             </a>
           </div>
         </section>
@@ -89,14 +109,14 @@ export function SiteFooter({ locale = "ar" as Locale }: { locale?: Locale } = {}
 
       <div className="border-t border-white/10 bg-black/20">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 text-sm text-white/90 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <p className="font-semibold">أخبار اليوم. جميع الحقوق محفوظة.</p>
+          <p className="font-semibold">{dict.allRights}</p>
           <div className="flex items-center gap-3">
             <Link href={`/${locale}/about`} className="font-semibold transition hover:text-white">
-              من نحن
+              {navDict.about}
             </Link>
             <span>/</span>
             <Link href={`/${locale}/contact`} className="font-semibold transition hover:text-white">
-              اتصل بنا
+              {navDict.contact}
             </Link>
           </div>
         </div>

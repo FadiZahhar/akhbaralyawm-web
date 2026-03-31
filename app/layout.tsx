@@ -5,7 +5,7 @@ import { Geist_Mono, Noto_Kufi_Arabic } from "next/font/google";
 import { PreviewModeBanner } from "@/src/components/preview-mode-banner";
 import { SiteFooter } from "@/src/components/site-footer";
 import { SiteHeader } from "@/src/components/site-header";
-import { isLocale, getDirection, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDirection, getDictionary, type Locale } from "@/src/lib/i18n";
 
 import "./globals.css";
 
@@ -31,14 +31,21 @@ function absoluteUrl(pathOrUrl: string): string {
   return `${SITE_URL}${path}`;
 }
 
-export const metadata: Metadata = {
-  title: {
-    default: "أخبار اليوم",
-    template: "%s | أخبار اليوم",
-  },
-  description: "منصة إخبارية عربية حديثة مبنية على Next.js وتجربة Headless CMS.",
-  metadataBase: new URL(SITE_URL),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const headerStore = await headers();
+  const rawLocale = headerStore.get("x-locale") ?? "ar";
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const dict = await getDictionary(locale);
+
+  return {
+    title: {
+      default: dict.site.name,
+      template: `%s | ${dict.site.name}`,
+    },
+    description: dict.site.description,
+    metadataBase: new URL(SITE_URL),
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -52,6 +59,7 @@ export default async function RootLayout({
   const rawLocale = headerStore.get("x-locale") ?? "ar";
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
   const dir = getDirection(locale);
+  const dict = await getDictionary(locale);
 
   const organizationJsonLd = {
     "@context": "https://schema.org",
@@ -97,10 +105,10 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         <div className="min-h-full">
-          {isPreviewMode ? <PreviewModeBanner /> : null}
-          <SiteHeader locale={locale} />
+          {isPreviewMode ? <PreviewModeBanner activeLabel={dict.preview.active} exitLabel={dict.preview.exit} /> : null}
+          <SiteHeader locale={locale} dict={{ nav: dict.nav, site: dict.site }} />
           <div className="flex min-h-[calc(100vh-12rem)] flex-col">{children}</div>
-          <SiteFooter locale={locale} />
+          <SiteFooter locale={locale} dict={dict.footer} navDict={dict.nav} />
         </div>
       </body>
     </html>

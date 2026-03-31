@@ -5,12 +5,17 @@ import type { FeedItemDto } from "@/src/lib/api";
 import { getAssetUrl } from "@/src/lib/api";
 
 type HomeHeroProps = {
+  locale: string;
   lead: FeedItemDto | undefined;
   updates: FeedItemDto[];
   formatDate: (value: string) => string;
+  dict: {
+    lastMoment: string;
+    live: string;
+  };
 };
 
-export function HomeHero({ lead, updates, formatDate }: HomeHeroProps) {
+export function HomeHero({ locale, lead, updates, formatDate, dict }: HomeHeroProps) {
   const heroImage = lead ? getAssetUrl(lead.photoPath) : null;
 
   return (
@@ -19,7 +24,7 @@ export function HomeHero({ lead, updates, formatDate }: HomeHeroProps) {
         {/* Lead story — large image with overlay */}
         {lead ? (
           <Link
-            href={`/news/${lead.slugId}`}
+            href={`/${locale}/news/${lead.slugId}`}
             className="group relative block aspect-[16/11] overflow-hidden lg:aspect-auto"
           >
             {heroImage ? (
@@ -47,22 +52,22 @@ export function HomeHero({ lead, updates, formatDate }: HomeHeroProps) {
           </Link>
         ) : null}
 
-        {/* Timestamped updates — اللحظة الأخيرة */}
+        {/* Timestamped updates */}
         <div className="flex flex-col border-r border-[color:var(--border-soft)] lg:border-r-0 lg:border-l">
           <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border-soft)] px-5 py-3">
             <div className="flex items-center gap-2">
               <span className="inline-block h-4 w-1 rounded-sm bg-[color:var(--accent)]" />
-              <h2 className="text-base font-black text-[color:var(--ink)]">اللحظة الأخيرة</h2>
+              <h2 className="text-base font-black text-[color:var(--ink)]">{dict.lastMoment}</h2>
             </div>
             <span className="rounded-sm bg-[color:var(--accent)] px-2.5 py-0.5 text-[10px] font-black text-white">
-              Live
+              {dict.live}
             </span>
           </div>
           <div className="flex-1 divide-y divide-[color:var(--border-soft)] overflow-y-auto">
             {updates.slice(0, 8).map((item) => (
               <Link
                 key={item.id}
-                href={`/news/${item.slugId}`}
+                href={`/${locale}/news/${item.slugId}`}
                 className="flex items-start gap-3 px-5 py-3 transition hover:bg-[color:var(--panel)]"
               >
                 <span className="mt-1 shrink-0 text-xs font-bold tabular-nums text-[color:var(--accent)]">

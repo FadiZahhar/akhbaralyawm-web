@@ -6,7 +6,7 @@ import { getCmsPageById } from "@/src/lib/api";
 import { getHomeFeed } from "@/src/lib/api";
 import { FallbackNotice } from "@/src/components/fallback-notice";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
-import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 
 type PageParams = {
   locale: string;
@@ -27,6 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: {
       canonical: `/${locale}/about`,
     },
+    openGraph: { locale: getOgLocale(locale) },
   };
 }
 
@@ -45,12 +46,12 @@ export default async function AboutPage({ params }: PageProps) {
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex flex-col gap-8">
       <header className="space-y-3 rounded-sm border border-[color:var(--border-soft)] bg-white px-5 py-6 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:px-6">
-        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">About</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">{dict.about.title}</p>
         <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">{dict.about.title}</h1>
         <p className="max-w-3xl text-sm leading-8 text-zinc-600">
           {dict.about.description}
         </p>
-        {cmsPage ? <FallbackNotice langMeta={cmsPage.langMeta} locale={locale} /> : null}
+        {cmsPage ? <FallbackNotice langMeta={cmsPage.langMeta} locale={locale} message={dict.fallback.notice} /> : null}
       </header>
 
       {cmsPage ? (
@@ -64,17 +65,13 @@ export default async function AboutPage({ params }: PageProps) {
         <section className="space-y-6 rounded-sm border border-[color:var(--border-soft)] bg-white p-6 shadow-[0_16px_46px_rgba(13,35,77,0.07)] sm:p-8">
           <div className="space-y-4 text-[1.02rem] leading-9 text-zinc-700">
             <p>
-              {locale === "ar"
-                ? "أخبار اليوم منصة إخبارية عربية تهدف إلى تقديم محتوى سريع وواضح مع الحفاظ على الدقة والسياق."
-                : locale === "fr"
-                  ? "Akhbar Alyawm est une plateforme d'information arabe visant à fournir un contenu rapide et clair tout en maintenant la précision et le contexte."
-                  : "Akhbar Alyawm is an Arabic news platform aiming to deliver fast, clear content while maintaining accuracy and context."}
+              {dict.about.fallbackBody}
             </p>
           </div>
         </section>
       )}
       </div>
-      <PageSidebar mostRead={mostRead} />
+      <PageSidebar locale={locale} label={dict.sidebar.mostRead} mostRead={mostRead} />
       </div>
     </main>
   );

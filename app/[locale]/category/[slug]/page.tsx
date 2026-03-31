@@ -7,7 +7,7 @@ export const revalidate = 120;
 import { getArticlesBySection, getHomeFeed, getSectionBySlugOrId } from "@/src/lib/api";
 import { CategoryArchiveList } from "@/src/components/category/category-archive-list";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
-import { isLocale, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 
 type PageParams = {
   locale: string;
@@ -59,20 +59,22 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
   const { page: rawPage } = await searchParams;
   const page = parsePageValue(rawPage);
+  const metaDict = await getDictionary(locale);
   const section = await getSectionBySlugOrId(slug, locale);
 
   if (!section) {
     return {
-      title: locale === "ar" ? "القسم غير موجود" : "Section not found",
+      title: metaDict.category.notFound,
     };
   }
 
   return {
     title: section.title,
-    description: locale === "ar" ? `آخر الأخبار ضمن قسم ${section.title}` : `Latest news in ${section.title}`,
+    description: metaDict.category.totalArticles.replace("{count}", section.title),
     alternates: {
       canonical: page > 1 ? `/${locale}/category/${section.link}?page=${page}` : `/${locale}/category/${section.link}`,
     },
+    openGraph: { locale: getOgLocale(locale) },
   };
 }
 
@@ -92,6 +94,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     permanentRedirect(`/${locale}/category/${section.link}`);
   }
 
+  const dict = await getDictionary(locale);
   const feed = await getArticlesBySection(section.link, page, pageSize, locale);
   const mostRead = await getHomeFeed(5, locale);
   const categoryPath = `/${locale}/category/${section.link}`;
@@ -102,8 +105,8 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const prevHref = page - 1 <= 1 ? categoryPath : `${categoryPath}?page=${page - 1}`;
   const nextHref = `${categoryPath}?page=${page + 1}`;
   const itemPositionStart = ((page - 1) * (feed.pagination?.limit ?? pageSize)) + 1;
-  const prevLabel = locale === "ar" ? "الصفحة السابقة" : locale === "fr" ? "Page précédente" : "Previous page";
-  const nextLabel = locale === "ar" ? "الصفحة التالية" : locale === "fr" ? "Page suivante" : "Next page";
+  const prevLabel = dict.common.prevPage;
+  const nextLabel = dict.common.nextPage;
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -153,12 +156,12 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex flex-col gap-8">
       <header className="space-y-3 rounded-sm border border-[color:var(--border-soft)] bg-white px-5 py-6 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:px-6">
-        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">Section</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">{dict.category.label}</p>
         <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">{section.title}</h1>
         <p className="max-w-3xl text-sm leading-8 text-zinc-600">
           {feed.pagination
-            ? (locale === "ar" ? `يعرض هذا القسم ${feed.pagination.total} مادة منشورة حتى الآن.` : `This section shows ${feed.pagination.total} published articles.`)
-            : (locale === "ar" ? "أحدث المواد المنشورة ضمن هذا القسم." : "Latest articles in this section.")}
+            ? dict.category.totalArticles.replace("{count}", String(feed.pagination.total))
+            : dict.category.latestArticles}
         </p>
         {(hasPrev || hasNext) ? (
           <nav className="flex flex-wrap items-center gap-2.5 border-t border-[color:var(--border-soft)] pt-4 text-sm" aria-label="pagination">
@@ -183,6 +186,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       </header>
 
       <CategoryArchiveList
+        locale={locale}
         sectionLink={section.link}
         sectionTitle={section.title}
         basePath={categoryPath}
@@ -190,9 +194,17 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         initialPage={page}
         pageSize={pageSize}
         totalPages={totalPages}
+        dict={{
+          loadMore: dict.archive.loadMore,
+          loading: dict.archive.loading,
+          loadError: dict.archive.loadError,
+          noArticles: dict.archive.noArticles,
+          archiveLinks: dict.archive.archiveLinks,
+          page: dict.archive.page,
+        }}
       />
       </div>
-      <PageSidebar mostRead={mostRead} />
+      <PageSidebar locale={locale} label={dict.sidebar.mostRead} mostRead={mostRead} />
       </div>
     </main>
   );

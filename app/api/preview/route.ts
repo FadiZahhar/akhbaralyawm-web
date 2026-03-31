@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
 
   const id = Number.parseInt(idParam, 10);
   const slugId = request.nextUrl.searchParams.get("slugId");
-  const redirectPath = safePath(slugId ? `/news/${slugId}` : null, `/news/article-${id}`);
+  const locale = request.nextUrl.searchParams.get("locale") ?? "ar";
+  const redirectPath = safePath(slugId ? `/${locale}/news/${slugId}` : null, `/${locale}/news/article-${id}`);
 
   try {
     const token = await mintPreviewToken(id);

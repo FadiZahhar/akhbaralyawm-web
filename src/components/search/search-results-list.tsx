@@ -6,36 +6,32 @@ import { useMemo, useState } from "react";
 import type { FeedItemDto } from "@/src/lib/api";
 
 type SearchResultsListProps = {
+  locale: string;
   query: string;
   basePath: string;
   initialItems: FeedItemDto[];
   initialPage: number;
   pageSize: number;
   totalPages: number;
+  dict: {
+    loadMore: string;
+    loading: string;
+    loadError: string;
+    noResults: string;
+    resultLinks: string;
+    page: string;
+  };
 };
 
-function formatDate(value: string): string {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("ar-LB", {
-    dateStyle: "medium",
-  }).format(date);
-}
-
 export function SearchResultsList({
+  locale,
   query,
   basePath,
   initialItems,
   initialPage,
   pageSize,
   totalPages,
+  dict,
 }: SearchResultsListProps) {
   const [items, setItems] = useState<FeedItemDto[]>(initialItems);
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -53,6 +49,13 @@ export function SearchResultsList({
     return Array.from({ length: maxLinks }, (_, index) => index + 1);
   }, [totalPages]);
 
+  function formatDate(value: string): string {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat(locale === "ar" ? "ar-LB" : locale, { dateStyle: "medium" }).format(date);
+  }
+
   async function handleLoadMore() {
     if (!hasMore || isLoading) {
       return;
@@ -64,7 +67,7 @@ export function SearchResultsList({
 
     try {
       const response = await fetch(
-        `/api/search/articles?q=${encodeURIComponent(query)}&page=${nextPage}&limit=${pageSize}`,
+        `/api/search/articles?q=${encodeURIComponent(query)}&page=${nextPage}&limit=${pageSize}&lang=${locale}`,
         { cache: "no-store" },
       );
 
@@ -81,7 +84,7 @@ export function SearchResultsList({
       });
       setCurrentPage(nextPage);
     } catch {
-      setErrorMessage("تعذر تحميل المزيد الآن. حاول مرة أخرى بعد قليل.");
+      setErrorMessage(dict.loadError);
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +93,7 @@ export function SearchResultsList({
   if (!items.length) {
     return (
       <section className="rounded-sm border border-dashed border-[color:var(--border-soft)] bg-white px-6 py-10 text-center text-zinc-600">
-        لا توجد نتائج مطابقة لعبارة البحث الحالية.
+        {dict.noResults}
       </section>
     );
   }
@@ -106,7 +109,7 @@ export function SearchResultsList({
             </div>
 
             <h2 className="text-xl font-black leading-8 text-[color:var(--ink)]">
-              <Link href={`/news/${item.slugId}`} className="transition hover:text-[color:var(--accent-strong)]">
+              <Link href={`/${locale}/news/${item.slugId}`} className="transition hover:text-[color:var(--accent-strong)]">
                 {item.title}
               </Link>
             </h2>
@@ -124,15 +127,15 @@ export function SearchResultsList({
             disabled={isLoading}
             className="inline-flex h-11 items-center justify-center rounded-sm bg-[color:var(--accent)] px-6 text-sm font-black text-white transition hover:bg-[color:var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isLoading ? "جاري التحميل..." : "تحميل المزيد"}
+            {isLoading ? dict.loading : dict.loadMore}
           </button>
           {errorMessage ? <p className="text-sm text-rose-700">{errorMessage}</p> : null}
         </div>
       ) : null}
 
       {crawlablePages.length ? (
-        <nav className="border-t border-[color:var(--border-soft)] pt-4" aria-label="صفحات نتائج البحث">
-          <p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">روابط النتائج</p>
+        <nav className="border-t border-[color:var(--border-soft)] pt-4" aria-label={dict.resultLinks}>
+          <p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">{dict.resultLinks}</p>
           <div className="flex flex-wrap gap-2">
             {crawlablePages.map((page) => (
               <Link
@@ -144,7 +147,7 @@ export function SearchResultsList({
                     : "border-[color:var(--border-soft)] bg-white text-zinc-600 hover:border-[color:var(--accent)]"
                 }`}
               >
-                صفحة {page}
+                {dict.page} {page}
               </Link>
             ))}
           </div>

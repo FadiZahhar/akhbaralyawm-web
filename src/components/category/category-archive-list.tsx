@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { getAssetUrl, type FeedItemDto } from "@/src/lib/api";
 
 type CategoryArchiveListProps = {
+  locale: string;
   sectionLink: string;
   sectionTitle: string;
   basePath: string;
@@ -14,24 +15,18 @@ type CategoryArchiveListProps = {
   initialPage: number;
   pageSize: number;
   totalPages: number;
+  dict: {
+    loadMore: string;
+    loading: string;
+    loadError: string;
+    noArticles: string;
+    archiveLinks: string;
+    page: string;
+  };
 };
 
-function formatDate(value: string): string {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("ar-LB", {
-    dateStyle: "medium",
-  }).format(date);
-}
-
 export function CategoryArchiveList({
+  locale,
   sectionLink,
   sectionTitle,
   basePath,
@@ -39,6 +34,7 @@ export function CategoryArchiveList({
   initialPage,
   pageSize,
   totalPages,
+  dict,
 }: CategoryArchiveListProps) {
   const [items, setItems] = useState<FeedItemDto[]>(initialItems);
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -56,6 +52,13 @@ export function CategoryArchiveList({
     return Array.from({ length: maxLinks }, (_, index) => index + 1);
   }, [totalPages]);
 
+  function formatDate(value: string): string {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat(locale === "ar" ? "ar-LB" : locale, { dateStyle: "medium" }).format(date);
+  }
+
   async function handleLoadMore() {
     if (!hasMore || isLoading) {
       return;
@@ -67,7 +70,7 @@ export function CategoryArchiveList({
 
     try {
       const response = await fetch(
-        `/api/category/articles?section=${encodeURIComponent(sectionLink)}&page=${nextPage}&limit=${pageSize}`,
+        `/api/category/articles?section=${encodeURIComponent(sectionLink)}&page=${nextPage}&limit=${pageSize}&lang=${locale}`,
         { cache: "no-store" },
       );
 
@@ -84,7 +87,7 @@ export function CategoryArchiveList({
       });
       setCurrentPage(nextPage);
     } catch {
-      setErrorMessage("تعذر تحميل المزيد الآن. حاول مرة أخرى بعد قليل.");
+      setErrorMessage(dict.loadError);
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +96,7 @@ export function CategoryArchiveList({
   if (!items.length) {
     return (
       <section className="rounded-sm border border-dashed border-[color:var(--border-soft)] bg-white px-6 py-10 text-center text-zinc-600">
-        لا توجد مواد منشورة في هذا القسم حالياً.
+        {dict.noArticles}
       </section>
     );
   }
@@ -130,7 +133,7 @@ export function CategoryArchiveList({
                 </div>
 
                 <h2 className="text-lg font-black leading-8 text-[color:var(--ink)]">
-                  <Link href={`/news/${item.slugId}`} className="transition hover:text-[color:var(--accent-strong)]">
+                  <Link href={`/${locale}/news/${item.slugId}`} className="transition hover:text-[color:var(--accent-strong)]">
                     {item.title}
                   </Link>
                 </h2>
@@ -152,15 +155,15 @@ export function CategoryArchiveList({
             disabled={isLoading}
             className="inline-flex h-11 items-center justify-center rounded-sm bg-[color:var(--accent)] px-6 text-sm font-black text-white transition hover:bg-[color:var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isLoading ? "جاري التحميل..." : "تحميل المزيد"}
+            {isLoading ? dict.loading : dict.loadMore}
           </button>
           {errorMessage ? <p className="text-sm text-rose-700">{errorMessage}</p> : null}
         </div>
       ) : null}
 
       {crawlablePages.length ? (
-        <nav className="border-t border-[color:var(--border-soft)] pt-4" aria-label="صفحات أرشيف القسم">
-          <p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">روابط الأرشيف</p>
+        <nav className="border-t border-[color:var(--border-soft)] pt-4" aria-label={dict.archiveLinks}>
+          <p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">{dict.archiveLinks}</p>
           <div className="flex flex-wrap gap-2">
             {crawlablePages.map((page) => (
               <Link
@@ -172,7 +175,7 @@ export function CategoryArchiveList({
                     : "border-[color:var(--border-soft)] bg-white text-zinc-600 hover:border-[color:var(--accent)]"
                 }`}
               >
-                صفحة {page}
+                {dict.page} {page}
               </Link>
             ))}
           </div>

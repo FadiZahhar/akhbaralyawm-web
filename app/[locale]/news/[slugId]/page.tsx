@@ -14,7 +14,7 @@ import {
   type ArticleDto,
 } from "@/src/lib/api";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
-import { isLocale, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 type PageParams = {
   locale: string;
   slugId: string;
@@ -71,11 +71,12 @@ async function fetchArticle(id: number, locale?: Locale): Promise<ArticleDto | n
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale: rawLocale, slugId } = await params;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const metaDict = await getDictionary(locale);
   const id = parseArticleIdFromSlugId(slugId);
 
   if (!id) {
     return {
-      title: locale === "ar" ? "الخبر غير موجود" : "Article not found",
+      title: metaDict.article.notFound,
     };
   }
 
@@ -83,7 +84,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!article) {
     return {
-      title: locale === "ar" ? "الخبر غير موجود" : "Article not found",
+      title: metaDict.article.notFound,
     };
   }
 
@@ -100,6 +101,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: article.title,
       type: "article",
       url: absoluteUrl(canonicalPath),
+      locale: getOgLocale(locale),
       ...(photoUrl ? { images: [{ url: photoUrl }] } : {}),
     },
   };
@@ -126,6 +128,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
   const photoUrl = getAssetUrl(article.photoPath);
   const canonicalUrl = absoluteUrl(`/${locale}/news/${article.slugId}`);
+  const dict = await getDictionary(locale);
   const mostRead = await getHomeFeed(5, locale);
 
   const articleJsonLd = {
@@ -195,7 +198,7 @@ export default async function ArticlePage({ params }: PageProps) {
       <article className="flex flex-col gap-6">
         <nav className="text-sm text-zinc-500">
           <Link href={`/${locale}`} className="transition hover:text-[color:var(--accent-strong)]">
-            {locale === "ar" ? "الرئيسية" : "Home"}
+            {dict.nav.home}
           </Link>
           {article.sectionTitle && article.sectionLink ? (
             <>
@@ -242,7 +245,7 @@ export default async function ArticlePage({ params }: PageProps) {
           />
         </section>
       </article>
-      <PageSidebar mostRead={mostRead} />
+      <PageSidebar locale={locale} label={dict.sidebar.mostRead} mostRead={mostRead} />
       </div>
     </main>
   );

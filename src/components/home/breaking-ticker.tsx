@@ -12,10 +12,12 @@ type TickerItem = {
 };
 
 type BreakingTickerProps = {
+  locale: string;
+  label: string;
   items: TickerItem[];
 };
 
-export function BreakingTicker({ items }: BreakingTickerProps) {
+export function BreakingTicker({ locale, label, items }: BreakingTickerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export function BreakingTicker({ items }: BreakingTickerProps) {
     <div className="border-b border-[color:var(--border-soft)] bg-white">
       <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-2.5 sm:px-6 lg:px-8">
         <span className="shrink-0 rounded-sm bg-[color:var(--accent)] px-3 py-1 text-xs font-black text-white">
-          عاجل
+          {label}
         </span>
         <div
           ref={scrollRef}
@@ -70,7 +72,7 @@ export function BreakingTicker({ items }: BreakingTickerProps) {
           {doubled.map((item, i) => (
             <Link
               key={`${item.id}-${i}`}
-              href={`/news/${item.slugId}`}
+              href={`/${locale}/news/${item.slugId}`}
               className="flex shrink-0 items-center gap-3 transition hover:text-[color:var(--accent-strong)]"
             >
               {item.photoUrl ? (

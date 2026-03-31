@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import { searchArticlesPaginated } from "@/src/lib/api";
 import { SearchResultsList } from "@/src/components/search/search-results-list";
-import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 
 type SearchValue = string | string[] | undefined;
 
@@ -70,6 +70,7 @@ export async function generateMetadata({ params: paramsPromise, searchParams }: 
       index: false,
       follow: true,
     },
+    openGraph: { locale: getOgLocale(locale) },
   };
 }
 
@@ -92,14 +93,14 @@ export default async function SearchPage({ params: paramsPromise, searchParams }
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
       <header className="space-y-3 rounded-sm border border-[color:var(--border-soft)] bg-white px-5 py-6 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:px-6">
-        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">Search</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">{dict.search.label}</p>
         <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">
           {query ? `${dict.search.resultsFor}: ${query}` : dict.search.placeholder}
         </h1>
         <p className="text-sm leading-8 text-zinc-600">
           {query
-            ? `يعرض البحث النتائج لعبارة ${query} مع دعم التصفح على صفحات متعددة.`
-            : "استخدم قيمة q في الرابط مثل /search?q=لبنان لعرض النتائج."}
+            ? dict.search.searchDescription.replace("{query}", query)
+            : dict.search.searchNoQueryDescription}
         </p>
         {(hasPrev || hasNext) ? (
           <nav className="flex flex-wrap items-center gap-2.5 border-t border-[color:var(--border-soft)] pt-4 text-sm" aria-label="pagination">
@@ -125,12 +126,21 @@ export default async function SearchPage({ params: paramsPromise, searchParams }
 
       {query ? (
         <SearchResultsList
+          locale={locale}
           query={query}
           basePath={basePath}
           initialItems={feed?.items ?? []}
           initialPage={page}
           pageSize={pageSize}
           totalPages={totalPages}
+          dict={{
+            loadMore: dict.archive.loadMore,
+            loading: dict.archive.loading,
+            loadError: dict.archive.loadError,
+            noResults: dict.archive.noResults,
+            resultLinks: dict.archive.resultLinks,
+            page: dict.archive.page,
+          }}
         />
       ) : (
         <section className="rounded-sm border border-dashed border-[color:var(--border-soft)] bg-white px-6 py-10 text-center text-zinc-600">

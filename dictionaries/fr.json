@@ -1,7 +1,10 @@
 {
   "site": {
     "name": "Akhbar Alyawm",
-    "description": "Une plateforme d'information arabe moderne"
+    "description": "Une plateforme d'information arabe moderne",
+    "tagline": "Une plateforme d'information arabe rapide axée sur l'actualité, le contexte et l'accessibilité.",
+    "searchPlaceholder": "Rechercher les actualités",
+    "searchButton": "Rechercher"
   },
   "nav": {
     "home": "Accueil",
@@ -10,6 +13,11 @@
     "contact": "Contact",
     "mix": "Mélange",
     "authors": "Auteurs"
+  },
+  "mix": {
+    "label": "Mix",
+    "title": "Mélange",
+    "description": "Un espace regroupant les derniers contenus de sections éditoriales sélectionnées."
   },
   "common": {
     "readMore": "Lire la suite",
@@ -32,18 +40,22 @@
     "title": "Recherche",
     "placeholder": "Rechercher sur le site",
     "resultsFor": "Résultats de recherche pour",
-    "noResults": "Aucun résultat trouvé"
+    "noResults": "Aucun résultat trouvé",
+    "label": "Recherche",
+    "searchDescription": "Affichage des résultats pour {query} avec pagination.",
+    "searchNoQueryDescription": "Utilisez le champ de recherche pour afficher les résultats."
   },
   "article": {
     "notFound": "Article non trouvé"
   },
   "category": {
     "notFound": "Section non trouvée",
-    "label": "Section"
+    "label": "Section",
+    "totalArticles": "Cette section affiche {count} articles publi\u00e9s.",
+    "latestArticles": "Derniers articles de cette section."
   },
   "author": {
-    "notFound": "Auteur non trouvé",
-    "archive": "Archives de l'auteur",
+    "notFound": "Auteur non trouvé",    "label": "Auteur",    "archive": "Archives de l'auteur",
     "noBio": "Aucune biographie disponible pour cet auteur."
   },
   "read": {
@@ -55,10 +67,51 @@
   },
   "about": {
     "title": "À propos de nous",
-    "description": "Découvrez Akhbar Alyawm et sa mission éditoriale."
+    "description": "Découvrez Akhbar Alyawm et sa mission éditoriale.",
+    "fallbackBody": "Akhbar Alyawm est une plateforme d'information arabe visant à fournir un contenu rapide et clair tout en maintenant la précision et le contexte."
   },
   "contact": {
     "title": "Contactez-nous",
     "description": "Moyens de contacter l'équipe d'Akhbar Alyawm."
+  },
+  "archive": {
+    "loadMore": "Charger plus",
+    "loading": "Chargement...",
+    "loadError": "Impossible de charger plus pour le moment. Veuillez réessayer.",
+    "noArticles": "Aucun article publié dans cette section pour le moment.",
+    "noAuthorArticles": "Aucun article publié par cet auteur pour le moment.",
+    "noResults": "Aucun résultat correspondant à la recherche actuelle.",
+    "archiveLinks": "Liens d'archive",
+    "resultLinks": "Liens des résultats",
+    "page": "Page"
+  },
+  "sidebar": {
+    "mostRead": "Les plus lus",
+    "editorial": "Éditorial",
+    "editorialBody": "Cette page est désormais connectée aux endpoints API publics et sert de base d'implémentation pour le nouveau design.",
+    "browseMix": "Parcourir Mélange",
+    "searchContent": "Rechercher le contenu",
+    "lastMoment": "Dernières mises à jour",
+    "section": "Section",
+    "live": "En direct",
+    "editorialTitle": "Version transitoire prête pour la construction éditoriale"
+  },
+  "ticker": {
+    "breaking": "Urgent"
+  },
+  "preview": {
+    "active": "Mode aperçu activé : vous consultez du contenu non publié.",
+    "exit": "Quitter l'aperçu"
+  },
+  "footer": {
+    "brand": "Akhbar Alyawm",
+    "brandDescription": "Une expérience de lecture arabe moderne construite sur une architecture Headless garantissant rapidité, clarté et fluidité.",
+    "quickLinks": "Liens rapides",
+    "appsAndCommunity": "Apps et communauté",
+    "appsDescription": "Suivez les publications quotidiennes via WhatsApp, les applications et les plateformes sociales officielles.",
+    "iphoneApp": "App iPhone",
+    "androidApp": "App Android",
+    "whatsappGroup": "Groupe WhatsApp",
+    "allRights": "Akhbar Alyawm. Tous droits réservés."
   }
 }
