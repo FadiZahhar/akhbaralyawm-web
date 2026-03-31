@@ -22,32 +22,67 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/Default.aspx",
-        destination: "/",
+        destination: "/ar",
         permanent: true,
       },
       {
         source: "/about-us",
-        destination: "/about",
+        destination: "/ar/about",
         permanent: true,
       },
       {
         source: "/contact-us",
-        destination: "/contact",
+        destination: "/ar/contact",
+        permanent: true,
+      },
+      {
+        source: "/about",
+        destination: "/ar/about",
+        permanent: true,
+      },
+      {
+        source: "/contact",
+        destination: "/ar/contact",
+        permanent: true,
+      },
+      {
+        source: "/mix",
+        destination: "/ar/mix",
         permanent: true,
       },
       {
         source: "/Mix.aspx",
-        destination: "/mix",
+        destination: "/ar/mix",
+        permanent: true,
+      },
+      {
+        source: "/search",
+        destination: "/ar/search",
         permanent: true,
       },
       {
         source: "/tag/:term",
-        destination: "/search?q=:term",
+        destination: "/ar/search?q=:term",
         permanent: true,
       },
       {
         source: "/news/:id(\\d+)/:legacySlug",
-        destination: "/news/:id",
+        destination: "/ar/news/:id",
+        permanent: true,
+      },
+      {
+        source: "/news/:slugId",
+        destination: "/ar/news/:slugId",
+        permanent: true,
+      },
+      {
+        source: "/category/:slug",
+        destination: "/ar/category/:slug",
+        permanent: true,
+      },
+      {
+        source: "/author/:slug",
+        destination: "/ar/author/:slug",
         permanent: true,
       },
       {
@@ -59,7 +94,7 @@ const nextConfig: NextConfig = {
             value: "(?<id>\\d+)",
           },
         ],
-        destination: "/news/:id",
+        destination: "/ar/news/:id",
         permanent: true,
       },
       {
@@ -71,7 +106,7 @@ const nextConfig: NextConfig = {
             value: "(?<slugOrId>[^&]+)",
           },
         ],
-        destination: "/category/:slugOrId",
+        destination: "/ar/category/:slugOrId",
         permanent: true,
       },
       {
@@ -83,7 +118,7 @@ const nextConfig: NextConfig = {
             value: "(?<slugOrId>[^&]+)",
           },
         ],
-        destination: "/author/:slugOrId",
+        destination: "/ar/author/:slugOrId",
         permanent: true,
       },
       {
@@ -95,7 +130,7 @@ const nextConfig: NextConfig = {
             value: "(?<term>[^&]+)",
           },
         ],
-        destination: "/search?q=:term",
+        destination: "/ar/search?q=:term",
         permanent: true,
       },
       {
@@ -107,7 +142,7 @@ const nextConfig: NextConfig = {
             value: "1",
           },
         ],
-        destination: "/about",
+        destination: "/ar/about",
         permanent: true,
       },
       {
@@ -119,7 +154,7 @@ const nextConfig: NextConfig = {
             value: "2",
           },
         ],
-        destination: "/contact",
+        destination: "/ar/contact",
         permanent: true,
       },
       {
@@ -131,17 +166,22 @@ const nextConfig: NextConfig = {
             value: "(?<id>\\d+)",
           },
         ],
-        destination: "/read/:id",
+        destination: "/ar/read/:id",
         permanent: true,
       },
       {
         source: "/read/1",
-        destination: "/about",
+        destination: "/ar/about",
         permanent: true,
       },
       {
         source: "/read/2",
-        destination: "/contact",
+        destination: "/ar/contact",
+        permanent: true,
+      },
+      {
+        source: "/read/:id",
+        destination: "/ar/read/:id",
         permanent: true,
       },
     ];

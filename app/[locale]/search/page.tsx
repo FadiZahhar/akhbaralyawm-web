@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 import { searchArticlesPaginated } from "@/src/lib/api";
 import { SearchResultsList } from "@/src/components/search/search-results-list";
+import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
 
 type SearchValue = string | string[] | undefined;
 
 type PageProps = {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{
     q?: SearchValue;
     page?: SearchValue;
@@ -44,20 +48,23 @@ function getSearchPageSize(): number {
   return Math.min(parsedValue, 50);
 }
 
-export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params: paramsPromise, searchParams }: PageProps): Promise<Metadata> {
+  const { locale: rawLocale } = await paramsPromise;
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const dict = await getDictionary(locale);
   const params = await searchParams;
   const query = readQuery(params.q);
   const page = parsePage(params.page);
 
   return {
-    title: query ? `نتائج البحث عن ${query}` : "البحث",
-    description: query ? `نتائج البحث عن ${query}` : "ابحث ضمن محتوى أخبار اليوم",
+    title: query ? `${dict.search.resultsFor} ${query}` : dict.search.title,
+    description: query ? `${dict.search.resultsFor} ${query}` : dict.search.placeholder,
     alternates: {
       canonical: query
         ? page > 1
-          ? `/search?q=${encodeURIComponent(query)}&page=${page}`
-          : `/search?q=${encodeURIComponent(query)}`
-        : "/search",
+          ? `/${locale}/search?q=${encodeURIComponent(query)}&page=${page}`
+          : `/${locale}/search?q=${encodeURIComponent(query)}`
+        : `/${locale}/search`,
     },
     robots: {
       index: false,
@@ -66,13 +73,16 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   };
 }
 
-export default async function SearchPage({ searchParams }: PageProps) {
+export default async function SearchPage({ params: paramsPromise, searchParams }: PageProps) {
+  const { locale: rawLocale } = await paramsPromise;
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const dict = await getDictionary(locale);
   const params = await searchParams;
   const query = readQuery(params.q);
   const page = parsePage(params.page);
   const pageSize = getSearchPageSize();
-  const feed = query ? await searchArticlesPaginated(query, page, pageSize) : null;
-  const basePath = query ? `/search?q=${encodeURIComponent(query)}` : "/search";
+  const feed = query ? await searchArticlesPaginated(query, page, pageSize, locale) : null;
+  const basePath = query ? `/${locale}/search?q=${encodeURIComponent(query)}` : `/${locale}/search`;
   const totalPages = feed?.pagination?.totalPages ?? 1;
   const hasPrev = query && page > 1;
   const hasNext = query && page < totalPages;
@@ -84,7 +94,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       <header className="space-y-3 rounded-sm border border-[color:var(--border-soft)] bg-white px-5 py-6 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:px-6">
         <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">Search</p>
         <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">
-          {query ? `نتائج البحث عن: ${query}` : "ابحث في الموقع"}
+          {query ? `${dict.search.resultsFor}: ${query}` : dict.search.placeholder}
         </h1>
         <p className="text-sm leading-8 text-zinc-600">
           {query
@@ -92,13 +102,13 @@ export default async function SearchPage({ searchParams }: PageProps) {
             : "استخدم قيمة q في الرابط مثل /search?q=لبنان لعرض النتائج."}
         </p>
         {(hasPrev || hasNext) ? (
-          <nav className="flex flex-wrap items-center gap-2.5 border-t border-[color:var(--border-soft)] pt-4 text-sm" aria-label="تنقل صفحات نتائج البحث">
+          <nav className="flex flex-wrap items-center gap-2.5 border-t border-[color:var(--border-soft)] pt-4 text-sm" aria-label="pagination">
             {hasPrev ? (
               <Link
                 href={prevHref}
                 className="rounded-sm border border-[color:var(--border-soft)] bg-white px-4 py-2 font-extrabold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent-strong)]"
               >
-                الصفحة السابقة
+                {dict.common.prevPage}
               </Link>
             ) : null}
             {hasNext ? (
@@ -106,7 +116,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                 href={nextHref}
                 className="rounded-sm border border-[color:var(--border-soft)] bg-white px-4 py-2 font-extrabold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent-strong)]"
               >
-                الصفحة التالية
+                {dict.common.nextPage}
               </Link>
             ) : null}
           </nav>
@@ -124,7 +134,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
         />
       ) : (
         <section className="rounded-sm border border-dashed border-[color:var(--border-soft)] bg-white px-6 py-10 text-center text-zinc-600">
-          أضف قيمة البحث إلى الرابط ثم أعد المحاولة.
+          {dict.search.noResults}
         </section>
       )}
     </main>

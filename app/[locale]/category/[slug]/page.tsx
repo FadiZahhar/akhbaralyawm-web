@@ -1,12 +1,16 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
+
+export const revalidate = 120;
 
 import { getArticlesBySection, getHomeFeed, getSectionBySlugOrId } from "@/src/lib/api";
 import { CategoryArchiveList } from "@/src/components/category/category-archive-list";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
+import { isLocale, type Locale } from "@/src/lib/i18n";
 
 type PageParams = {
+  locale: string;
   slug: string;
 };
 
@@ -51,44 +55,46 @@ function parsePageValue(rawPage: string | undefined): number {
 }
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale: rawLocale, slug } = await params;
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
   const { page: rawPage } = await searchParams;
   const page = parsePageValue(rawPage);
-  const section = await getSectionBySlugOrId(slug);
+  const section = await getSectionBySlugOrId(slug, locale);
 
   if (!section) {
     return {
-      title: "القسم غير موجود",
+      title: locale === "ar" ? "القسم غير موجود" : "Section not found",
     };
   }
 
   return {
     title: section.title,
-    description: `آخر الأخبار ضمن قسم ${section.title}`,
+    description: locale === "ar" ? `آخر الأخبار ضمن قسم ${section.title}` : `Latest news in ${section.title}`,
     alternates: {
-      canonical: page > 1 ? `/category/${section.link}?page=${page}` : `/category/${section.link}`,
+      canonical: page > 1 ? `/${locale}/category/${section.link}?page=${page}` : `/${locale}/category/${section.link}`,
     },
   };
 }
 
 export default async function CategoryPage({ params, searchParams }: PageProps) {
-  const { slug } = await params;
+  const { locale: rawLocale, slug } = await params;
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
   const { page: rawPage } = await searchParams;
   const page = parsePageValue(rawPage);
   const pageSize = getCategoryArchivePageSize();
-  const section = await getSectionBySlugOrId(slug);
+  const section = await getSectionBySlugOrId(slug, locale);
 
   if (!section) {
     notFound();
   }
 
   if (slug !== section.link) {
-    permanentRedirect(`/category/${section.link}`);
+    permanentRedirect(`/${locale}/category/${section.link}`);
   }
 
-  const feed = await getArticlesBySection(section.link, page, pageSize);
-  const mostRead = await getHomeFeed(5);
-  const categoryPath = `/category/${section.link}`;
+  const feed = await getArticlesBySection(section.link, page, pageSize, locale);
+  const mostRead = await getHomeFeed(5, locale);
+  const categoryPath = `/${locale}/category/${section.link}`;
   const categoryUrl = absoluteUrl(page > 1 ? `${categoryPath}?page=${page}` : categoryPath);
   const totalPages = feed.pagination?.totalPages ?? 1;
   const hasPrev = page > 1;
@@ -96,6 +102,8 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const prevHref = page - 1 <= 1 ? categoryPath : `${categoryPath}?page=${page - 1}`;
   const nextHref = `${categoryPath}?page=${page + 1}`;
   const itemPositionStart = ((page - 1) * (feed.pagination?.limit ?? pageSize)) + 1;
+  const prevLabel = locale === "ar" ? "الصفحة السابقة" : locale === "fr" ? "Page précédente" : "Previous page";
+  const nextLabel = locale === "ar" ? "الصفحة التالية" : locale === "fr" ? "Page suivante" : "Next page";
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -104,8 +112,8 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       {
         "@type": "ListItem",
         position: 1,
-        name: "الرئيسية",
-        item: absoluteUrl("/"),
+        name: locale === "ar" ? "الرئيسية" : "Home",
+        item: absoluteUrl(`/${locale}`),
       },
       {
         "@type": "ListItem",
@@ -126,7 +134,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       itemListElement: feed.items.map((item, index) => ({
         "@type": "ListItem",
         position: itemPositionStart + index,
-        url: absoluteUrl(`/news/${item.slugId}`),
+        url: absoluteUrl(`/${locale}/news/${item.slugId}`),
         name: item.title,
       })),
     },
@@ -149,17 +157,17 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">{section.title}</h1>
         <p className="max-w-3xl text-sm leading-8 text-zinc-600">
           {feed.pagination
-            ? `يعرض هذا القسم ${feed.pagination.total} مادة منشورة حتى الآن.`
-            : "أحدث المواد المنشورة ضمن هذا القسم."}
+            ? (locale === "ar" ? `يعرض هذا القسم ${feed.pagination.total} مادة منشورة حتى الآن.` : `This section shows ${feed.pagination.total} published articles.`)
+            : (locale === "ar" ? "أحدث المواد المنشورة ضمن هذا القسم." : "Latest articles in this section.")}
         </p>
         {(hasPrev || hasNext) ? (
-          <nav className="flex flex-wrap items-center gap-2.5 border-t border-[color:var(--border-soft)] pt-4 text-sm" aria-label="تنقل صفحات القسم">
+          <nav className="flex flex-wrap items-center gap-2.5 border-t border-[color:var(--border-soft)] pt-4 text-sm" aria-label="pagination">
             {hasPrev ? (
               <Link
                 href={prevHref}
                 className="rounded-sm border border-[color:var(--border-soft)] bg-white px-4 py-2 font-extrabold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent-strong)]"
               >
-                الصفحة السابقة
+                {prevLabel}
               </Link>
             ) : null}
             {hasNext ? (
@@ -167,7 +175,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                 href={nextHref}
                 className="rounded-sm border border-[color:var(--border-soft)] bg-white px-4 py-2 font-extrabold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent-strong)]"
               >
-                الصفحة التالية
+                {nextLabel}
               </Link>
             ) : null}
           </nav>

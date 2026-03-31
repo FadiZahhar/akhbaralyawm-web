@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import type { Locale } from "@/src/lib/i18n";
+
 const SOCIAL_LINKS = [
   { href: "https://www.facebook.com/akhbaralyawm78/", label: "Facebook" },
   { href: "https://twitter.com/akhbaralyawm", label: "X" },
@@ -8,7 +10,7 @@ const SOCIAL_LINKS = [
   { href: "https://nabd.com/akhbaralyawm", label: "Nabd" },
 ];
 
-export function SiteFooter() {
+export function SiteFooter({ locale = "ar" as Locale }: { locale?: Locale } = {}) {
   return (
     <footer className="mt-16 border-t-2 border-[color:var(--accent)] bg-[color:var(--ink)] text-white">
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-3 lg:px-8">
@@ -36,16 +38,16 @@ export function SiteFooter() {
         <section className="space-y-4 border-b border-white/10 pb-6 lg:border-b-0 lg:border-e lg:pb-0 lg:pe-6">
           <h2 className="text-base font-black uppercase tracking-[0.14em] text-white/95">روابط سريعة</h2>
           <div className="grid gap-2.5 text-sm text-white/90">
-            <Link href="/about" className="font-semibold transition hover:text-white">
+            <Link href={`/${locale}/about`} className="font-semibold transition hover:text-white">
               من نحن
             </Link>
-            <Link href="/contact" className="font-semibold transition hover:text-white">
+            <Link href={`/${locale}/contact`} className="font-semibold transition hover:text-white">
               اتصل بنا
             </Link>
-            <Link href="/mix" className="font-semibold transition hover:text-white">
+            <Link href={`/${locale}/mix`} className="font-semibold transition hover:text-white">
               من كل شي
             </Link>
-            <Link href="/search" className="font-semibold transition hover:text-white">
+            <Link href={`/${locale}/search`} className="font-semibold transition hover:text-white">
               البحث
             </Link>
           </div>
@@ -89,11 +91,11 @@ export function SiteFooter() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 text-sm text-white/90 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <p className="font-semibold">أخبار اليوم. جميع الحقوق محفوظة.</p>
           <div className="flex items-center gap-3">
-            <Link href="/about" className="font-semibold transition hover:text-white">
+            <Link href={`/${locale}/about`} className="font-semibold transition hover:text-white">
               من نحن
             </Link>
             <span>/</span>
-            <Link href="/contact" className="font-semibold transition hover:text-white">
+            <Link href={`/${locale}/contact`} className="font-semibold transition hover:text-white">
               اتصل بنا
             </Link>
           </div>

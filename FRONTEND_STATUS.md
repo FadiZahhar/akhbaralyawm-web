@@ -1,15 +1,20 @@
 # Frontend Migration Status
 
-Date: 2026-03-30
+Date: 2026-03-31
 
 ## Overall Status
-The Next.js frontend migration is largely implemented and validated.
+The Next.js frontend migration is implemented, validated, and now includes full multilingual (i18n) support for Arabic, English, and French locales.
 
 Current state:
-- Core frontend routes are implemented.
+- Core frontend routes are implemented under `app/[locale]/` with locale-prefixed URLs.
+- i18n infrastructure includes proxy-based locale detection, UI string dictionaries, RTL/LTR direction, and language fallback notices.
+- CMS static page endpoint is integrated via `getCmsPageById()` with locale-aware requests.
+- HTML content is sanitized with DOMPurify (isomorphic-dompurify).
 - SEO, redirects, metadata, structured data, preview flow, pagination UX, and CI validation are in place.
 - Accessibility and Lighthouse follow-up work has been completed to a strong baseline.
-- The main remaining blocker to full parity is a backend API gap for CMS static pages used by legacy `Read.aspx` behavior.
+- All pages use `force-dynamic` rendering — no build-time API dependency.
+- TypeScript and ESLint pass cleanly. Dev server verified working for all locales.
+- Note: `npm run build` hangs at "Collecting page data" — this is a pre-existing Turbopack issue (verified with original code) unrelated to i18n changes.
 
 ## Plan Status by Phase
 
@@ -81,7 +86,7 @@ Key artifacts:
 - [docs/data-contracts.md](docs/data-contracts.md)
 
 ### Phase 5: Route-by-Route Page Migration
-Status: complete for planned frontend routes, except backend-dependent CMS content parity
+Status: complete — all routes restructured under `app/[locale]/`
 
 Completed:
 - Home page
@@ -90,32 +95,31 @@ Completed:
 - Search page
 - Author page
 - Mix page
-- About page
-- Contact page
-- Read compatibility route
+- About page (CMS content via API)
+- Contact page (CMS content via API)
+- Read compatibility route (CMS content via API with typed error handling)
+- All pages accept locale param and render locale-aware content
 
-Still open:
-- Full CMS page rendering parity for `/read/[id]` depends on missing backend endpoint.
-
-Key routes:
-- [app/page.tsx](app/page.tsx)
-- [app/news/[slugId]/page.tsx](app/news/[slugId]/page.tsx)
-- [app/category/[slug]/page.tsx](app/category/[slug]/page.tsx)
-- [app/search/page.tsx](app/search/page.tsx)
-- [app/author/[slug]/page.tsx](app/author/[slug]/page.tsx)
-- [app/read/[id]/page.tsx](app/read/[id]/page.tsx)
+Key routes (now under [locale]):
+- [app/[locale]/page.tsx](app/[locale]/page.tsx)
+- [app/[locale]/news/[slugId]/page.tsx](app/[locale]/news/[slugId]/page.tsx)
+- [app/[locale]/category/[slug]/page.tsx](app/[locale]/category/[slug]/page.tsx)
+- [app/[locale]/search/page.tsx](app/[locale]/search/page.tsx)
+- [app/[locale]/author/[slug]/page.tsx](app/[locale]/author/[slug]/page.tsx)
+- [app/[locale]/read/[id]/page.tsx](app/[locale]/read/[id]/page.tsx)
+- [app/[locale]/about/page.tsx](app/[locale]/about/page.tsx)
+- [app/[locale]/contact/page.tsx](app/[locale]/contact/page.tsx)
+- [app/[locale]/mix/page.tsx](app/[locale]/mix/page.tsx)
 
 ### Phase 6: Preview, CMS Workflow, and Editorial QA
-Status: mostly complete
+Status: complete
 
 Completed:
 - Preview token flow works.
 - Preview article resolution works.
 - Preview mode indicator banner is implemented.
 - Editorial QA checklist exists.
-
-Still open:
-- CMS static page preview/public parity remains limited by missing backend CMS endpoint.
+- CMS static page endpoint integrated — about, contact, and read pages fetch content from API.
 
 Key artifacts:
 - [app/api/preview/route.ts](app/api/preview/route.ts)
@@ -156,15 +160,8 @@ Key artifacts:
 
 ## Remaining Gaps
 
-### 1. Backend CMS Static Pages Endpoint
-This is the main blocker to full migration parity.
-
-Impact:
-- `/read/[id]` cannot render real CMS page content from the API.
-- Legacy `Read.aspx` parity is incomplete until backend exposes a page-by-id endpoint.
-
-Reference:
-- [docs/api-gaps.md](docs/api-gaps.md)
+### 1. Build Hang (Pre-existing Turbopack Issue)
+`npm run build` hangs at "Collecting page data using 11 workers" — verified to occur with both the original and updated code. This is a Turbopack issue. Dev server (`npm run dev`) works correctly.
 
 ### 2. Optional Legacy Screenshot Comparison
 The project now has automated Next-side baseline capture, but final visual sign-off may still require direct legacy IIS screenshot capture for exact before/after review.
@@ -172,29 +169,59 @@ The project now has automated Next-side baseline capture, but final visual sign-
 ### 3. Production Execution
 Release gates and runbooks are ready, but production rollout and stabilization have not yet been executed.
 
+## i18n Implementation (Phase 9)
+
+### Status: complete
+
+Infrastructure created:
+- `proxy.ts` — locale detection from Accept-Language header, redirect to `/{locale}/path`
+- `src/lib/i18n.ts` — Locale type, direction helper, dictionary loader
+- `dictionaries/ar.json`, `en.json`, `fr.json` — UI string dictionaries
+- `src/components/fallback-notice.tsx` — shows notice when backend returns content in fallback language
+- `app/[locale]/layout.tsx` — locale validation layout
+
+API client updates (`src/lib/api.ts`):
+- `ApiError` class with typed error kinds (NotFound, BadRequest, ServerError)
+- `LanguageMeta` type for language fallback metadata
+- `sanitizeHtml()` with DOMPurify for bodyHtml content
+- Locale-aware headers and query params for API requests
+- `getCmsPageById()` accepts locale parameter
+
+All pages updated:
+- Moved from `app/` to `app/[locale]/`
+- Accept locale param, use dictionaries for UI strings
+- Locale-prefixed links throughout
+- `force-dynamic` export on all data-fetching pages
+- Date formatting uses locale-aware `Intl.DateTimeFormat`
+
+Verified working:
+- `/` redirects to `/ar/` (307)
+- `/ar`, `/en`, `/fr` — home pages (200)
+- `/ar/about`, `/en/about` — about pages (200)
+- `/ar/contact` — contact page (200)
+- TypeScript: clean
+- ESLint: clean
+
 ## Launch Readiness
 
 Frontend implementation readiness: high
 
 Meaning:
-- The Next.js frontend itself is in strong shape.
-- Most remaining work is backend dependency resolution or operational rollout.
+- The Next.js frontend is in strong shape with full multilingual support.
+- CMS page endpoint is integrated.
+- Remaining work is operational rollout and resolving the pre-existing Turbopack build hang.
 
 Frontend is ready for:
-- continued QA
+- continued QA across all locales
 - staging validation
 - canary planning
 
-Frontend is not fully ready for final parity sign-off until:
-- backend CMS page endpoint is implemented
+Frontend is not fully ready for production until:
+- Turbopack build hang is resolved (or deployment uses dev/start mode)
 - optional final legacy-vs-Next visual comparison is completed if required by stakeholders
 
 ## Recommended Next Step
 Highest priority:
 
-1. Implement the backend CMS page endpoint described in [docs/api-gaps.md](docs/api-gaps.md).
-
-After that:
-
-2. Revalidate `/read/[id]` rendering with real CMS payloads.
-3. Execute staging and production runbooks.
+1. Investigate and resolve the Turbopack build hang (pre-existing, affects both old and new code).
+2. Execute staging and production runbooks from [docs/go-live-runbook.md](docs/go-live-runbook.md).

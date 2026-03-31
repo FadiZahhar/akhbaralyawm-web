@@ -1,3 +1,39 @@
+import DOMPurify from "isomorphic-dompurify";
+
+import type { Locale } from "./i18n";
+
+// ---------------------------------------------------------------------------
+// Typed API errors
+// ---------------------------------------------------------------------------
+
+export type ApiErrorKind = "NotFound" | "BadRequest" | "ServerError";
+
+export class ApiError extends Error {
+  kind: ApiErrorKind;
+  status: number;
+
+  constructor(kind: ApiErrorKind, status: number, message?: string) {
+    super(message ?? kind);
+    this.name = "ApiError";
+    this.kind = kind;
+    this.status = status;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Language metadata
+// ---------------------------------------------------------------------------
+
+export type LanguageMeta = {
+  requestedLanguage: Locale;
+  contentLanguage: Locale;
+  fallbackUsed: boolean;
+};
+
+// ---------------------------------------------------------------------------
+// DTOs
+// ---------------------------------------------------------------------------
+
 export type ArticleDto = {
   id: number;
   title: string;
@@ -56,6 +92,7 @@ export type CmsPageDto = {
   slugId: string;
   bodyHtml: string;
   updatedAt: string;
+  langMeta: LanguageMeta;
 };
 
 const API_BASE_URL = process.env.API_BASE_URL;
@@ -139,6 +176,9 @@ type RawCmsPage = {
   body?: string;
   updatedAt?: string;
   updated_at?: string;
+  requestedLanguage?: string;
+  contentLanguage?: string;
+  fallbackUsed?: boolean;
 };
 
 const CMS_PAGE_PATH = process.env.API_CMS_PAGE_PATH || "/v1/pages/by-id.ashx";
@@ -230,11 +270,19 @@ function createUrl(path: string, params?: Record<string, string | number>): URL 
 async function fetchJson<T>(input: URL, init?: RequestInit): Promise<T> {
   const response = await fetch(input, {
     ...init,
-    cache: "no-store",
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    if (response.status === 400) {
+      throw new ApiError("BadRequest", 400, `Bad request: ${input.pathname}`);
+    }
+    if (response.status === 404) {
+      throw new ApiError("NotFound", 404, `Not found: ${input.pathname}`);
+    }
+    if (response.status >= 500) {
+      throw new ApiError("ServerError", response.status, `Server error: ${response.status}`);
+    }
+    throw new ApiError("ServerError", response.status, `API request failed: ${response.status} ${response.statusText}`);
   }
 
   return (await response.json()) as T;
@@ -243,7 +291,6 @@ async function fetchJson<T>(input: URL, init?: RequestInit): Promise<T> {
 async function fetchOptionalJson<T>(input: URL, init?: RequestInit): Promise<T | null> {
   const response = await fetch(input, {
     ...init,
-    cache: "no-store",
   });
 
   if (response.status === 404) {
@@ -251,10 +298,65 @@ async function fetchOptionalJson<T>(input: URL, init?: RequestInit): Promise<T |
   }
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    if (response.status === 400) {
+      throw new ApiError("BadRequest", 400, `Bad request: ${input.pathname}`);
+    }
+    if (response.status >= 500) {
+      throw new ApiError("ServerError", response.status, `Server error: ${response.status}`);
+    }
+    throw new ApiError("ServerError", response.status, `API request failed: ${response.status} ${response.statusText}`);
   }
 
   return (await response.json()) as T;
+}
+
+// ---------------------------------------------------------------------------
+// Locale-aware fetch helpers
+// ---------------------------------------------------------------------------
+
+function buildLocaleHeaders(locale?: Locale): Record<string, string> {
+  if (!locale) return {};
+  return { "Accept-Language": locale };
+}
+
+function applyLocale(url: URL, locale?: Locale): URL {
+  if (locale) {
+    url.searchParams.set("lang", locale);
+  }
+  return url;
+}
+
+// ---------------------------------------------------------------------------
+// Fallback logging
+// ---------------------------------------------------------------------------
+
+function logFallback(context: string, langMeta: LanguageMeta): void {
+  if (langMeta.fallbackUsed) {
+    console.warn(
+      `[i18n-fallback] ${context}: requested="${langMeta.requestedLanguage}" served="${langMeta.contentLanguage}"`,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// HTML sanitization
+// ---------------------------------------------------------------------------
+
+function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    ALLOWED_TAGS: [
+      "p", "br", "strong", "em", "b", "i", "u", "a", "ul", "ol", "li",
+      "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre", "code",
+      "img", "figure", "figcaption", "table", "thead", "tbody", "tr", "th",
+      "td", "div", "span", "hr", "iframe", "video", "source",
+    ],
+    ALLOWED_ATTR: [
+      "href", "src", "alt", "title", "class", "id", "target", "rel",
+      "width", "height", "style", "colspan", "rowspan", "frameborder",
+      "allowfullscreen", "allow", "loading",
+    ],
+  });
 }
 
 function normalizeArticle(raw: RawArticle): ArticleDto {
@@ -268,7 +370,7 @@ function normalizeArticle(raw: RawArticle): ArticleDto {
     sectionTitle: raw.sectionTitle ?? raw.category ?? "",
     sectionLink: raw.sectionLink ?? raw.categoryLink ?? "",
     photoPath: raw.photoPath ?? raw.photo ?? null,
-    bodyHtml: raw.bodyHtml ?? raw.body ?? "",
+    bodyHtml: sanitizeHtml(raw.bodyHtml ?? raw.body ?? ""),
     disdate: raw.disdate ?? "",
     statusId: raw.statusId ?? 0,
   };
@@ -310,7 +412,7 @@ function normalizeAuthor(raw: RawAuthor): AuthorDto {
     title: raw.title,
     link: raw.link,
     photoPath: raw.photo ?? null,
-    bodyHtml: raw.body ?? "",
+    bodyHtml: sanitizeHtml(raw.body ?? ""),
     orderorder: raw.orderorder,
   };
 }
@@ -333,32 +435,47 @@ function normalizePaginatedFeed(raw: RawPaginatedFeed): PaginatedFeedDto {
   };
 }
 
-function normalizeCmsPage(raw: RawCmsPage): CmsPageDto {
+function normalizeCmsPage(raw: RawCmsPage, locale: Locale = "ar"): CmsPageDto {
   assertRawCmsPage(raw, "CMS page");
+
+  const contentLang = (raw.contentLanguage ?? "ar") as Locale;
+  const requestedLang = (raw.requestedLanguage ?? locale) as Locale;
+  const langMeta: LanguageMeta = {
+    requestedLanguage: requestedLang,
+    contentLanguage: contentLang,
+    fallbackUsed: raw.fallbackUsed ?? (requestedLang !== contentLang),
+  };
+
+  logFallback(`CMS page ${raw.id}`, langMeta);
 
   return {
     id: raw.id,
     title: raw.title,
     slugId: raw.slugId ?? String(raw.id),
-    bodyHtml: raw.bodyHtml ?? raw.body ?? "",
+    bodyHtml: sanitizeHtml(raw.bodyHtml ?? raw.body ?? ""),
     updatedAt: raw.updatedAt ?? raw.updated_at ?? "",
+    langMeta,
   };
 }
 
-export async function getArticleById(id: number): Promise<ArticleDto | null> {
-  const url = createUrl("/v1/articles/by-id.ashx", { id });
-  const raw = await fetchOptionalJson<RawArticle>(url);
+export async function getArticleById(id: number, locale?: Locale): Promise<ArticleDto | null> {
+  const url = applyLocale(createUrl("/v1/articles/by-id.ashx", { id }), locale);
+  const raw = await fetchOptionalJson<RawArticle>(url, {
+    headers: buildLocaleHeaders(locale),
+  });
   return raw ? normalizeArticle(raw) : null;
 }
 
 export async function getPreviewArticleById(
   id: number,
   token: string,
+  locale?: Locale,
 ): Promise<ArticleDto | null> {
-  const url = createUrl("/v1/preview/articles/by-id.ashx", { id });
+  const url = applyLocale(createUrl("/v1/preview/articles/by-id.ashx", { id }), locale);
   const raw = await fetchOptionalJson<RawArticle>(url, {
     headers: {
       Authorization: `Bearer ${token}`,
+      ...buildLocaleHeaders(locale),
     },
   });
   return raw ? normalizeArticle(raw) : null;
@@ -402,28 +519,34 @@ export async function mintPreviewToken(id: number): Promise<string> {
   return raw;
 }
 
-export async function getHomeFeed(limit = 12): Promise<FeedItemDto[]> {
-  const url = createUrl("/v1/home/feed.ashx", { limit });
-  const response = await fetchJson<unknown>(url);
+export async function getHomeFeed(limit = 12, locale?: Locale): Promise<FeedItemDto[]> {
+  const url = applyLocale(createUrl("/v1/home/feed.ashx", { limit }), locale);
+  const response = await fetchJson<unknown>(url, {
+    headers: buildLocaleHeaders(locale),
+  });
   assertDataArray(response, "home feed");
   return response.data.map((item) => normalizeFeedItem(item as RawFeedItem));
 }
 
-export async function getSections(): Promise<SectionDto[]> {
-  const url = createUrl("/v1/sections.ashx");
-  const response = await fetchJson<unknown>(url);
+export async function getSections(locale?: Locale): Promise<SectionDto[]> {
+  const url = applyLocale(createUrl("/v1/sections.ashx"), locale);
+  const response = await fetchJson<unknown>(url, {
+    headers: buildLocaleHeaders(locale),
+  });
   assertDataArray(response, "sections");
   return response.data.map((item) => normalizeSection(item as RawSection));
 }
 
-export async function getSectionBySlugOrId(slugOrId: string): Promise<SectionDto | null> {
+export async function getSectionBySlugOrId(slugOrId: string, locale?: Locale): Promise<SectionDto | null> {
   if (/^\d+$/.test(slugOrId)) {
-    const url = createUrl("/v1/sections.ashx", { id: slugOrId });
-    const response = await fetchOptionalJson<RawSection>(url);
+    const url = applyLocale(createUrl("/v1/sections.ashx", { id: slugOrId }), locale);
+    const response = await fetchOptionalJson<RawSection>(url, {
+      headers: buildLocaleHeaders(locale),
+    });
     return response ? normalizeSection(response) : null;
   }
 
-  const sections = await getSections();
+  const sections = await getSections(locale);
   return sections.find((section) => section.link === slugOrId) ?? null;
 }
 
@@ -431,18 +554,21 @@ export async function getArticlesBySection(
   sectionLink: string,
   page = 1,
   limit = 12,
+  locale?: Locale,
 ): Promise<PaginatedFeedDto> {
-  const url = createUrl("/v1/news.ashx", {
+  const url = applyLocale(createUrl("/v1/news.ashx", {
     section: sectionLink,
     page,
     limit,
+  }), locale);
+  const response = await fetchJson<RawPaginatedFeed>(url, {
+    headers: buildLocaleHeaders(locale),
   });
-  const response = await fetchJson<RawPaginatedFeed>(url);
   return normalizePaginatedFeed(response);
 }
 
-export async function searchArticles(query: string, limit = 12): Promise<FeedItemDto[]> {
-  const response = await searchArticlesPaginated(query, 1, limit);
+export async function searchArticles(query: string, limit = 12, locale?: Locale): Promise<FeedItemDto[]> {
+  const response = await searchArticlesPaginated(query, 1, limit, locale);
   return response.items;
 }
 
@@ -450,11 +576,14 @@ export async function searchArticlesPaginated(
   query: string,
   page = 1,
   limit = 12,
+  locale?: Locale,
 ): Promise<PaginatedFeedDto> {
-  const url = createUrl("/v1/search.ashx", { q: query, limit });
+  const url = applyLocale(createUrl("/v1/search.ashx", { q: query, limit }), locale);
   url.searchParams.set("page", String(page));
 
-  const response = await fetchJson<RawSearchResponse>(url);
+  const response = await fetchJson<RawSearchResponse>(url, {
+    headers: buildLocaleHeaders(locale),
+  });
 
   assertDataArray(response, "search");
 
@@ -491,31 +620,39 @@ export async function searchArticlesPaginated(
   };
 }
 
-export async function getAuthorBySlugOrId(slugOrId: string): Promise<AuthorDto | null> {
+export async function getAuthorBySlugOrId(slugOrId: string, locale?: Locale): Promise<AuthorDto | null> {
   const params: Record<string, string> = /^\d+$/.test(slugOrId) ? { id: slugOrId } : { link: slugOrId };
-  const url = createUrl("/v1/authors.ashx", params);
-  const response = await fetchOptionalJson<RawAuthor>(url);
+  const url = applyLocale(createUrl("/v1/authors.ashx", params), locale);
+  const response = await fetchOptionalJson<RawAuthor>(url, {
+    headers: buildLocaleHeaders(locale),
+  });
   return response ? normalizeAuthor(response) : null;
 }
 
-export async function getCmsPageById(id: number): Promise<CmsPageDto | null> {
-  const url = createUrl(CMS_PAGE_PATH, { id });
-  const response = await fetchOptionalJson<RawCmsPage>(url);
-  return response ? normalizeCmsPage(response) : null;
+export async function getCmsPageById(id: number, locale?: Locale): Promise<CmsPageDto | null> {
+  const url = applyLocale(createUrl(CMS_PAGE_PATH, { id }), locale);
+  const response = await fetchOptionalJson<RawCmsPage>(url, {
+    headers: buildLocaleHeaders(locale),
+    next: { revalidate: 120 },
+  });
+  return response ? normalizeCmsPage(response, locale) : null;
 }
 
 export async function getArticlesByAuthor(
   slugOrId: string,
   page = 1,
   limit = 12,
+  locale?: Locale,
 ): Promise<PaginatedFeedDto | null> {
-  const url = createUrl(AUTHOR_ARTICLES_PATH, {
+  const url = applyLocale(createUrl(AUTHOR_ARTICLES_PATH, {
     [AUTHOR_QUERY_KEY]: slugOrId,
     page,
     limit,
-  });
+  }), locale);
 
-  const response = await fetchOptionalJson<RawPaginatedFeed>(url);
+  const response = await fetchOptionalJson<RawPaginatedFeed>(url, {
+    headers: buildLocaleHeaders(locale),
+  });
   return response ? normalizePaginatedFeed(response) : null;
 }
 

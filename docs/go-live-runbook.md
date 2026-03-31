@@ -1,10 +1,15 @@
 # Go-Live Runbook
 
-Date: 2026-03-30
-Phase: 8
+Date: 2026-03-31
+Phase: 8 (updated for Phase 9 i18n)
 
 ## Objective
 Release the Next.js frontend safely with controlled risk and clear rollback criteria.
+
+## Known Issue
+`npm run build` currently hangs at "Collecting page data" — this is a pre-existing Turbopack issue that affects both old and new code. The dev server (`npm run dev`) and `next start` work correctly. Deployment options:
+- Use `next start` with runtime rendering (all pages are `force-dynamic`)
+- Deploy via a platform that supports server-side rendering without a full static build (e.g., Vercel, containerized Node.js)
 
 ## Owners
 - Release lead:
@@ -16,10 +21,14 @@ Release the Next.js frontend safely with controlled risk and clear rollback crit
 ## Pre-Go-Live Checklist
 - Production env variables verified.
 - NEXT_PUBLIC_SITE_URL set to production domain.
+- API_BASE_URL set to production backend.
 - Redirect rules verified against docs/redirects.csv.
 - robots and sitemap endpoints reachable.
 - Preview flow validated in production-like environment.
-- Lint/build pass in CI.
+- TypeScript and ESLint pass cleanly.
+- i18n locale routing verified: `/` redirects to `/{locale}/`.
+- All three locales tested: `/ar`, `/en`, `/fr`.
+- CMS pages render for about and contact.
 - Automated pagination SEO check pass:
    - npm run seo:pagination-check -- --base https://<release-domain>
    - or CI workflow_dispatch with:
@@ -28,14 +37,17 @@ Release the Next.js frontend safely with controlled risk and clear rollback crit
 
 ## Deployment Steps
 1. Deploy backend API changes first (if any).
-2. Deploy Next.js frontend to production target.
-3. Warm critical routes:
-   - /
-   - /news/{known-slug-id}
-   - /category/{known-section}
-   - /search?q={term}
-4. Verify HTTP responses and redirect behavior.
+2. Deploy Next.js frontend to production target (use `next start` for SSR mode).
+3. Warm critical routes (for each locale, starting with /ar):
+   - /{locale}/
+   - /{locale}/news/{known-slug-id}
+   - /{locale}/category/{known-section}
+   - /{locale}/search?q={term}
+   - /{locale}/about
+   - /{locale}/contact
+4. Verify HTTP responses and redirect behavior (/ should 307 to /{locale}/).
 5. Verify robots.txt and sitemap.xml.
+6. Verify legacy redirects chain correctly (e.g., /Default.aspx → / → /{locale}/).
 
 ## Canary Strategy
 - Route 5 to 10 percent of traffic initially.
@@ -63,12 +75,16 @@ Release the Next.js frontend safely with controlled risk and clear rollback crit
      - Trigger CI workflow_dispatch with production environment and release URL
 
 ## Functional Smoke Tests
-- Home page renders live feed.
+- Home page renders live feed for each locale.
 - Article page renders and canonicalizes.
 - Category page renders list.
 - Author page renders profile and fallback/archive behavior.
 - Read page fallback/cms behavior.
+- About and contact pages render CMS content.
+- Fallback notice appears when content language differs from requested locale.
 - Preview enter and exit flow.
+- Locale switch: navigating between /ar/, /en/, /fr/ works correctly.
+- RTL layout renders for Arabic, LTR for English and French.
 
 ## Launch Decision Gate
 Proceed to full traffic only when:

@@ -1,0 +1,64 @@
+{
+  "site": {
+    "name": "Akhbar Alyawm",
+    "description": "Une plateforme d'information arabe moderne"
+  },
+  "nav": {
+    "home": "Accueil",
+    "search": "Recherche",
+    "about": "À propos",
+    "contact": "Contact",
+    "mix": "Mélange",
+    "authors": "Auteurs"
+  },
+  "common": {
+    "readMore": "Lire la suite",
+    "showMore": "Voir plus",
+    "prevPage": "Page précédente",
+    "nextPage": "Page suivante",
+    "notFound": "Page non trouvée",
+    "serverError": "Une erreur serveur s'est produite. Veuillez réessayer plus tard.",
+    "badRequest": "Requête invalide.",
+    "retry": "Réessayer"
+  },
+  "fallback": {
+    "notice": "Ce contenu est actuellement disponible uniquement en arabe."
+  },
+  "home": {
+    "title": "Akhbar Alyawm",
+    "breakingNews": "Dernières nouvelles"
+  },
+  "search": {
+    "title": "Recherche",
+    "placeholder": "Rechercher sur le site",
+    "resultsFor": "Résultats de recherche pour",
+    "noResults": "Aucun résultat trouvé"
+  },
+  "article": {
+    "notFound": "Article non trouvé"
+  },
+  "category": {
+    "notFound": "Section non trouvée",
+    "label": "Section"
+  },
+  "author": {
+    "notFound": "Auteur non trouvé",
+    "archive": "Archives de l'auteur",
+    "noBio": "Aucune biographie disponible pour cet auteur."
+  },
+  "read": {
+    "label": "Lire",
+    "page": "Page",
+    "cmsPlaceholder": "Ceci est une page transitoire pour les liens de contenu hérité. Le contenu sera affiché ici lorsqu'il sera disponible.",
+    "backHome": "Accueil",
+    "goSearch": "Recherche"
+  },
+  "about": {
+    "title": "À propos de nous",
+    "description": "Découvrez Akhbar Alyawm et sa mission éditoriale."
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "description": "Moyens de contacter l'équipe d'Akhbar Alyawm."
+  }
+}

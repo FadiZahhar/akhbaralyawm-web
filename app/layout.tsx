@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Geist_Mono, Noto_Kufi_Arabic } from "next/font/google";
 
 import { PreviewModeBanner } from "@/src/components/preview-mode-banner";
 import { SiteFooter } from "@/src/components/site-footer";
 import { SiteHeader } from "@/src/components/site-header";
+import { isLocale, getDirection, type Locale } from "@/src/lib/i18n";
 
 import "./globals.css";
 
@@ -44,8 +45,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerStore = await headers();
   const cookieStore = await cookies();
   const isPreviewMode = Boolean(cookieStore.get("previewToken")?.value);
+
+  const rawLocale = headerStore.get("x-locale") ?? "ar";
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const dir = getDirection(locale);
 
   const organizationJsonLd = {
     "@context": "https://schema.org",
@@ -67,18 +73,18 @@ export default async function RootLayout({
     "@type": "WebSite",
     name: "Akhbar Alyawm",
     url: SITE_URL,
-    inLanguage: "ar",
+    inLanguage: locale,
     potentialAction: {
       "@type": "SearchAction",
-      target: `${SITE_URL}/search?q={search_term_string}`,
+      target: `${SITE_URL}/${locale}/search?q={search_term_string}`,
       "query-input": "required name=search_term_string",
     },
   };
 
   return (
     <html
-      lang="ar"
-      dir="rtl"
+      lang={locale}
+      dir={dir}
       className={`${notoKufiArabic.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-[color:var(--page-bg)] text-[color:var(--foreground)]">
@@ -92,9 +98,9 @@ export default async function RootLayout({
         />
         <div className="min-h-full">
           {isPreviewMode ? <PreviewModeBanner /> : null}
-          <SiteHeader />
+          <SiteHeader locale={locale} />
           <div className="flex min-h-[calc(100vh-12rem)] flex-col">{children}</div>
-          <SiteFooter />
+          <SiteFooter locale={locale} />
         </div>
       </body>
     </html>

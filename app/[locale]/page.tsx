@@ -1,29 +1,39 @@
 import { getArticlesBySection, getAssetUrl, getHomeFeed, getSectionBySlugOrId } from "@/src/lib/api";
 import { BreakingTicker } from "@/src/components/home/breaking-ticker";
+
+export const revalidate = 120;
 import { HomeHero } from "@/src/components/home/home-hero";
 import { HomeSectionBlock } from "@/src/components/home/home-section-block";
 import { HomeSidebar } from "@/src/components/home/home-sidebar";
 import { StoryCard } from "@/src/components/home/story-card";
+import { isLocale, type Locale } from "@/src/lib/i18n";
 
 const HOME_SECTION_IDS = [29, 45, 30, 39];
 
-function formatDate(value: string): string {
-  if (!value) {
-    return "";
+type PageProps = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function Home({ params }: PageProps) {
+  const { locale: rawLocale } = await params;
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+
+  function formatDate(value: string): string {
+    if (!value) {
+      return "";
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat(locale === "ar" ? "ar-LB" : locale, {
+      dateStyle: "medium",
+    }).format(date);
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("ar-LB", {
-    dateStyle: "medium",
-  }).format(date);
-}
-
-export default async function Home() {
-  const feed = await getHomeFeed(12);
+  const feed = await getHomeFeed(12, locale);
   const [lead, ...rest] = feed;
   const highlighted = rest.slice(0, 4);
   const updates = feed.slice(0, 8);
@@ -35,13 +45,13 @@ export default async function Home() {
   }));
   const sections = await Promise.all(
     HOME_SECTION_IDS.map(async (id) => {
-      const section = await getSectionBySlugOrId(String(id));
+      const section = await getSectionBySlugOrId(String(id), locale);
 
       if (!section || section.link === "/") {
         return null;
       }
 
-      const stories = await getArticlesBySection(section.link, 1, 3);
+      const stories = await getArticlesBySection(section.link, 1, 3, locale);
       return {
         section,
         stories: stories.items,

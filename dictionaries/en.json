@@ -1,0 +1,64 @@
+{
+  "site": {
+    "name": "Akhbar Alyawm",
+    "description": "A modern Arabic news platform"
+  },
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "about": "About",
+    "contact": "Contact",
+    "mix": "Mix",
+    "authors": "Authors"
+  },
+  "common": {
+    "readMore": "Read more",
+    "showMore": "Show more",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "notFound": "Page not found",
+    "serverError": "A server error occurred. Please try again later.",
+    "badRequest": "Bad request.",
+    "retry": "Retry"
+  },
+  "fallback": {
+    "notice": "This content is currently available in Arabic only."
+  },
+  "home": {
+    "title": "Akhbar Alyawm",
+    "breakingNews": "Breaking News"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search the site",
+    "resultsFor": "Search results for",
+    "noResults": "No results found"
+  },
+  "article": {
+    "notFound": "Article not found"
+  },
+  "category": {
+    "notFound": "Section not found",
+    "label": "Section"
+  },
+  "author": {
+    "notFound": "Author not found",
+    "archive": "Author archive",
+    "noBio": "No biography available for this author."
+  },
+  "read": {
+    "label": "Read",
+    "page": "Page",
+    "cmsPlaceholder": "This is a transitional page for legacy content links. Content will be displayed here when available.",
+    "backHome": "Home",
+    "goSearch": "Search"
+  },
+  "about": {
+    "title": "About Us",
+    "description": "Learn about Akhbar Alyawm and its editorial mission."
+  },
+  "contact": {
+    "title": "Contact Us",
+    "description": "Ways to reach the Akhbar Alyawm team."
+  }
+}
