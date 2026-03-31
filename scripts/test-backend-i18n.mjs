@@ -88,17 +88,23 @@ async function testB1() {
     report("B1", "lang=ar → fallbackUsed=false", false, e.message);
   }
 
-  // Test 3: lang=en → fallbackUsed: true (until B2)
+  // Test 3: lang=en/fr → LanguageMeta is consistent (fallbackUsed matches contentLanguage)
   for (const locale of ["en", "fr"]) {
     try {
       const { body } = await fetchJson(`${API}/v1/home/feed.ashx?limit=1&lang=${locale}`, {
         headers: { "Accept-Language": locale },
       });
-      const ok = hasLangMeta(body) && body.requestedLanguage === locale && body.fallbackUsed === true;
-      report("B1", `lang=${locale} → fallbackUsed=true`, ok,
-        body ? `requestedLanguage=${body.requestedLanguage}, fallbackUsed=${body.fallbackUsed}` : "");
+      if (!hasLangMeta(body)) {
+        report("B1", `lang=${locale} → LanguageMeta consistent`, false, "Missing fields");
+        continue;
+      }
+      const metaConsistent = body.requestedLanguage === locale &&
+        ((body.contentLanguage === locale && body.fallbackUsed === false) ||
+         (body.contentLanguage === "ar" && body.fallbackUsed === true));
+      const detail = `requestedLanguage=${body.requestedLanguage}, contentLanguage=${body.contentLanguage}, fallbackUsed=${body.fallbackUsed}`;
+      report("B1", `lang=${locale} → LanguageMeta consistent`, metaConsistent, detail);
     } catch (e) {
-      report("B1", `lang=${locale} → fallbackUsed=true`, false, e.message);
+      report("B1", `lang=${locale} → LanguageMeta consistent`, false, e.message);
     }
   }
 
