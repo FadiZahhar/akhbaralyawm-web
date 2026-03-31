@@ -115,7 +115,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       {
         "@type": "ListItem",
         position: 1,
-        name: locale === "ar" ? "الرئيسية" : "Home",
+        name: dict.nav.home,
         item: absoluteUrl(`/${locale}`),
       },
       {

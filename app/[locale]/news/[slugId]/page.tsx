@@ -153,7 +153,7 @@ export default async function ArticlePage({ params }: PageProps) {
       {
         "@type": "ListItem",
         position: 1,
-        name: locale === "ar" ? "الرئيسية" : "Home",
+        name: dict.nav.home,
         item: absoluteUrl(`/${locale}`),
       },
       ...(article.sectionTitle && article.sectionLink
