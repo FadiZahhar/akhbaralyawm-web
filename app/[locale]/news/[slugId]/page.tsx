@@ -14,6 +14,8 @@ import {
   type ArticleDto,
 } from "@/src/lib/api";
 import { Breadcrumbs } from "@/src/components/breadcrumbs";
+import { SocialShare } from "@/src/components/article/social-share";
+import { RelatedArticles } from "@/src/components/article/related-articles";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
 import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 type PageParams = {
@@ -236,6 +238,27 @@ export default async function ArticlePage({ params }: PageProps) {
             dangerouslySetInnerHTML={{ __html: article.bodyHtml }}
           />
         </section>
+
+        {/* Social share buttons */}
+        <SocialShare
+          url={canonicalUrl}
+          title={article.title}
+          dict={{
+            share: dict.article.share,
+            copyLink: dict.article.copyLink,
+            copied: dict.article.copied,
+          }}
+        />
+
+        {/* Related articles */}
+        {article.sectionLink ? (
+          <RelatedArticles
+            locale={locale}
+            sectionLink={article.sectionLink}
+            excludeId={article.id}
+            label={dict.article.relatedArticles}
+          />
+        ) : null}
       </article>
       <PageSidebar locale={locale} label={dict.sidebar.mostRead} mostRead={mostRead} />
       </div>

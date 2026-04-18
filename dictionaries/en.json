@@ -46,7 +46,11 @@
     "searchNoQueryDescription": "Use the search field to display results."
   },
   "article": {
-    "notFound": "Article not found"
+    "notFound": "Article not found",
+    "share": "Share",
+    "copyLink": "Copy link",
+    "copied": "Copied!",
+    "relatedArticles": "You may also like"
   },
   "category": {
     "notFound": "Section not found",
