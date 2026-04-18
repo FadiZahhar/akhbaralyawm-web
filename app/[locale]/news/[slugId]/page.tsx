@@ -13,6 +13,7 @@ import {
   getPreviewArticleById,
   type ArticleDto,
 } from "@/src/lib/api";
+import { Breadcrumbs } from "@/src/components/breadcrumbs";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
 import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 type PageParams = {
@@ -196,22 +197,13 @@ export default async function ArticlePage({ params }: PageProps) {
       />
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
       <article className="flex flex-col gap-6">
-        <nav className="text-sm text-zinc-500">
-          <Link href={`/${locale}`} className="transition hover:text-[color:var(--accent-strong)]">
-            {dict.nav.home}
-          </Link>
-          {article.sectionTitle && article.sectionLink ? (
-            <>
-              <span className="px-2">/</span>
-              <Link
-                href={`/${locale}/category/${article.sectionLink}`}
-                className="transition hover:text-[color:var(--accent-strong)]"
-              >
-                {article.sectionTitle}
-              </Link>
-            </>
-          ) : null}
-        </nav>
+        <Breadcrumbs items={[
+          { label: dict.nav.home, href: `/${locale}` },
+          ...(article.sectionTitle && article.sectionLink
+            ? [{ label: article.sectionTitle, href: `/${locale}/category/${article.sectionLink}` }]
+            : []),
+          { label: article.title },
+        ]} />
 
         <header className="space-y-3 rounded-sm border border-[color:var(--border-soft)] bg-white px-5 py-6 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:px-6">
           {article.sectionTitle ? (

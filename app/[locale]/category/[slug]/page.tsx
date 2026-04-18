@@ -5,6 +5,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 export const revalidate = 120;
 
 import { getArticlesBySection, getHomeFeed, getSectionBySlugOrId } from "@/src/lib/api";
+import { Breadcrumbs } from "@/src/components/breadcrumbs";
 import { CategoryArchiveList } from "@/src/components/category/category-archive-list";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
 import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
@@ -155,6 +156,10 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       />
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex flex-col gap-8">
+      <Breadcrumbs items={[
+        { label: dict.nav.home, href: `/${locale}` },
+        { label: section.title },
+      ]} />
       <header className="space-y-3 rounded-sm border border-[color:var(--border-soft)] bg-white px-5 py-6 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:px-6">
         <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">{dict.category.label}</p>
         <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">{section.title}</h1>
