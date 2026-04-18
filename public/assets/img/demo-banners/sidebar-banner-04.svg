@@ -1,0 +1,32 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgFour" x1="0" y1="0" x2="1200" y2="1200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#142963"/>
+      <stop offset="1" stop-color="#1A3B85"/>
+    </linearGradient>
+    <linearGradient id="cardGlow" x1="0" y1="0" x2="520" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2FA14B"/>
+      <stop offset="1" stop-color="#7CD88F"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="1200" fill="url(#bgFour)"/>
+  <circle cx="950" cy="260" r="220" fill="#2FA14B" fill-opacity="0.18"/>
+
+  <text x="120" y="170" fill="white" font-size="68" font-family="Arial, sans-serif" font-weight="800">REWARD CARD</text>
+  <text x="120" y="230" fill="#D8E6FF" font-size="38" font-family="Arial, sans-serif">Daily cashback campaign</text>
+
+  <rect x="120" y="320" width="960" height="760" rx="34" fill="white" fill-opacity="0.12" stroke="white" stroke-opacity="0.25"/>
+
+  <rect x="190" y="430" width="820" height="470" rx="30" fill="#F6FAFF"/>
+  <rect x="240" y="490" width="420" height="250" rx="24" fill="url(#cardGlow)"/>
+  <text x="290" y="620" fill="white" font-size="92" font-family="Arial, sans-serif" font-weight="900">12%</text>
+  <text x="290" y="690" fill="white" font-size="40" font-family="Arial, sans-serif" font-weight="700">cashback</text>
+
+  <rect x="700" y="520" width="260" height="20" rx="10" fill="#B8CBEA"/>
+  <rect x="700" y="570" width="220" height="20" rx="10" fill="#B8CBEA"/>
+  <rect x="700" y="620" width="240" height="20" rx="10" fill="#B8CBEA"/>
+
+  <rect x="190" y="940" width="820" height="90" rx="18" fill="#142963"/>
+  <text x="260" y="998" fill="white" font-size="42" font-family="Arial, sans-serif" font-weight="700">Apply now and start earning points</text>
+</svg>

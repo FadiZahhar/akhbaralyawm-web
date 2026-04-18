@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import type { FeedItemDto } from "@/src/lib/api";
 
@@ -39,15 +39,6 @@ export function AuthorArchiveList({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const hasMore = currentPage < totalPages;
-
-  const crawlablePages = useMemo(() => {
-    if (totalPages <= 1) {
-      return [] as number[];
-    }
-
-    const maxLinks = Math.min(totalPages, 10);
-    return Array.from({ length: maxLinks }, (_, index) => index + 1);
-  }, [totalPages]);
 
   async function handleLoadMore() {
     if (!hasMore || isLoading) {
@@ -116,23 +107,17 @@ export function AuthorArchiveList({
         </div>
       ) : null}
 
-      {crawlablePages.length ? (
+      {totalPages > 1 ? (
         <nav className="border-t border-[color:var(--border-soft)] pt-4" aria-label={dict.archiveLinks}>
           <p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">{dict.archiveLinks}</p>
-          <div className="flex flex-wrap gap-2">
-            {crawlablePages.map((page) => (
-              <Link
-                key={page}
-                href={page === 1 ? `/${locale}/author/${authorLink}` : `/${locale}/author/${authorLink}?page=${page}`}
-                className={`rounded-sm border px-3 py-1 text-xs font-extrabold transition ${
-                  page === currentPage
-                    ? "border-[color:var(--accent)] bg-[color:var(--panel)] text-[color:var(--accent-strong)]"
-                    : "border-[color:var(--border-soft)] bg-white text-zinc-600 hover:border-[color:var(--accent)]"
-                }`}
-              >
-                {dict.page} {page}
-              </Link>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className="rounded-sm border border-[color:var(--accent)] bg-[color:var(--panel)] px-3 py-1 text-xs font-extrabold text-[color:var(--accent-strong)]"
+              aria-current="page"
+            >
+              {dict.page} {currentPage}
+            </span>
+            <span className="text-xs font-extrabold text-zinc-500">/ {totalPages}</span>
           </div>
         </nav>
       ) : null}

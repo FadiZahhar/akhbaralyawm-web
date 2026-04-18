@@ -4,10 +4,11 @@ import { notFound, permanentRedirect } from "next/navigation";
 
 export const revalidate = 120;
 
-import { getArticlesBySection, getHomeFeed, getSectionBySlugOrId } from "@/src/lib/api";
+import { getArticlesBySection, getAssetUrl, getHomeFeed, getSectionBySlugOrId } from "@/src/lib/api";
 import { Breadcrumbs } from "@/src/components/breadcrumbs";
 import { FallbackNotice } from "@/src/components/fallback-notice";
 import { CategoryArchiveList } from "@/src/components/category/category-archive-list";
+import { MostReadSlider } from "@/src/components/home/most-read-slider";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
 import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 
@@ -152,6 +153,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   };
 
   return (
+    <>
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
@@ -216,5 +218,16 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       <PageSidebar locale={locale} label={dict.sidebar.mostRead} mostRead={mostRead} />
       </div>
     </main>
+    <MostReadSlider
+      label={dict.sidebar.mostRead}
+      items={mostRead.map((item) => ({
+        id: item.id,
+        slugId: item.slugId,
+        title: item.title,
+        imageUrl: getAssetUrl(item.photoPath),
+        locale,
+      }))}
+    />
+    </>
   );
 }

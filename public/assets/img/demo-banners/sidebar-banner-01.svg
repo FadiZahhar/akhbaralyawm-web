@@ -1,0 +1,35 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgOne" x1="0" y1="0" x2="1200" y2="1200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#142963"/>
+      <stop offset="1" stop-color="#0C1E4B"/>
+    </linearGradient>
+    <linearGradient id="chip" x1="0" y1="0" x2="640" y2="220" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2FA14B"/>
+      <stop offset="1" stop-color="#238A3A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="1200" fill="url(#bgOne)"/>
+  <circle cx="980" cy="240" r="240" fill="#2FA14B" fill-opacity="0.15"/>
+  <circle cx="250" cy="930" r="280" fill="#2FA14B" fill-opacity="0.1"/>
+
+  <rect x="120" y="120" width="960" height="190" rx="28" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.22"/>
+  <text x="170" y="200" fill="white" font-size="78" font-family="Arial, sans-serif" font-weight="700">AKHBAR DEAL</text>
+  <text x="170" y="270" fill="#D5E7FF" font-size="46" font-family="Arial, sans-serif">CITY EXPLORER PASS</text>
+
+  <rect x="120" y="380" width="620" height="540" rx="36" fill="white" fill-opacity="0.95"/>
+  <text x="170" y="495" fill="#142963" font-size="66" font-family="Arial, sans-serif" font-weight="800">30% OFF</text>
+  <text x="170" y="575" fill="#142963" font-size="44" font-family="Arial, sans-serif" font-weight="600">Local transport</text>
+  <text x="170" y="640" fill="#425785" font-size="38" font-family="Arial, sans-serif">Metro + bus + tram</text>
+
+  <rect x="170" y="700" width="470" height="120" rx="20" fill="url(#chip)"/>
+  <text x="220" y="775" fill="white" font-size="48" font-family="Arial, sans-serif" font-weight="700">Book Today</text>
+
+  <rect x="790" y="420" width="290" height="500" rx="26" fill="white" fill-opacity="0.12" stroke="white" stroke-opacity="0.24"/>
+  <rect x="840" y="500" width="190" height="330" rx="20" fill="#F4F8FF"/>
+  <rect x="870" y="560" width="130" height="18" rx="9" fill="#C6D6F3"/>
+  <rect x="870" y="600" width="130" height="18" rx="9" fill="#C6D6F3"/>
+  <rect x="870" y="640" width="130" height="18" rx="9" fill="#C6D6F3"/>
+  <circle cx="935" cy="735" r="34" fill="#2FA14B"/>
+</svg>

@@ -1,0 +1,33 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgTwo" x1="1200" y1="0" x2="0" y2="1200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0E244F"/>
+      <stop offset="1" stop-color="#071632"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(600 720) rotate(90) scale(360 620)">
+      <stop stop-color="#2FA14B" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#2FA14B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="1200" fill="url(#bgTwo)"/>
+  <rect y="880" width="1200" height="320" fill="#091833"/>
+  <ellipse cx="600" cy="790" rx="520" ry="240" fill="url(#halo)"/>
+
+  <text x="120" y="170" fill="white" font-size="72" font-family="Arial, sans-serif" font-weight="800">AUTO SHOWCASE</text>
+  <text x="120" y="240" fill="#BCD2FF" font-size="42" font-family="Arial, sans-serif">Hybrid city edition</text>
+
+  <g>
+    <rect x="180" y="460" width="840" height="280" rx="130" fill="#DCE6F5"/>
+    <rect x="280" y="430" width="560" height="200" rx="90" fill="white"/>
+    <rect x="420" y="420" width="270" height="120" rx="58" fill="#EEF4FF"/>
+    <circle cx="350" cy="780" r="92" fill="#0B1732"/>
+    <circle cx="850" cy="780" r="92" fill="#0B1732"/>
+    <circle cx="350" cy="780" r="45" fill="#798EBA"/>
+    <circle cx="850" cy="780" r="45" fill="#798EBA"/>
+    <rect x="585" y="510" width="220" height="24" rx="12" fill="#2FA14B"/>
+  </g>
+
+  <rect x="120" y="940" width="960" height="140" rx="24" fill="white" fill-opacity="0.08" stroke="white" stroke-opacity="0.2"/>
+  <text x="170" y="1022" fill="white" font-size="48" font-family="Arial, sans-serif" font-weight="700">Manual + Automatic Available</text>
+</svg>

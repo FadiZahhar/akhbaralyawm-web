@@ -2,10 +2,10 @@
 
 export const revalidate = 120;
 
-import { getCmsPageById } from "@/src/lib/api";
-import { getHomeFeed } from "@/src/lib/api";
+import { getAssetUrl, getCmsPageById, getHomeFeed } from "@/src/lib/api";
 import { Breadcrumbs } from "@/src/components/breadcrumbs";
 import { FallbackNotice } from "@/src/components/fallback-notice";
+import { MostReadSlider } from "@/src/components/home/most-read-slider";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
 import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 
@@ -43,6 +43,7 @@ export default async function AboutPage({ params }: PageProps) {
   ]);
 
   return (
+    <>
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex flex-col gap-8">
@@ -79,5 +80,16 @@ export default async function AboutPage({ params }: PageProps) {
       <PageSidebar locale={locale} label={dict.sidebar.mostRead} mostRead={mostRead} />
       </div>
     </main>
+    <MostReadSlider
+      label={dict.sidebar.mostRead}
+      items={mostRead.map((item) => ({
+        id: item.id,
+        slugId: item.slugId,
+        title: item.title,
+        imageUrl: getAssetUrl(item.photoPath),
+        locale,
+      }))}
+    />
+    </>
   );
 }

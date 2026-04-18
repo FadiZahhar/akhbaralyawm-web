@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { getAssetUrl, type FeedItemDto } from "@/src/lib/api";
 
@@ -25,27 +25,6 @@ type CategoryArchiveListProps = {
   };
 };
 
-/** Build a windowed page list for the crawlable pagination nav.
- * Always shows first page, last page, current page ±2, with ellipsis gaps.
- * Returns at most ~11 entries (numbers + null for gaps).
- */
-function buildPageWindow(current: number, total: number): (number | null)[] {
-  if (total <= 1) return [];
-  const pages = new Set<number>();
-  pages.add(1);
-  pages.add(total);
-  for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) {
-    pages.add(i);
-  }
-  const sorted = [...pages].sort((a, b) => a - b);
-  const result: (number | null)[] = [];
-  for (let i = 0; i < sorted.length; i++) {
-    if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push(null);
-    result.push(sorted[i]);
-  }
-  return result;
-}
-
 export function CategoryArchiveList({
   locale,
   sectionLink,
@@ -66,11 +45,6 @@ export function CategoryArchiveList({
 
   const hasMore = !reachedEnd && currentPage < totalPages;
 
-  const pageWindow = useMemo(
-    () => buildPageWindow(currentPage, totalPages),
-    [currentPage, totalPages],
-  );
-
   function formatDate(value: string): string {
     if (!value) return "";
     const date = new Date(value);
@@ -86,15 +60,40 @@ export function CategoryArchiveList({
     setErrorMessage(null);
 
     try {
-      const response = await fetch(
-        `/api/category/articles?section=${encodeURIComponent(sectionLink)}&page=${nextPage}&limit=${pageSize}&lang=${locale}`,
-        { cache: "no-store" },
-      );
+      const endpoint =
+        `/api/category/articles?section=${encodeURIComponent(sectionLink)}&page=${nextPage}&limit=${pageSize}&lang=${locale}`;
 
-      if (!response.ok) throw new Error("Failed to load");
+      async function requestPage(): Promise<{ items: FeedItemDto[]; pagination: { page: number; totalPages: number } | null }> {
+        const response = await fetch(endpoint, { cache: "no-store" });
 
-      const payload: { items: FeedItemDto[]; pagination: { page: number; totalPages: number } | null } =
-        await response.json();
+        // Treat invalid or out-of-range page responses as end-of-list instead of hard error.
+        if (response.status === 400 || response.status === 404) {
+          return { items: [], pagination: { page: nextPage, totalPages: currentPage } };
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP_${response.status}`);
+        }
+
+        const payload = await response.json() as {
+          items: FeedItemDto[];
+          pagination: { page: number; totalPages: number } | null;
+        };
+
+        if (!Array.isArray(payload.items)) {
+          throw new Error("INVALID_PAYLOAD");
+        }
+
+        return payload;
+      }
+
+      // Retry once for transient network/server failures.
+      let payload: { items: FeedItemDto[]; pagination: { page: number; totalPages: number } | null };
+      try {
+        payload = await requestPage();
+      } catch {
+        payload = await requestPage();
+      }
 
       const newPage = payload.pagination?.page ?? nextPage;
       const serverTotalPages = payload.pagination?.totalPages ?? totalPages;
@@ -199,38 +198,18 @@ export function CategoryArchiveList({
         <p className="text-center text-sm text-zinc-500">{dict.noArticles}</p>
       ) : null}
 
-      {/* SEO-crawlable pagination nav — windowed around current page so Googlebot
-          can discover and index every page via <a href> links, while keeping the
-          UI compact. The server renders page 1 (or whatever ?page= you opened),
-          and this nav always includes page 1 and the last page so crawlers can
-          fan out to all depths. */}
-      {pageWindow.length ? (
+      {/* Page status indicator (non-interactive) to avoid UX confusion. */}
+      {totalPages > 1 ? (
         <nav className="border-t border-[color:var(--border-soft)] pt-4" aria-label={dict.archiveLinks}>
           <p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">{dict.archiveLinks}</p>
-          <div className="flex flex-wrap gap-2">
-            {pageWindow.map((page, idx) =>
-              page === null ? (
-                <span
-                  key={`gap-${idx}`}
-                  className="flex items-end px-1 text-xs text-zinc-400"
-                  aria-hidden
-                >
-                  …
-                </span>
-              ) : (
-                <Link
-                  key={page}
-                  href={page === 1 ? basePath : `${basePath}?page=${page}`}
-                  className={`rounded-sm border px-3 py-1 text-xs font-extrabold transition ${
-                    page === currentPage
-                      ? "border-[color:var(--accent)] bg-[color:var(--panel)] text-[color:var(--accent-strong)]"
-                      : "border-[color:var(--border-soft)] bg-white text-zinc-600 hover:border-[color:var(--accent)]"
-                  }`}
-                >
-                  {dict.page} {page}
-                </Link>
-              ),
-            )}
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className="rounded-sm border border-[color:var(--accent)] bg-[color:var(--panel)] px-3 py-1 text-xs font-extrabold text-[color:var(--accent-strong)]"
+              aria-current="page"
+            >
+              {dict.page} {currentPage}
+            </span>
+            <span className="text-xs font-extrabold text-zinc-500">/ {totalPages}</span>
           </div>
         </nav>
       ) : null}
