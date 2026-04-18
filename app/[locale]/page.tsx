@@ -7,8 +7,13 @@ export const revalidate = 120;
 import { HomeHero } from "@/src/components/home/home-hero";
 import { HomeSectionBlock } from "@/src/components/home/home-section-block";
 import { CategorySlider } from "@/src/components/home/category-slider";
+import { AdBanner } from "@/src/components/home/ad-banner";
+import { FeaturedSectionSlider } from "@/src/components/home/featured-section-slider";
+import { VideoPrograms } from "@/src/components/home/video-programs";
 import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
 
+const FEATURED_SECTION_ID = 29;
+const PROGRAMS_SECTION_ID = 56;
 const HOME_SECTION_IDS = [29, 45, 30, 39];
 
 type PageProps = {
@@ -55,6 +60,46 @@ export default async function Home({ params }: PageProps) {
   );
 
   const homeSections = sections.filter((section) => section !== null);
+
+  // Fetch 20 articles for the featured slider section
+  const featuredGroup = homeSections.find((g) => g.section.id === FEATURED_SECTION_ID);
+  let featuredSliderItems: { id: number; slugId: string; title: string; imageUrl: string | null; locale: string }[] = [];
+  if (featuredGroup) {
+    const featuredStories = await getArticlesBySection(featuredGroup.section.link, 1, 20, locale);
+    featuredSliderItems = featuredStories.items.map((story) => ({
+      id: story.id,
+      slugId: story.slugId,
+      title: story.title,
+      imageUrl: getAssetUrl(story.photoPath),
+      locale,
+    }));
+  }
+
+  const regularSections = homeSections.filter((g) => g.section.id !== FEATURED_SECTION_ID);
+
+  // Fetch programs (البرامج) section for video slider
+  const programsSection = await getSectionBySlugOrId(String(PROGRAMS_SECTION_ID), locale);
+  let videoItems: { id: number; title: string; thumbnail: string | null; youtubeId: string }[] = [];
+  if (programsSection && programsSection.link !== "/") {
+    const programStories = await getArticlesBySection(programsSection.link, 1, 20, locale);
+    videoItems = programStories.items.map((story) => ({
+      id: story.id,
+      title: story.title,
+      thumbnail: getAssetUrl(story.photoPath),
+      youtubeId: "", // API doesn't provide YouTube IDs yet
+    }));
+  }
+  // Fallback: use Akhbar Alyawm YouTube channel videos until API supports video URLs
+  const FALLBACK_VIDEOS = [
+    { id: 9001, title: "بالفيديو- هل سيصمد سعر الصرف والاقتصاد؟! ... الاموال الموجودة في مصرف لبنان ليست له", thumbnail: "https://img.youtube.com/vi/JGwWNGJdvx8/hqdefault.jpg", youtubeId: "JGwWNGJdvx8" },
+    { id: 9002, title: "بالفيديو – ملف الاسلاميين الذين غادروا إلى سوريا فتح بقوة والحل بعفو عام", thumbnail: "https://img.youtube.com/vi/LXb3EKWsInQ/hqdefault.jpg", youtubeId: "LXb3EKWsInQ" },
+    { id: 9003, title: "حوار خاص مع الوزير السابق حول مستقبل الاقتصاد اللبناني", thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg", youtubeId: "dQw4w9WgXcQ" },
+    { id: 9004, title: "ندوة حول الاصلاحات المطلوبة في القطاع المصرفي", thumbnail: "https://img.youtube.com/vi/9bZkp7q19f0/hqdefault.jpg", youtubeId: "9bZkp7q19f0" },
+    { id: 9005, title: "تقرير خاص: التحديات الامنية على الحدود الشمالية", thumbnail: "https://img.youtube.com/vi/kJQP7kiw5Fk/hqdefault.jpg", youtubeId: "kJQP7kiw5Fk" },
+    { id: 9006, title: "مقابلة حصرية حول ملف النازحين والعودة الطوعية", thumbnail: "https://img.youtube.com/vi/RgKAFK5djSk/hqdefault.jpg", youtubeId: "RgKAFK5djSk" },
+  ];
+  // Use API items if they have youtubeIds, otherwise use fallback
+  const finalVideos = videoItems.some((v) => v.youtubeId) ? videoItems : FALLBACK_VIDEOS;
 
   // Build slider items from the first article of each loaded section
   const sliderItems = homeSections
@@ -128,8 +173,21 @@ export default async function Home({ params }: PageProps) {
         </div>
       </section>
 
+      {/* Banner ad between hero and sections */}
+      <AdBanner />
+
+      {/* Featured section — one-by-one slider */}
+      {featuredGroup && featuredSliderItems.length > 0 && (
+        <FeaturedSectionSlider
+          locale={locale}
+          sectionTitle={featuredGroup.section.title}
+          sectionLink={featuredGroup.section.link}
+          items={featuredSliderItems}
+        />
+      )}
+
       <section className="grid gap-8">
-        {homeSections.map((group) => (
+        {regularSections.map((group) => (
           <HomeSectionBlock
             key={group.section.id}
             locale={locale}
@@ -141,6 +199,12 @@ export default async function Home({ params }: PageProps) {
         ))}
       </section>
     </main>
+
+    {/* Programs video section — full-width dark blue */}
+    <VideoPrograms
+      sectionTitle={programsSection?.title ?? "البرامج"}
+      items={finalVideos}
+    />
     </>
   );
 }
