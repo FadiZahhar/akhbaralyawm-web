@@ -47,7 +47,7 @@ export function SocialShare({ url, title, dict }: SocialShareProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-row-reverse flex-wrap items-center gap-3">
       <span className="text-sm font-semibold text-[#8A8A8A]">{dict.share}</span>
       {channels.map((ch) => (
         <a
@@ -56,16 +56,16 @@ export function SocialShare({ url, title, dict }: SocialShareProps) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={ch.label}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#142963] text-white transition hover:bg-[#2FA14B]"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#142963] transition hover:bg-[#2FA14B]"
         >
-          <SocialIcon platform={ch.platform} className="h-4 w-4" />
+          <SocialIcon platform={ch.platform} className="h-5 w-5 fill-white" />
         </a>
       ))}
       <button
         type="button"
         id="copy-link-btn"
         onClick={handleCopy}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#DCDCDC] bg-white px-3.5 text-xs font-semibold text-[#142963] transition hover:border-[#2FA14B] hover:text-[#2FA14B]"
+        className="inline-flex h-10 items-center gap-1.5 rounded-full border border-[#DCDCDC] bg-white px-4 text-xs font-semibold text-[#142963] transition hover:border-[#2FA14B] hover:text-[#2FA14B]"
       >
         {dict.copyLink}
       </button>

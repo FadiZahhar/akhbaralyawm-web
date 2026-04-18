@@ -62,13 +62,27 @@ export default async function Home({ params }: PageProps) {
 
   const homeSections = sections.filter((section) => section !== null);
 
+  // Build slider items from the first article of each loaded section
+  const sliderItems = homeSections
+    .flatMap((group) =>
+      group.stories.slice(0, 2).map((story) => ({
+        id: story.id,
+        slugId: story.slugId,
+        title: story.title,
+        sectionTitle: group.section.title,
+        imageUrl: getAssetUrl(story.photoPath),
+        locale,
+      })),
+    )
+    .slice(0, 8);
+
   return (
     <>
     <BreakingTicker locale={locale} label={dict.ticker.breaking} items={tickerItems} />
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-4 py-8 sm:px-6 lg:px-8">
       <section className="grid gap-6 lg:grid-cols-[1.35fr_0.9fr]">
         <div className="space-y-6">
-          <HomeHero locale={locale} lead={lead} updates={updates} formatDate={formatDate} dict={{ lastMoment: dict.sidebar.lastMoment, live: dict.sidebar.live }} />
+          <HomeHero locale={locale} lead={lead} updates={updates} dict={{ lastMoment: dict.sidebar.lastMoment, live: dict.sidebar.live }} />
 
           <div className="grid gap-6 md:grid-cols-2">
             {highlighted.map((item) => (
@@ -85,7 +99,7 @@ export default async function Home({ params }: PageProps) {
           </div>
         </div>
 
-        <HomeSidebar locale={locale} dict={{ editorial: dict.sidebar.editorial, editorialTitle: dict.sidebar.editorialTitle, editorialBody: dict.sidebar.editorialBody, browseMix: dict.sidebar.browseMix, searchContent: dict.sidebar.searchContent, mostRead: dict.sidebar.mostRead }} feed={feed} />
+        <HomeSidebar locale={locale} dict={{ editorial: dict.sidebar.editorial, editorialTitle: dict.sidebar.editorialTitle, editorialBody: dict.sidebar.editorialBody, browseMix: dict.sidebar.browseMix, searchContent: dict.sidebar.searchContent, mostRead: dict.sidebar.mostRead, latestCategories: dict.sidebar.latestCategories }} feed={feed} sliderItems={sliderItems} />
       </section>
 
       <section className="grid gap-8">

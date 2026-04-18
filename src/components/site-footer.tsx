@@ -42,7 +42,7 @@ export function SiteFooter({ locale = "ar" as Locale, dict, navDict }: SiteFoote
                 aria-label={link.label}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-[#CCCCCC] transition hover:bg-[#2FA14B] hover:text-white"
               >
-                <SocialIcon platform={link.platform} className="h-4 w-4" />
+                <SocialIcon platform={link.platform} className="h-4 w-4 fill-current" />
               </a>
             ))}
           </div>

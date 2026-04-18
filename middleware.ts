@@ -49,9 +49,8 @@ export function middleware(request: NextRequest) {
     });
   }
 
-  // No locale in path — redirect to prefixed URL
-  const locale = getLocale(request);
-  request.nextUrl.pathname = `/${locale}${pathname}`;
+  // No locale in path — redirect to default locale (Arabic)
+  request.nextUrl.pathname = `/${defaultLocale}${pathname}`;
   return NextResponse.redirect(request.nextUrl);
 }
 

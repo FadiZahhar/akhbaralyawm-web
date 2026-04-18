@@ -5,6 +5,7 @@ import { getSections } from "@/src/lib/api";
 import type { Locale } from "@/src/lib/i18n";
 import { SOCIAL_LINKS, SocialIcon } from "@/src/components/social-icons";
 import { MobileNav } from "@/src/components/mobile-nav";
+import { HeaderSearch } from "@/src/components/header-search";
 
 const PRIMARY_SECTION_IDS = [29, 45, 39, 30, 46, 33, 56];
 
@@ -68,7 +69,7 @@ export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderPr
                   aria-label={link.label}
                   className="transition hover:text-[#2FA14B]"
                 >
-                  <SocialIcon platform={link.platform} className="h-3.5 w-3.5" />
+                  <SocialIcon platform={link.platform} className="h-3.5 w-3.5 fill-current" />
                 </a>
               ))}
             </div>
@@ -81,56 +82,22 @@ export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderPr
         </div>
       </div>
 
-      {/* Logo + Search bar + Mobile hamburger */}
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4 lg:justify-between">
-          <Link href={`/${locale}`} className="inline-flex shrink-0 items-center">
-            <Image
-              src={locale === "fr" ? "/assets/img/logo-fr.png" : locale === "en" ? "/assets/img/logo-en.png" : "/assets/img/logo.png"}
-              alt={dict.site.name}
-              width={238}
-              height={60}
-              className="h-auto w-[200px]"
-              priority
-            />
-          </Link>
-
-          <form action={`/${locale}/search`} method="get" className="hidden w-full max-w-md items-center gap-2 md:flex lg:w-[380px]">
-            <div className="relative w-full">
-              <input
-                type="search"
-                name="q"
-                placeholder={dict.site.searchPlaceholder}
-                className="h-11 w-full rounded border border-[#DCDCDC] bg-transparent px-4 pe-10 text-sm text-[#70798B] outline-none focus:border-[#2FA14B]"
-              />
-              <button
-                type="submit"
-                className="absolute end-0 top-0 flex h-11 w-11 items-center justify-center text-[#70798B] transition hover:text-[#2FA14B]"
-                aria-label={dict.site.searchButton}
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                </svg>
-              </button>
-            </div>
-          </form>
-
-          {/* Mobile hamburger */}
-          <MobileNav
-            homeHref={`/${locale}`}
-            homeLabel={dict.nav.home}
-            mixHref={`/${locale}/mix`}
-            mixLabel={dict.nav.mix}
-            navItems={navItems.map((item) => ({
-              id: item.id,
-              href: `/${locale}/category/${item.link}`,
-              label: item.title,
-            }))}
+      {/* Single row: Logo + Navigation + Search icon */}
+      <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        {/* Logo */}
+        <Link href={`/${locale}`} className="inline-flex shrink-0 items-center">
+          <Image
+            src={locale === "fr" ? "/assets/img/logo-fr.png" : locale === "en" ? "/assets/img/logo-en.png" : "/assets/img/logo.png"}
+            alt={dict.site.name}
+            width={238}
+            height={60}
+            className="h-auto w-[200px]"
+            priority
           />
-        </div>
+        </Link>
 
-        {/* Desktop navigation — hidden on mobile */}
-        <nav className="hidden border-t border-[#EEEEEE] pt-2 md:block">
+        {/* Desktop navigation — single row beside logo */}
+        <nav className="hidden flex-1 md:block">
           <ul className="flex flex-wrap items-center gap-1 text-[17px] font-bold text-[#142963]">
             <li>
               <Link
@@ -150,16 +117,30 @@ export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderPr
                 </Link>
               </li>
             ))}
-            <li>
-              <Link
-                href={`/${locale}/mix`}
-                className="inline-flex px-2.5 py-2 transition hover:text-[#2FA14B]"
-              >
-                {dict.nav.mix}
-              </Link>
-            </li>
           </ul>
         </nav>
+
+        {/* Search icon — opens overlay */}
+        <div className="hidden md:flex">
+          <HeaderSearch
+            locale={locale}
+            placeholder={dict.site.searchPlaceholder}
+            buttonLabel={dict.site.searchButton}
+          />
+        </div>
+
+        {/* Mobile hamburger */}
+        <MobileNav
+          homeHref={`/${locale}`}
+          homeLabel={dict.nav.home}
+          mixHref={`/${locale}/mix`}
+          mixLabel={dict.nav.mix}
+          navItems={navItems.map((item) => ({
+            id: item.id,
+            href: `/${locale}/category/${item.link}`,
+            label: item.title,
+          }))}
+        />
       </div>
     </header>
   );
