@@ -1,11 +1,12 @@
+import Image from "next/image";
+import Link from "next/link";
+
 import { getArticlesBySection, getAssetUrl, getHomeFeed, getSectionBySlugOrId } from "@/src/lib/api";
-import { BreakingTicker } from "@/src/components/home/breaking-ticker";
 
 export const revalidate = 120;
 import { HomeHero } from "@/src/components/home/home-hero";
 import { HomeSectionBlock } from "@/src/components/home/home-section-block";
-import { HomeSidebar } from "@/src/components/home/home-sidebar";
-import { StoryCard } from "@/src/components/home/story-card";
+import { CategorySlider } from "@/src/components/home/category-slider";
 import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
 
 const HOME_SECTION_IDS = [29, 45, 30, 39];
@@ -34,16 +35,9 @@ export default async function Home({ params }: PageProps) {
     }).format(date);
   }
 
-  const feed = await getHomeFeed(12, locale);
+  const feed = await getHomeFeed(20, locale);
   const [lead, ...rest] = feed;
-  const highlighted = rest.slice(0, 4);
-  const updates = feed.slice(0, 8);
-  const tickerItems = feed.slice(0, 6).map((item) => ({
-    id: item.id,
-    slugId: item.slugId,
-    title: item.title,
-    photoUrl: getAssetUrl(item.photoPath),
-  }));
+  const updates = feed.slice(0, 10);
   const sections = await Promise.all(
     HOME_SECTION_IDS.map(async (id) => {
       const section = await getSectionBySlugOrId(String(id), locale);
@@ -76,30 +70,62 @@ export default async function Home({ params }: PageProps) {
     )
     .slice(0, 8);
 
+  // Pick one article from each different category for the side cards (max 3)
+  const sideCards = homeSections
+    .slice(0, 3)
+    .map((group) => ({
+      ...group.stories[0],
+      sectionTitle: group.section.title,
+    }))
+    .filter((item) => item.id);
+
   return (
     <>
-    <BreakingTicker locale={locale} label={dict.ticker.breaking} items={tickerItems} />
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-4 py-8 sm:px-6 lg:px-8">
-      <section className="grid gap-6 lg:grid-cols-[1.35fr_0.9fr]">
-        <div className="space-y-6">
-          <HomeHero locale={locale} lead={lead} updates={updates} dict={{ lastMoment: dict.sidebar.lastMoment, live: dict.sidebar.live }} />
+      {/* Three-column hero area — ticker(4) | slider(6) | cards(3) */}
+      <section className="grid gap-5 lg:grid-cols-[4fr_6fr_3fr]">
+        {/* Right column (RTL first): لحظة بلحظة vertical ticker */}
+        <HomeHero locale={locale} updates={updates} dict={{ lastMoment: dict.sidebar.lastMoment, live: dict.sidebar.live }} />
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {highlighted.map((item) => (
-              <StoryCard
+        {/* Middle column: large image swiper */}
+        <CategorySlider items={sliderItems} label={dict.sidebar.latestCategories} />
+
+        {/* Left column (RTL last): cards from different categories — match slider height */}
+        <div className="flex flex-col gap-2">
+          {sideCards.map((item) => {
+            const photoUrl = getAssetUrl(item.photoPath);
+            return (
+              <Link
                 key={item.id}
                 href={`/${locale}/news/${item.slugId}`}
-                title={item.title}
-                summary={item.summary}
-                imageUrl={getAssetUrl(item.photoPath)}
-                eyebrow={item.sectionTitle}
-                compact
-              />
-            ))}
-          </div>
+                className="group relative block flex-1 overflow-hidden rounded-sm"
+              >
+                <article className="relative h-full min-h-[60px] w-full">
+                  {photoUrl ? (
+                    <Image
+                      src={photoUrl}
+                      alt={item.title}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 16vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-[#142963]" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-2.5">
+                    <span className="inline-block w-fit rounded-sm bg-[#2FA14B] px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
+                      {item.sectionTitle || "أخبار"}
+                    </span>
+                    <h3 className="line-clamp-2 text-xs font-bold leading-snug text-white drop-shadow-sm">
+                      {item.title}
+                    </h3>
+                  </div>
+                </article>
+              </Link>
+            );
+          })}
         </div>
-
-        <HomeSidebar locale={locale} dict={{ editorial: dict.sidebar.editorial, editorialTitle: dict.sidebar.editorialTitle, editorialBody: dict.sidebar.editorialBody, browseMix: dict.sidebar.browseMix, searchContent: dict.sidebar.searchContent, mostRead: dict.sidebar.mostRead, latestCategories: dict.sidebar.latestCategories }} feed={feed} sliderItems={sliderItems} />
       </section>
 
       <section className="grid gap-8">

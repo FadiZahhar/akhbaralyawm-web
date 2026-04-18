@@ -41,7 +41,7 @@ export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderPr
   return (
     <header className="relative bg-white shadow-[0_2px_28px_rgba(0,0,0,0.06)]">
       {/* Top utility bar — legacy light gray */}
-      <div className="border-b border-[#EEEEEE] bg-[#F5F6FA]">
+      <div className="header-utility-bar border-b border-[#EEEEEE] bg-[#F5F6FA]">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-2 text-xs sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[#8A8A8A]">
             {langLinks.map((link) => (

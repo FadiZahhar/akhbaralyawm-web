@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type TickerItem = {
   id: number;
@@ -17,80 +17,82 @@ type BreakingTickerProps = {
   items: TickerItem[];
 };
 
+/**
+ * Smooth CSS-translated marquee ticker.
+ * Doubles the item list for seamless infinite loop.
+ * Pauses on hover. Respects prefers-reduced-motion.
+ */
 export function BreakingTicker({ locale, label, items }: BreakingTickerProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [paused, setPaused] = useState(false);
+  const [halfWidth, setHalfWidth] = useState(0);
 
+  // Measure half-width (one copy of items) to set keyframe destination
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    let animationId: number;
-    let scrollPos = 0;
-    const speed = 0.5;
-
-    function step() {
-      if (!el) return;
-      scrollPos += speed;
-      if (scrollPos >= el.scrollWidth / 2) {
-        scrollPos = 0;
-      }
-      el.scrollLeft = scrollPos;
-      animationId = requestAnimationFrame(step);
-    }
-
-    animationId = requestAnimationFrame(step);
-
-    const pause = () => cancelAnimationFrame(animationId);
-    const resume = () => {
-      animationId = requestAnimationFrame(step);
-    };
-
-    el.addEventListener("mouseenter", pause);
-    el.addEventListener("mouseleave", resume);
-
-    return () => {
-      cancelAnimationFrame(animationId);
-      el.removeEventListener("mouseenter", pause);
-      el.removeEventListener("mouseleave", resume);
-    };
-  }, []);
+    const track = trackRef.current;
+    if (!track) return;
+    const measure = () => setHalfWidth(track.scrollWidth / 2);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [items.length]);
 
   if (items.length === 0) return null;
 
   const doubled = [...items, ...items];
 
+  // Speed: ~50px/s → duration = totalWidth / 50
+  const duration = halfWidth > 0 ? halfWidth / 50 : 40;
+
   return (
-    <div className="border-b border-[color:var(--border-soft)] bg-white">
-      <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-2.5 sm:px-6 lg:px-8">
-        <span className="shrink-0 rounded-sm bg-[color:var(--accent)] px-3 py-1 text-xs font-black text-white">
+    <div
+      className="border-b border-[color:var(--border-soft)] bg-white"
+      aria-live="off"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-2 sm:px-6 lg:px-8">
+        {/* "عاجل" badge */}
+        <span className="shrink-0 rounded bg-[#c0392b] px-3 py-1 text-xs font-black text-white">
           {label}
         </span>
-        <div
-          ref={scrollRef}
-          className="flex gap-6 overflow-hidden"
-        >
-          {doubled.map((item, i) => (
-            <Link
-              key={`${item.id}-${i}`}
-              href={`/${locale}/news/${item.slugId}`}
-              className="flex shrink-0 items-center gap-3 transition hover:text-[color:var(--accent-strong)]"
-            >
-              {item.photoUrl ? (
-                <Image
-                  src={item.photoUrl}
-                  alt=""
-                  width={48}
-                  height={48}
-                  className="h-10 w-10 shrink-0 rounded-sm object-cover"
-                />
-              ) : (
-                <span className="h-10 w-10 shrink-0 rounded-sm bg-[color:var(--panel)]" />
-              )}
-              <span className="whitespace-nowrap text-sm font-bold text-[color:var(--ink)]">
-                {item.title}
+
+        {/* Marquee viewport */}
+        <div className="relative min-w-0 flex-1 overflow-hidden">
+          <div
+            ref={trackRef}
+            className="marquee-track flex items-center whitespace-nowrap"
+            style={{
+              animationDuration: `${duration}s`,
+              animationPlayState: paused ? "paused" : "running",
+            }}
+          >
+            {doubled.map((item, i) => (
+              <span key={`${item.id}-${i}`} className="inline-flex shrink-0 items-center">
+                {/* Dot separator (skip before the very first item) */}
+                {i > 0 && (
+                  <span className="mx-3 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#2FA14B] opacity-50" />
+                )}
+                <Link
+                  href={`/${locale}/news/${item.slugId}`}
+                  className="inline-flex items-center gap-2 text-[13px] font-bold leading-6 text-[color:var(--ink)] transition-colors hover:text-[#2FA14B]"
+                >
+                  {item.photoUrl ? (
+                    <Image
+                      src={item.photoUrl}
+                      alt=""
+                      width={28}
+                      height={28}
+                      className="h-7 w-7 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="h-7 w-7 shrink-0 rounded-full bg-[color:var(--panel)]" />
+                  )}
+                  {item.title}
+                </Link>
               </span>
-            </Link>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

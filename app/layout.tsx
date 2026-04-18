@@ -5,6 +5,9 @@ import { Geist_Mono, Noto_Kufi_Arabic } from "next/font/google";
 import { PreviewModeBanner } from "@/src/components/preview-mode-banner";
 import { SiteFooter } from "@/src/components/site-footer";
 import { SiteHeader } from "@/src/components/site-header";
+import { StickyHeaderWrapper } from "@/src/components/sticky-header-wrapper";
+import { BreakingTicker } from "@/src/components/home/breaking-ticker";
+import { getHomeFeed, getAssetUrl } from "@/src/lib/api";
 import { isLocale, getDirection, getDictionary, type Locale } from "@/src/lib/i18n";
 
 import "./globals.css";
@@ -72,6 +75,14 @@ export default async function RootLayout({
   const dir = getDirection(locale);
   const dict = await getDictionary(locale);
 
+  const feed = await getHomeFeed(20, locale);
+  const tickerItems = feed.map((item) => ({
+    id: item.id,
+    slugId: item.slugId,
+    title: item.title,
+    photoUrl: getAssetUrl(item.photoPath),
+  }));
+
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -117,7 +128,10 @@ export default async function RootLayout({
         />
         <div className="min-h-full">
           {isPreviewMode ? <PreviewModeBanner activeLabel={dict.preview.active} exitLabel={dict.preview.exit} /> : null}
-          <SiteHeader locale={locale} dict={{ nav: dict.nav, site: dict.site }} />
+          <StickyHeaderWrapper>
+            <SiteHeader locale={locale} dict={{ nav: dict.nav, site: dict.site }} />
+            <BreakingTicker locale={locale} label={dict.ticker.breaking} items={tickerItems} />
+          </StickyHeaderWrapper>
           <div className="flex min-h-[calc(100vh-12rem)] flex-col">{children}</div>
           <SiteFooter locale={locale} dict={dict.footer} navDict={dict.nav} />
         </div>

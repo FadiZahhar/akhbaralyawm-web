@@ -75,11 +75,7 @@ export function CategorySlider({ items, label }: CategorySliderProps) {
   if (items.length === 0) return null;
 
   return (
-    <section className="space-y-4">
-      <h2 className="border-s-[3px] border-[#2FA14B] ps-2.5 text-lg font-bold text-[#142963]">
-        {label}
-      </h2>
-
+    <section>
       <div className="relative">
         {/* Carousel viewport */}
         <div className="overflow-hidden rounded-lg" ref={emblaRef}>
