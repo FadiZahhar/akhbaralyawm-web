@@ -44,6 +44,17 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: dict.site.description,
     metadataBase: new URL(SITE_URL),
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "any" },
+        { url: "/favicon.png", type: "image/png" },
+      ],
+      apple: "/apple-touch-icon.png",
+    },
+    openGraph: {
+      siteName: dict.site.name,
+      images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    },
   };
 }
 
@@ -66,7 +77,7 @@ export default async function RootLayout({
     "@type": "Organization",
     name: "Akhbar Alyawm",
     url: SITE_URL,
-    logo: absoluteUrl("/favicon.png"),
+    logo: absoluteUrl("/assets/img/logo.png"),
     sameAs: [
       "https://www.facebook.com/akhbaralyawm78/",
       "https://twitter.com/akhbaralyawm",

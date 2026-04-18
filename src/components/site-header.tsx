@@ -86,7 +86,7 @@ export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderPr
         <div className="flex items-center gap-4 lg:justify-between">
           <Link href={`/${locale}`} className="inline-flex shrink-0 items-center">
             <Image
-              src="/assets/img/logo.png"
+              src={locale === "fr" ? "/assets/img/logo-fr.png" : locale === "en" ? "/assets/img/logo-en.png" : "/assets/img/logo.png"}
               alt={dict.site.name}
               width={238}
               height={60}
