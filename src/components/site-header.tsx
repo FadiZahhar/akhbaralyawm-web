@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { getSections } from "@/src/lib/api";
@@ -80,15 +81,16 @@ export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderPr
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
-            <Link href={`/${locale}`} className="inline-flex items-center gap-3 text-[color:var(--ink)]">
-              <span className="rounded-sm bg-[color:var(--accent)]/10 px-3 py-1 text-xs font-bold text-[color:var(--accent)]">
-                Akhbar Al Youm
-              </span>
-              <span className="text-4xl font-extrabold tracking-tight">{dict.site.name}</span>
+            <Link href={`/${locale}`} className="inline-flex items-center gap-3">
+              <Image
+                src="/assets/img/logo.png"
+                alt={dict.site.name}
+                width={238}
+                height={60}
+                className="h-auto w-[200px]"
+                priority
+              />
             </Link>
-            <p className="max-w-2xl text-sm leading-7 text-zinc-800">
-              {dict.site.tagline}
-            </p>
           </div>
 
           <form action={`/${locale}/search`} method="get" className="flex w-full max-w-md items-center gap-2 lg:w-[380px]">
