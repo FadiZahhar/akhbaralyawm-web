@@ -74,8 +74,9 @@ async function fetchArticle(id: number, locale?: Locale): Promise<ArticleDto | n
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { locale: rawLocale, slugId } = await params;
+  const { locale: rawLocale, slugId: rawSlugId } = await params;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const slugId = decodeURIComponent(rawSlugId);
   const metaDict = await getDictionary(locale);
   const id = parseArticleIdFromSlugId(slugId);
 
@@ -113,8 +114,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ArticlePage({ params }: PageProps) {
-  const { locale: rawLocale, slugId } = await params;
+  const { locale: rawLocale, slugId: rawSlugId } = await params;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const slugId = decodeURIComponent(rawSlugId);
   const id = parseArticleIdFromSlugId(slugId);
 
   if (!id) {
@@ -128,13 +130,7 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   if (slugId !== article.slugId) {
-    // Only redirect if the numeric ID also differs or one side is purely numeric — 
-    // avoids infinite redirect from invisible Unicode normalization mismatches.
-    const urlId = parseArticleIdFromSlugId(slugId);
-    const artId = parseArticleIdFromSlugId(article.slugId);
-    if (urlId !== artId || /^\d+$/.test(slugId)) {
-      permanentRedirect(`/${locale}/news/${article.slugId}`);
-    }
+    permanentRedirect(`/${locale}/news/${article.slugId}`);
   }
 
   const photoUrl = getAssetUrl(article.photoPath);

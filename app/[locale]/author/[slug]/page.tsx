@@ -45,8 +45,9 @@ function parsePageValue(rawPage: string | undefined): number {
 }
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
-  const { locale: rawLocale, slug } = await params;
+  const { locale: rawLocale, slug: rawSlug } = await params;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const slug = decodeURIComponent(rawSlug);
   const { page: rawPage } = await searchParams;
   const page = parsePageValue(rawPage);
   const author = await getAuthorBySlugOrId(slug, locale);
@@ -68,8 +69,9 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 }
 
 export default async function AuthorPage({ params, searchParams }: PageProps) {
-  const { locale: rawLocale, slug } = await params;
+  const { locale: rawLocale, slug: rawSlug } = await params;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const slug = decodeURIComponent(rawSlug);
   const dict = await getDictionary(locale);
   const { page: rawPage } = await searchParams;
   const page = parsePageValue(rawPage);

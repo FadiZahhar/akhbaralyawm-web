@@ -57,8 +57,9 @@ function parsePageValue(rawPage: string | undefined): number {
 }
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
-  const { locale: rawLocale, slug } = await params;
+  const { locale: rawLocale, slug: rawSlug } = await params;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const slug = decodeURIComponent(rawSlug);
   const { page: rawPage } = await searchParams;
   const page = parsePageValue(rawPage);
   const metaDict = await getDictionary(locale);
@@ -81,8 +82,9 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 }
 
 export default async function CategoryPage({ params, searchParams }: PageProps) {
-  const { locale: rawLocale, slug } = await params;
+  const { locale: rawLocale, slug: rawSlug } = await params;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
+  const slug = decodeURIComponent(rawSlug);
   const { page: rawPage } = await searchParams;
   const page = parsePageValue(rawPage);
   const pageSize = getCategoryArchivePageSize();
