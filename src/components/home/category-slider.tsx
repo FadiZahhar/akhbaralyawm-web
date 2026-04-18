@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Image from "next/image";
 import Link from "next/link";
+import { shimmerPlaceholder } from "@/src/lib/shimmer";
 
 type SlideItem = {
   id: number;
@@ -92,6 +93,8 @@ export function CategorySlider({ items, label }: CategorySliderProps) {
                       alt={item.title}
                       fill
                       sizes="(max-width: 768px) 100vw, 400px"
+                      placeholder="blur"
+                      blurDataURL={shimmerPlaceholder(400, 300)}
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (

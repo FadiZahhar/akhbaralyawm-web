@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import type { FeedItemDto } from "@/src/lib/api";
 import { getAssetUrl } from "@/src/lib/api";
+import { shimmerPlaceholder } from "@/src/lib/shimmer";
 
 type MostReadWidgetProps = {
   locale: string;
@@ -39,6 +40,8 @@ export function MostReadWidget({ locale, label, items }: MostReadWidgetProps) {
                     alt={item.title}
                     fill
                     sizes="56px"
+                    placeholder="blur"
+                    blurDataURL={shimmerPlaceholder(56, 56)}
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 ) : (

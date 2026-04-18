@@ -79,7 +79,7 @@ export default async function MixPage({ params }: PageProps) {
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-bold text-zinc-900">{group.section.title}</h2>
             <Link
-              href={`/${locale}/category/${group.section.link}`}
+              href={`/${locale}/category/${group.section.slug}`}
               className="text-sm font-medium text-emerald-700 hover:text-emerald-800"
             >
               {dict.common.showMore}

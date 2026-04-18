@@ -11,9 +11,11 @@ import {
   getAssetUrl,
   getHomeFeed,
   getPreviewArticleById,
+  getSectionSlug,
   type ArticleDto,
 } from "@/src/lib/api";
 import { Breadcrumbs } from "@/src/components/breadcrumbs";
+import { FallbackNotice } from "@/src/components/fallback-notice";
 import { SocialShare } from "@/src/components/article/social-share";
 import { RelatedArticles } from "@/src/components/article/related-articles";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
@@ -126,13 +128,20 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   if (slugId !== article.slugId) {
-    permanentRedirect(`/${locale}/news/${article.slugId}`);
+    // Only redirect if the numeric ID also differs or one side is purely numeric — 
+    // avoids infinite redirect from invisible Unicode normalization mismatches.
+    const urlId = parseArticleIdFromSlugId(slugId);
+    const artId = parseArticleIdFromSlugId(article.slugId);
+    if (urlId !== artId || /^\d+$/.test(slugId)) {
+      permanentRedirect(`/${locale}/news/${article.slugId}`);
+    }
   }
 
   const photoUrl = getAssetUrl(article.photoPath);
   const canonicalUrl = absoluteUrl(`/${locale}/news/${article.slugId}`);
   const dict = await getDictionary(locale);
   const mostRead = await getHomeFeed(5, locale);
+  const sectionSlug = article.sectionLink ? await getSectionSlug(article.sectionLink, locale) : "";
 
   const articleJsonLd = {
     "@context": "https://schema.org",
@@ -165,7 +174,7 @@ export default async function ArticlePage({ params }: PageProps) {
               "@type": "ListItem",
               position: 2,
               name: article.sectionTitle,
-              item: absoluteUrl(`/${locale}/category/${article.sectionLink}`),
+              item: absoluteUrl(`/${locale}/category/${sectionSlug}`),
             },
           ]
         : []),
@@ -202,10 +211,12 @@ export default async function ArticlePage({ params }: PageProps) {
         <Breadcrumbs items={[
           { label: dict.nav.home, href: `/${locale}` },
           ...(article.sectionTitle && article.sectionLink
-            ? [{ label: article.sectionTitle, href: `/${locale}/category/${article.sectionLink}` }]
+            ? [{ label: article.sectionTitle, href: `/${locale}/category/${sectionSlug}` }]
             : []),
           { label: article.title },
         ]} />
+
+        <FallbackNotice langMeta={article.langMeta} locale={locale} message={dict.fallback.notice} />
 
         <header className="space-y-3 rounded-sm border border-[color:var(--border-soft)] bg-white px-5 py-6 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:px-6">
           {article.sectionTitle ? (
@@ -228,6 +239,8 @@ export default async function ArticlePage({ params }: PageProps) {
               height={500}
               className="h-auto w-full object-cover"
               priority
+              placeholder="blur"
+              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTAwIiBoZWlnaHQ9IjUwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlMmU1ZWMiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2YwZjJmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZTJlNWVjIiBvZmZzZXQ9IjgwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI5MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjZTJlNWVjIi8+PC9zdmc+"
             />
           </div>
         ) : null}

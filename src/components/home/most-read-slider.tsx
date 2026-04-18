@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Image from "next/image";
 import Link from "next/link";
+import { shimmerPlaceholder } from "@/src/lib/shimmer";
 
 type MostReadItem = {
   id: number;
@@ -116,6 +117,8 @@ export function MostReadSlider({ label, items }: MostReadSliderProps) {
                         alt={item.title}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        placeholder="blur"
+                        blurDataURL={shimmerPlaceholder(600, 375)}
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (

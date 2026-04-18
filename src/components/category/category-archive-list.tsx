@@ -118,6 +118,8 @@ export function CategoryArchiveList({
                   alt=""
                   width={1200}
                   height={675}
+                  placeholder="blur"
+                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2NzUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIj48c3RvcCBzdG9wLWNvbG9yPSIjZTJlNWVjIiBvZmZzZXQ9IjIwJSIvPjxzdG9wIHN0b3AtY29sb3I9IiNmMGYyZjUiIG9mZnNldD0iNTAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2UyZTVlYyIgb2Zmc2V0PSI4MCUiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2NzUiIGZpbGw9IiNlMmU1ZWMiLz48L3N2Zz4="
                   className="aspect-[16/10] w-full bg-zinc-100 object-cover"
                 />
               ) : (

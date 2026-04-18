@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Image from "next/image";
 import Link from "next/link";
+import { shimmerPlaceholder } from "@/src/lib/shimmer";
 
 type FeaturedItem = {
   id: number;
@@ -126,6 +127,8 @@ export function FeaturedSectionSlider({
                       alt={item.title}
                       fill
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      placeholder="blur"
+                      blurDataURL={shimmerPlaceholder(400, 300)}
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (

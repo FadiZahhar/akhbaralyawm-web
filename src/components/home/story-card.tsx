@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { shimmerPlaceholder } from "@/src/lib/shimmer";
 
 type StoryCardProps = {
   href: string;
@@ -19,6 +20,8 @@ export function StoryCard({ href, title, summary, imageUrl, eyebrow, compact = f
           alt={title}
           width={1200}
           height={675}
+          placeholder="blur"
+          blurDataURL={shimmerPlaceholder(1200, 675)}
           className={compact ? "aspect-[16/11] w-full object-cover" : "aspect-[16/10] w-full object-cover"}
         />
       ) : (

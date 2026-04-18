@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { getArticlesBySection, getAssetUrl } from "@/src/lib/api";
+import { shimmerPlaceholder } from "@/src/lib/shimmer";
 import type { Locale } from "@/src/lib/i18n";
 
 type RelatedArticlesProps = {
@@ -38,6 +39,8 @@ export async function RelatedArticles({ locale, sectionLink, excludeId, label }:
                     alt={item.title}
                     fill
                     sizes="(max-width: 640px) 100vw, 50vw"
+                    placeholder="blur"
+                    blurDataURL={shimmerPlaceholder(600, 450)}
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (

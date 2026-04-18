@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import type { FeedItemDto } from "@/src/lib/api";
 import { getAssetUrl } from "@/src/lib/api";
+import { shimmerPlaceholder } from "@/src/lib/shimmer";
 
 type HomeHeroProps = {
   locale: string;
@@ -58,6 +59,8 @@ export function HomeHero({ locale, updates, dict }: HomeHeroProps) {
                     alt=""
                     fill
                     sizes="40px"
+                    placeholder="blur"
+                    blurDataURL={shimmerPlaceholder(40, 40)}
                     className="object-cover"
                   />
                 </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 export const dynamic = 'force-dynamic';
 
 import { searchArticlesPaginated } from "@/src/lib/api";
+import { FallbackNotice } from "@/src/components/fallback-notice";
 import { SearchResultsList } from "@/src/components/search/search-results-list";
 import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 
@@ -123,6 +124,10 @@ export default async function SearchPage({ params: paramsPromise, searchParams }
           </nav>
         ) : null}
       </header>
+
+      {feed ? (
+        <FallbackNotice langMeta={feed.langMeta} locale={locale} message={dict.fallback.notice} />
+      ) : null}
 
       {query ? (
         <SearchResultsList

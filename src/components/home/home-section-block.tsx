@@ -24,7 +24,7 @@ export function HomeSectionBlock({ locale, section, stories, formatDate, dict }:
           {section.title}
         </h2>
         <Link
-          href={`/${locale}/category/${section.link}`}
+          href={`/${locale}/category/${section.slug}`}
           className="rounded-sm border border-[color:var(--border-soft)] bg-white px-4 py-2 text-sm font-extrabold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent-strong)]"
         >
           {dict.showMore}

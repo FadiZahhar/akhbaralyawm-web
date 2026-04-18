@@ -93,6 +93,8 @@ export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderPr
             height={60}
             className="h-auto w-[200px]"
             priority
+            placeholder="blur"
+            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjM4IiBoZWlnaHQ9IjYwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIyMzgiIGhlaWdodD0iNjAiIGZpbGw9IiNmNWY2ZmEiLz48L3N2Zz4="
           />
         </Link>
 
@@ -110,7 +112,7 @@ export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderPr
             {navItems.map((item) => (
               <li key={item.id}>
                 <Link
-                  href={`/${locale}/category/${item.link}`}
+                  href={`/${locale}/category/${item.slug}`}
                   className="inline-flex px-2.5 py-2 transition hover:text-[#2FA14B]"
                 >
                   {item.title}
@@ -137,7 +139,7 @@ export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderPr
           mixLabel={dict.nav.mix}
           navItems={navItems.map((item) => ({
             id: item.id,
-            href: `/${locale}/category/${item.link}`,
+            href: `/${locale}/category/${item.slug}`,
             label: item.title,
           }))}
         />

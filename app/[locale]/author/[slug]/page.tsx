@@ -6,6 +6,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 export const revalidate = 120;
 
 import { getArticlesByAuthor, getAssetUrl, getAuthorBySlugOrId } from "@/src/lib/api";
+import { FallbackNotice } from "@/src/components/fallback-notice";
 import { AuthorArchiveList } from "@/src/components/author/author-archive-list";
 import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
 
@@ -60,7 +61,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     title: author.title,
     description: `${(await getDictionary(locale)).author.archive} - ${author.title}`,
     alternates: {
-      canonical: page > 1 ? `/${locale}/author/${author.link}?page=${page}` : `/${locale}/author/${author.link}`,
+      canonical: page > 1 ? `/${locale}/author/${author.slug}?page=${page}` : `/${locale}/author/${author.slug}`,
     },
     openGraph: { locale: getOgLocale(locale) },
   };
@@ -79,8 +80,8 @@ export default async function AuthorPage({ params, searchParams }: PageProps) {
     notFound();
   }
 
-  if (slug !== author.link) {
-    permanentRedirect(`/${locale}/author/${author.link}`);
+  if (slug !== author.slug) {
+    permanentRedirect(`/${locale}/author/${author.slug}`);
   }
 
   const imageUrl = getAssetUrl(author.photoPath);
@@ -96,6 +97,8 @@ export default async function AuthorPage({ params, searchParams }: PageProps) {
         <span>{dict.nav.authors}</span>
       </nav>
 
+      <FallbackNotice langMeta={author.langMeta} locale={locale} message={dict.fallback.notice} />
+
       <section className="overflow-hidden rounded-sm border border-[color:var(--border-soft)] bg-white shadow-[0_16px_46px_rgba(13,35,77,0.07)]">
         <div className="grid gap-6 p-5 md:grid-cols-[220px_minmax(0,1fr)] md:p-7">
           <div>
@@ -105,6 +108,8 @@ export default async function AuthorPage({ params, searchParams }: PageProps) {
                 alt={author.title}
                 width={800}
                 height={800}
+                placeholder="blur"
+                blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgZmlsbD0iI2UyZTVlYyIvPjwvc3ZnPg=="
                 className="aspect-square w-full rounded-sm border border-[color:var(--border-soft)] bg-zinc-100 object-cover"
               />
             ) : (
@@ -134,7 +139,7 @@ export default async function AuthorPage({ params, searchParams }: PageProps) {
         <AuthorArchiveList
           locale={locale}
           authorId={String(author.id)}
-          authorLink={author.link}
+          authorLink={author.slug}
           initialItems={articles?.items ?? []}
           initialPage={page}
           pageSize={pageSize}

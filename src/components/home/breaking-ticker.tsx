@@ -83,6 +83,8 @@ export function BreakingTicker({ locale, label, items }: BreakingTickerProps) {
                       alt=""
                       width={28}
                       height={28}
+                      placeholder="blur"
+                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjgiIGhlaWdodD0iMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjI4IiBoZWlnaHQ9IjI4IiByeD0iMTQiIGZpbGw9IiNlMmU1ZWMiLz48L3N2Zz4="
                       className="h-7 w-7 shrink-0 rounded-full object-cover"
                     />
                   ) : (

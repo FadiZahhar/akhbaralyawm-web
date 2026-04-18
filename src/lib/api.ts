@@ -1,6 +1,7 @@
 import DOMPurify from "isomorphic-dompurify";
 
 import type { Locale } from "./i18n";
+import { buildArticleSlug, buildSectionSlug, isNumericSlug } from "./slugify";
 
 // ---------------------------------------------------------------------------
 // Typed API errors
@@ -45,6 +46,7 @@ export type ArticleDto = {
   bodyHtml: string;
   disdate: string;
   statusId: number;
+  langMeta: LanguageMeta;
 };
 
 export type FeedItemDto = {
@@ -57,23 +59,32 @@ export type FeedItemDto = {
   sectionTitle: string;
   sectionLink: string;
   tag: string | null;
+  langMeta: LanguageMeta;
 };
 
 export type SectionDto = {
   id: number;
   title: string;
+  /** Original link from API — used for API calls */
   link: string;
+  /** SEO-friendly slug for URLs */
+  slug: string;
   orderorder: number;
   active?: boolean;
+  langMeta: LanguageMeta;
 };
 
 export type AuthorDto = {
   id: number;
   title: string;
+  /** Original link from API — used for API calls */
   link: string;
+  /** SEO-friendly slug for URLs */
+  slug: string;
   photoPath: string | null;
   bodyHtml: string;
   orderorder: number;
+  langMeta: LanguageMeta;
 };
 
 export type PaginatedFeedDto = {
@@ -84,6 +95,7 @@ export type PaginatedFeedDto = {
     total: number;
     totalPages: number;
   } | null;
+  langMeta: LanguageMeta;
 };
 
 export type CmsPageDto = {
@@ -113,6 +125,9 @@ type RawArticle = {
   body?: string;
   disdate?: string;
   statusId?: number;
+  requestedLanguage?: string;
+  contentLanguage?: string;
+  fallbackUsed?: boolean;
 };
 
 type RawFeedItem = {
@@ -160,10 +175,16 @@ type RawPagination = {
 type RawPaginatedFeed = {
   data: RawFeedItem[];
   pagination?: RawPagination;
+  requestedLanguage?: string;
+  contentLanguage?: string;
+  fallbackUsed?: boolean;
 };
 
 type RawListResponse<T> = {
   data: T[];
+  requestedLanguage?: string;
+  contentLanguage?: string;
+  fallbackUsed?: boolean;
 };
 
 type RawSearchResponse = RawPaginatedFeed | RawListResponse<RawFeedItem>;
@@ -339,6 +360,33 @@ function logFallback(context: string, langMeta: LanguageMeta): void {
 }
 
 // ---------------------------------------------------------------------------
+// LanguageMeta extraction
+// ---------------------------------------------------------------------------
+
+/** Default langMeta when the backend does not yet return language metadata. */
+function defaultLangMeta(locale: Locale = "ar"): LanguageMeta {
+  return {
+    requestedLanguage: locale,
+    contentLanguage: "ar",
+    fallbackUsed: locale !== "ar",
+  };
+}
+
+/** Extract langMeta from a raw API response, with sensible defaults. */
+function extractLangMeta(
+  raw: { requestedLanguage?: string; contentLanguage?: string; fallbackUsed?: boolean },
+  locale: Locale = "ar",
+): LanguageMeta {
+  const contentLang = (raw.contentLanguage ?? "ar") as Locale;
+  const requestedLang = (raw.requestedLanguage ?? locale) as Locale;
+  return {
+    requestedLanguage: requestedLang,
+    contentLanguage: contentLang,
+    fallbackUsed: raw.fallbackUsed ?? (requestedLang !== contentLang),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // HTML sanitization
 // ---------------------------------------------------------------------------
 
@@ -359,71 +407,101 @@ function sanitizeHtml(html: string): string {
   });
 }
 
-function normalizeArticle(raw: RawArticle): ArticleDto {
+function normalizeArticle(raw: RawArticle, locale: Locale = "ar"): ArticleDto {
   assertRawArticle(raw, "article");
 
+  const rawSlug = raw.slugId ?? "";
+  const slugId = rawSlug && !isNumericSlug(rawSlug)
+    ? rawSlug
+    : buildArticleSlug(raw.title, raw.id);
+
+  const langMeta = extractLangMeta(raw, locale);
+  logFallback(`article ${raw.id}`, langMeta);
+
+  const bodySource = raw.bodyHtml || raw.body || "";
+
   return {
     id: raw.id,
     title: raw.title,
-    slugId: raw.slugId ?? String(raw.id),
+    slugId,
     sectionId: raw.sectionId ?? 0,
-    sectionTitle: raw.sectionTitle ?? raw.category ?? "",
-    sectionLink: raw.sectionLink ?? raw.categoryLink ?? "",
+    sectionTitle: raw.sectionTitle || raw.category || "",
+    sectionLink: raw.sectionLink || raw.categoryLink || "",
     photoPath: raw.photoPath ?? raw.photo ?? null,
-    bodyHtml: sanitizeHtml(raw.bodyHtml ?? raw.body ?? ""),
+    bodyHtml: sanitizeHtml(bodySource),
     disdate: raw.disdate ?? "",
     statusId: raw.statusId ?? 0,
+    langMeta,
   };
 }
 
-function normalizeFeedItem(raw: RawFeedItem): FeedItemDto {
+function normalizeFeedItem(raw: RawFeedItem, locale: Locale = "ar"): FeedItemDto {
   assertRawFeedItem(raw, "feed item");
 
+  const rawSlug = raw.slugId ?? raw.slug ?? "";
+  const slugId = rawSlug && !isNumericSlug(rawSlug)
+    ? rawSlug
+    : buildArticleSlug(raw.title, raw.id);
+
   return {
     id: raw.id,
     title: raw.title,
-    slugId: raw.slugId ?? raw.slug ?? String(raw.id),
-    summary: raw.smallbody ?? "",
+    slugId,
+    summary: raw.smallbody || "",
     photoPath: raw.photoPath ?? raw.photo ?? null,
     disdate: raw.disdate ?? "",
-    sectionTitle: raw.sectionTitle ?? raw.section_title ?? raw.category ?? "",
-    sectionLink: raw.sectionLink ?? raw.section_link ?? raw.categoryLink ?? "",
+    sectionTitle: raw.sectionTitle || raw.section_title || raw.category || "",
+    sectionLink: raw.sectionLink || raw.section_link || raw.categoryLink || "",
     tag: raw.tag ?? null,
+    langMeta: defaultLangMeta(locale),
   };
 }
 
-function normalizeSection(raw: RawSection): SectionDto {
+function normalizeSection(raw: RawSection, locale: Locale = "ar"): SectionDto {
   assertRawSection(raw, "section");
 
+  const link = raw.link;
+  const slug = isNumericSlug(link) ? buildSectionSlug(raw.title, raw.id) : link;
+
   return {
     id: raw.id,
     title: raw.title,
-    link: raw.link,
+    link,
+    slug,
     orderorder: raw.orderorder,
     active: raw.active,
+    langMeta: defaultLangMeta(locale),
   };
 }
 
-function normalizeAuthor(raw: RawAuthor): AuthorDto {
+function normalizeAuthor(raw: RawAuthor, locale: Locale = "ar"): AuthorDto {
   assertRawAuthor(raw, "author");
+
+  const link = raw.link;
+  const slug = isNumericSlug(link) ? buildSectionSlug(raw.title, raw.id) : link;
 
   return {
     id: raw.id,
     title: raw.title,
-    link: raw.link,
+    link,
+    slug,
     photoPath: raw.photo ?? null,
-    bodyHtml: sanitizeHtml(raw.body ?? ""),
+    bodyHtml: sanitizeHtml(raw.body || ""),
     orderorder: raw.orderorder,
+    langMeta: defaultLangMeta(locale),
   };
 }
 
-function normalizePaginatedFeed(raw: RawPaginatedFeed): PaginatedFeedDto {
+function normalizePaginatedFeed(raw: RawPaginatedFeed, locale: Locale = "ar"): PaginatedFeedDto {
   if (!Array.isArray(raw.data)) {
     throw new Error("Malformed paginated feed payload: data must be an array");
   }
 
+  const langMeta = extractLangMeta(raw, locale);
+  logFallback("paginated feed", langMeta);
+
   return {
-    items: raw.data.map(normalizeFeedItem),
+    items: raw.data.map((item) => normalizeFeedItem(item, locale)),
     pagination: raw.pagination
       ? {
           page: raw.pagination.page,
@@ -432,27 +510,21 @@ function normalizePaginatedFeed(raw: RawPaginatedFeed): PaginatedFeedDto {
           totalPages: raw.pagination.total_pages,
         }
       : null,
+    langMeta,
   };
 }
 
 function normalizeCmsPage(raw: RawCmsPage, locale: Locale = "ar"): CmsPageDto {
   assertRawCmsPage(raw, "CMS page");
 
-  const contentLang = (raw.contentLanguage ?? "ar") as Locale;
-  const requestedLang = (raw.requestedLanguage ?? locale) as Locale;
-  const langMeta: LanguageMeta = {
-    requestedLanguage: requestedLang,
-    contentLanguage: contentLang,
-    fallbackUsed: raw.fallbackUsed ?? (requestedLang !== contentLang),
-  };
-
+  const langMeta = extractLangMeta(raw, locale);
   logFallback(`CMS page ${raw.id}`, langMeta);
 
   return {
     id: raw.id,
     title: raw.title,
     slugId: raw.slugId ?? String(raw.id),
-    bodyHtml: sanitizeHtml(raw.bodyHtml ?? raw.body ?? ""),
+    bodyHtml: sanitizeHtml(raw.bodyHtml || raw.body || ""),
     updatedAt: raw.updatedAt ?? raw.updated_at ?? "",
     langMeta,
   };
@@ -463,7 +535,7 @@ export async function getArticleById(id: number, locale?: Locale): Promise<Artic
   const raw = await fetchOptionalJson<RawArticle>(url, {
     headers: buildLocaleHeaders(locale),
   });
-  return raw ? normalizeArticle(raw) : null;
+  return raw ? normalizeArticle(raw, locale) : null;
 }
 
 export async function getPreviewArticleById(
@@ -478,7 +550,7 @@ export async function getPreviewArticleById(
       ...buildLocaleHeaders(locale),
     },
   });
-  return raw ? normalizeArticle(raw) : null;
+  return raw ? normalizeArticle(raw, locale) : null;
 }
 
 export async function mintPreviewToken(id: number): Promise<string> {
@@ -525,7 +597,7 @@ export async function getHomeFeed(limit = 12, locale?: Locale): Promise<FeedItem
     headers: buildLocaleHeaders(locale),
   });
   assertDataArray(response, "home feed");
-  return response.data.map((item) => normalizeFeedItem(item as RawFeedItem));
+  return response.data.map((item) => normalizeFeedItem(item as RawFeedItem, locale));
 }
 
 export async function getSections(locale?: Locale): Promise<SectionDto[]> {
@@ -534,20 +606,52 @@ export async function getSections(locale?: Locale): Promise<SectionDto[]> {
     headers: buildLocaleHeaders(locale),
   });
   assertDataArray(response, "sections");
-  return response.data.map((item) => normalizeSection(item as RawSection));
+  return response.data.map((item) => normalizeSection(item as RawSection, locale));
+}
+
+/**
+ * Resolve a section's API link to its SEO-friendly slug.
+ * Falls back to the original link if the section isn't found.
+ */
+export async function getSectionSlug(sectionLink: string, locale?: Locale): Promise<string> {
+  if (!sectionLink) return sectionLink;
+  const sections = await getSections(locale);
+  const match = sections.find((s) => s.link === sectionLink);
+  return match ? match.slug : sectionLink;
 }
 
 export async function getSectionBySlugOrId(slugOrId: string, locale?: Locale): Promise<SectionDto | null> {
+  // Pure numeric ID — fetch directly by ID
   if (/^\d+$/.test(slugOrId)) {
     const url = applyLocale(createUrl("/v1/sections.ashx", { id: slugOrId }), locale);
     const response = await fetchOptionalJson<RawSection>(url, {
       headers: buildLocaleHeaders(locale),
     });
-    return response ? normalizeSection(response) : null;
+    return response ? normalizeSection(response, locale) : null;
   }
 
   const sections = await getSections(locale);
-  return sections.find((section) => section.link === slugOrId) ?? null;
+
+  // Try exact match on original API link first
+  const byLink = sections.find((section) => section.link === slugOrId);
+  if (byLink) return byLink;
+
+  // Try match on generated SEO slug
+  const bySlug = sections.find((section) => section.slug === slugOrId);
+  if (bySlug) return bySlug;
+
+  // Try extracting trailing numeric ID from a slugified URL (e.g., "سياسة-45")
+  const trailingIdMatch = slugOrId.match(/-(\d+)$/);
+  if (trailingIdMatch) {
+    const id = trailingIdMatch[1];
+    const url = applyLocale(createUrl("/v1/sections.ashx", { id }), locale);
+    const response = await fetchOptionalJson<RawSection>(url, {
+      headers: buildLocaleHeaders(locale),
+    });
+    return response ? normalizeSection(response, locale) : null;
+  }
+
+  return null;
 }
 
 export async function getArticlesBySection(
@@ -564,7 +668,7 @@ export async function getArticlesBySection(
   const response = await fetchJson<RawPaginatedFeed>(url, {
     headers: buildLocaleHeaders(locale),
   });
-  return normalizePaginatedFeed(response);
+  return normalizePaginatedFeed(response, locale);
 }
 
 export async function searchArticles(query: string, limit = 12, locale?: Locale): Promise<FeedItemDto[]> {
@@ -588,7 +692,9 @@ export async function searchArticlesPaginated(
   assertDataArray(response, "search");
 
   if ("pagination" in response || "data" in response) {
-    const list = response.data.map(normalizeFeedItem);
+    const langMeta = extractLangMeta(response as RawListResponse<RawFeedItem>, locale);
+    logFallback("search", langMeta);
+    const list = response.data.map((item) => normalizeFeedItem(item, locale));
     const pagination = "pagination" in response && response.pagination
       ? {
           page: response.pagination.page,
@@ -606,6 +712,7 @@ export async function searchArticlesPaginated(
     return {
       items: list,
       pagination,
+      langMeta,
     };
   }
 
@@ -617,16 +724,38 @@ export async function searchArticlesPaginated(
       total: 0,
       totalPages: 1,
     },
+    langMeta: defaultLangMeta(locale),
   };
 }
 
 export async function getAuthorBySlugOrId(slugOrId: string, locale?: Locale): Promise<AuthorDto | null> {
-  const params: Record<string, string> = /^\d+$/.test(slugOrId) ? { id: slugOrId } : { link: slugOrId };
-  const url = applyLocale(createUrl("/v1/authors.ashx", params), locale);
+  // Pure numeric ID
+  if (/^\d+$/.test(slugOrId)) {
+    const url = applyLocale(createUrl("/v1/authors.ashx", { id: slugOrId }), locale);
+    const response = await fetchOptionalJson<RawAuthor>(url, {
+      headers: buildLocaleHeaders(locale),
+    });
+    return response ? normalizeAuthor(response, locale) : null;
+  }
+
+  // Try original link value
+  const url = applyLocale(createUrl("/v1/authors.ashx", { link: slugOrId }), locale);
   const response = await fetchOptionalJson<RawAuthor>(url, {
     headers: buildLocaleHeaders(locale),
   });
-  return response ? normalizeAuthor(response) : null;
+  if (response) return normalizeAuthor(response, locale);
+
+  // Try extracting trailing numeric ID from slugified URL (e.g., "author-name-42")
+  const trailingIdMatch = slugOrId.match(/-(\d+)$/);
+  if (trailingIdMatch) {
+    const idUrl = applyLocale(createUrl("/v1/authors.ashx", { id: trailingIdMatch[1] }), locale);
+    const idResponse = await fetchOptionalJson<RawAuthor>(idUrl, {
+      headers: buildLocaleHeaders(locale),
+    });
+    return idResponse ? normalizeAuthor(idResponse, locale) : null;
+  }
+
+  return null;
 }
 
 export async function getCmsPageById(id: number, locale?: Locale): Promise<CmsPageDto | null> {
@@ -653,7 +782,7 @@ export async function getArticlesByAuthor(
   const response = await fetchOptionalJson<RawPaginatedFeed>(url, {
     headers: buildLocaleHeaders(locale),
   });
-  return response ? normalizePaginatedFeed(response) : null;
+  return response ? normalizePaginatedFeed(response, locale) : null;
 }
 
 export function getAssetUrl(photoPath: string | null | undefined): string | null {

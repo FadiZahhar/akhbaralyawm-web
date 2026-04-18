@@ -149,6 +149,131 @@ a {
   animation: modal-scale-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ============================================
+   Page preloader — branded loading screen
+   ============================================ */
+.page-preloader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--page-bg);
+  z-index: 9998;
+}
+.preloader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Spinner container */
+.preloader-spinner {
+  position: relative;
+  width: 90px;
+  height: 90px;
+}
+
+/* Outer ring — navy, spins clockwise */
+.spinner-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid transparent;
+}
+.spinner-ring-outer {
+  border-top-color: #142963;
+  border-right-color: #142963;
+  animation: spinner-rotate 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Inner ring — green, spins counter-clockwise */
+.spinner-ring-inner {
+  inset: 12px;
+  border-bottom-color: #2FA14B;
+  border-left-color: #2FA14B;
+  animation: spinner-rotate 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite reverse;
+}
+
+/* Center dot — pulsing accent */
+.spinner-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #2FA14B;
+  animation: spinner-dot-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes spinner-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes spinner-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.5); opacity: 0.4; }
+}
+
+.preloader-bar {
+  width: 120px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--border-soft);
+  overflow: hidden;
+}
+.preloader-bar-fill {
+  width: 40%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #142963, #2FA14B);
+  animation: preloader-slide 1.2s ease-in-out infinite;
+}
+@keyframes preloader-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner-ring-outer,
+  .spinner-ring-inner,
+  .spinner-dot,
+  .preloader-bar-fill {
+    animation: none !important;
+  }
+  .preloader-bar-fill { width: 100%; }
+}
+
+/* ============================================
+   Route progress bar — top of viewport
+   ============================================ */
+.route-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  background: transparent;
+  pointer-events: none;
+}
+.route-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2FA14B, #142963);
+  border-radius: 0 2px 2px 0;
+  transition: width 0.2s ease-out;
+  box-shadow: 0 0 8px rgba(47, 161, 75, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-progress-fill {
+    transition: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .video-play-btn { animation: none !important; }
   .video-modal-overlay { animation: none !important; }

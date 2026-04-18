@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Image from "next/image";
+import { shimmerPlaceholder } from "@/src/lib/shimmer";
 
 type VideoItem = {
   id: number;
@@ -117,6 +118,8 @@ export function VideoPrograms({ sectionTitle, items }: VideoProgramsProps) {
                           alt={item.title}
                           fill
                           sizes="(max-width: 640px) 100vw, 50vw"
+                          placeholder="blur"
+                          blurDataURL={shimmerPlaceholder(640, 360)}
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (

@@ -49,11 +49,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const sectionRoutes: MetadataRoute.Sitemap = sections
       .filter((section) => section.link && section.link !== "/")
       .map((section) => ({
-        url: absoluteUrl(`/${locale}/category/${section.link}`),
+        url: absoluteUrl(`/${locale}/category/${section.slug}`),
         lastModified: now,
         changeFrequency: "daily" as const,
         priority: 0.8,
-        alternates: { languages: buildAlternates(`/category/${section.link}`) },
+        alternates: { languages: buildAlternates(`/category/${section.slug}`) },
       }));
 
     const articleRoutes: MetadataRoute.Sitemap = feed.map((item) => ({

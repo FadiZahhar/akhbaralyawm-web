@@ -7,6 +7,7 @@ import { SiteFooter } from "@/src/components/site-footer";
 import { SiteHeader } from "@/src/components/site-header";
 import { StickyHeaderWrapper } from "@/src/components/sticky-header-wrapper";
 import { BreakingTicker } from "@/src/components/home/breaking-ticker";
+import { RouteProgressBar } from "@/src/components/route-progress";
 import { getHomeFeed, getAssetUrl } from "@/src/lib/api";
 import { isLocale, getDirection, getDictionary, type Locale } from "@/src/lib/i18n";
 
@@ -127,6 +128,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         <div className="min-h-full">
+          <RouteProgressBar />
           {isPreviewMode ? <PreviewModeBanner activeLabel={dict.preview.active} exitLabel={dict.preview.exit} /> : null}
           <StickyHeaderWrapper>
             <SiteHeader locale={locale} dict={{ nav: dict.nav, site: dict.site }} />

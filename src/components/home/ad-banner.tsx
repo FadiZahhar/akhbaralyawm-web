@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { shimmerPlaceholder } from "@/src/lib/shimmer";
 
 export type AdBannerItem = {
   imageUrl: string;
@@ -36,6 +37,8 @@ export function AdBanner({ banner }: AdBannerProps) {
           width={900}
           height={232}
           sizes="(max-width: 900px) 100vw, 900px"
+          placeholder="blur"
+          blurDataURL={shimmerPlaceholder(900, 232)}
           className="h-auto w-full rounded-lg transition-opacity duration-200 group-hover:opacity-90"
           priority={false}
         />

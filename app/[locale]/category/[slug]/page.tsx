@@ -6,6 +6,7 @@ export const revalidate = 120;
 
 import { getArticlesBySection, getHomeFeed, getSectionBySlugOrId } from "@/src/lib/api";
 import { Breadcrumbs } from "@/src/components/breadcrumbs";
+import { FallbackNotice } from "@/src/components/fallback-notice";
 import { CategoryArchiveList } from "@/src/components/category/category-archive-list";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
 import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
@@ -73,7 +74,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     title: section.title,
     description: metaDict.category.totalArticles.replace("{count}", section.title),
     alternates: {
-      canonical: page > 1 ? `/${locale}/category/${section.link}?page=${page}` : `/${locale}/category/${section.link}`,
+      canonical: page > 1 ? `/${locale}/category/${section.slug}?page=${page}` : `/${locale}/category/${section.slug}`,
     },
     openGraph: { locale: getOgLocale(locale) },
   };
@@ -91,14 +92,14 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     notFound();
   }
 
-  if (slug !== section.link) {
-    permanentRedirect(`/${locale}/category/${section.link}`);
+  if (slug !== section.slug) {
+    permanentRedirect(`/${locale}/category/${section.slug}`);
   }
 
   const dict = await getDictionary(locale);
   const feed = await getArticlesBySection(section.link, page, pageSize, locale);
   const mostRead = await getHomeFeed(5, locale);
-  const categoryPath = `/${locale}/category/${section.link}`;
+  const categoryPath = `/${locale}/category/${section.slug}`;
   const categoryUrl = absoluteUrl(page > 1 ? `${categoryPath}?page=${page}` : categoryPath);
   const totalPages = feed.pagination?.totalPages ?? 1;
   const hasPrev = page > 1;
@@ -160,6 +161,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         { label: dict.nav.home, href: `/${locale}` },
         { label: section.title },
       ]} />
+      <FallbackNotice langMeta={feed.langMeta} locale={locale} message={dict.fallback.notice} />
       <header className="space-y-3 rounded-sm border border-[color:var(--border-soft)] bg-white px-5 py-6 shadow-[0_14px_36px_rgba(13,35,77,0.06)] sm:px-6">
         <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[color:var(--accent)]">{dict.category.label}</p>
         <h1 className="text-[1.95rem] font-black text-[color:var(--ink)]">{section.title}</h1>
