@@ -10,6 +10,7 @@ import { CategorySlider } from "@/src/components/home/category-slider";
 import { AdBanner } from "@/src/components/home/ad-banner";
 import { FeaturedSectionSlider } from "@/src/components/home/featured-section-slider";
 import { VideoPrograms } from "@/src/components/home/video-programs";
+import { MostReadSlider } from "@/src/components/home/most-read-slider";
 import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
 
 const FEATURED_SECTION_ID = 29;
@@ -187,23 +188,45 @@ export default async function Home({ params }: PageProps) {
       )}
 
       <section className="grid gap-8">
-        {regularSections.map((group) => (
-          <HomeSectionBlock
-            key={group.section.id}
-            locale={locale}
-            section={group.section}
-            stories={group.stories}
-            formatDate={formatDate}
-            dict={{ section: dict.sidebar.section, showMore: dict.common.showMore }}
-          />
+        {regularSections.map((group, index) => (
+          <div key={group.section.id}>
+            <HomeSectionBlock
+              locale={locale}
+              section={group.section}
+              stories={group.stories}
+              formatDate={formatDate}
+              dict={{ section: dict.sidebar.section, showMore: dict.common.showMore }}
+            />
+            {/* Second banner after the first section (politics) */}
+            {index === 0 && (
+              <div className="mt-8">
+                <AdBanner banner={{ imageUrl: "/assets/img/banner-placeholder-2.svg", href: "#", alt: "إعلان" }} />
+              </div>
+            )}
+            {/* Programs video section after second banner */}
+            {index === 0 && (
+              <div className="mt-8">
+                <VideoPrograms
+                  sectionTitle={programsSection?.title ?? "البرامج"}
+                  items={finalVideos}
+                />
+              </div>
+            )}
+          </div>
         ))}
       </section>
     </main>
 
-    {/* Programs video section — full-width dark blue */}
-    <VideoPrograms
-      sectionTitle={programsSection?.title ?? "البرامج"}
-      items={finalVideos}
+    {/* Most Read — full-width green slider before footer */}
+    <MostReadSlider
+      label={dict.sidebar.mostRead}
+      items={feed.slice(0, 15).map((item) => ({
+        id: item.id,
+        slugId: item.slugId,
+        title: item.title,
+        imageUrl: getAssetUrl(item.photoPath),
+        locale,
+      }))}
     />
     </>
   );
