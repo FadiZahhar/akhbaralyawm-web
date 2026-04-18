@@ -25,6 +25,27 @@ type CategoryArchiveListProps = {
   };
 };
 
+/** Build a windowed page list for the crawlable pagination nav.
+ * Always shows first page, last page, current page ±2, with ellipsis gaps.
+ * Returns at most ~11 entries (numbers + null for gaps).
+ */
+function buildPageWindow(current: number, total: number): (number | null)[] {
+  if (total <= 1) return [];
+  const pages = new Set<number>();
+  pages.add(1);
+  pages.add(total);
+  for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) {
+    pages.add(i);
+  }
+  const sorted = [...pages].sort((a, b) => a - b);
+  const result: (number | null)[] = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push(null);
+    result.push(sorted[i]);
+  }
+  return result;
+}
+
 export function CategoryArchiveList({
   locale,
   sectionLink,
@@ -33,24 +54,22 @@ export function CategoryArchiveList({
   initialItems,
   initialPage,
   pageSize,
-  totalPages,
+  totalPages: initialTotalPages,
   dict,
 }: CategoryArchiveListProps) {
   const [items, setItems] = useState<FeedItemDto[]>(initialItems);
   const [currentPage, setCurrentPage] = useState(initialPage);
+  const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [reachedEnd, setReachedEnd] = useState(initialPage >= initialTotalPages);
 
-  const hasMore = currentPage < totalPages;
+  const hasMore = !reachedEnd && currentPage < totalPages;
 
-  const crawlablePages = useMemo(() => {
-    if (totalPages <= 1) {
-      return [] as number[];
-    }
-
-    const maxLinks = Math.min(totalPages, 12);
-    return Array.from({ length: maxLinks }, (_, index) => index + 1);
-  }, [totalPages]);
+  const pageWindow = useMemo(
+    () => buildPageWindow(currentPage, totalPages),
+    [currentPage, totalPages],
+  );
 
   function formatDate(value: string): string {
     if (!value) return "";
@@ -60,9 +79,7 @@ export function CategoryArchiveList({
   }
 
   async function handleLoadMore() {
-    if (!hasMore || isLoading) {
-      return;
-    }
+    if (!hasMore || isLoading) return;
 
     const nextPage = currentPage + 1;
     setIsLoading(true);
@@ -74,18 +91,31 @@ export function CategoryArchiveList({
         { cache: "no-store" },
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to load category page");
+      if (!response.ok) throw new Error("Failed to load");
+
+      const payload: { items: FeedItemDto[]; pagination: { page: number; totalPages: number } | null } =
+        await response.json();
+
+      const newPage = payload.pagination?.page ?? nextPage;
+      const serverTotalPages = payload.pagination?.totalPages ?? totalPages;
+
+      setItems((prev) => {
+        const seenIds = new Set(prev.map((item) => item.id));
+        return [...prev, ...payload.items.filter((item) => !seenIds.has(item.id))];
+      });
+      setCurrentPage(newPage);
+      setTotalPages(serverTotalPages);
+
+      if (newPage >= serverTotalPages || payload.items.length === 0) {
+        setReachedEnd(true);
       }
 
-      const payload: { items: FeedItemDto[] } = await response.json();
-
-      setItems((previousItems) => {
-        const seenIds = new Set(previousItems.map((item) => item.id));
-        const dedupedNewItems = payload.items.filter((item) => !seenIds.has(item.id));
-        return [...previousItems, ...dedupedNewItems];
-      });
-      setCurrentPage(nextPage);
+      // Update URL so the user can share or bookmark the loaded state,
+      // and search engines following <link rel="next"> can index deeper pages.
+      if (typeof window !== "undefined") {
+        const newUrl = newPage === 1 ? basePath : `${basePath}?page=${newPage}`;
+        window.history.replaceState(null, "", newUrl);
+      }
     } catch {
       setErrorMessage(dict.loadError);
     } finally {
@@ -135,7 +165,10 @@ export function CategoryArchiveList({
                 </div>
 
                 <h2 className="text-lg font-black leading-8 text-[color:var(--ink)]">
-                  <Link href={`/${locale}/news/${item.slugId}`} className="transition hover:text-[color:var(--accent-strong)]">
+                  <Link
+                    href={`/${locale}/news/${item.slugId}`}
+                    className="transition hover:text-[color:var(--accent-strong)]"
+                  >
                     {item.title}
                   </Link>
                 </h2>
@@ -149,6 +182,7 @@ export function CategoryArchiveList({
         })}
       </section>
 
+      {/* Load More / end state */}
       {hasMore ? (
         <div className="space-y-3">
           <button
@@ -161,25 +195,42 @@ export function CategoryArchiveList({
           </button>
           {errorMessage ? <p className="text-sm text-rose-700">{errorMessage}</p> : null}
         </div>
+      ) : reachedEnd && items.length > pageSize ? (
+        <p className="text-center text-sm text-zinc-500">{dict.noArticles}</p>
       ) : null}
 
-      {crawlablePages.length ? (
+      {/* SEO-crawlable pagination nav — windowed around current page so Googlebot
+          can discover and index every page via <a href> links, while keeping the
+          UI compact. The server renders page 1 (or whatever ?page= you opened),
+          and this nav always includes page 1 and the last page so crawlers can
+          fan out to all depths. */}
+      {pageWindow.length ? (
         <nav className="border-t border-[color:var(--border-soft)] pt-4" aria-label={dict.archiveLinks}>
           <p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">{dict.archiveLinks}</p>
           <div className="flex flex-wrap gap-2">
-            {crawlablePages.map((page) => (
-              <Link
-                key={page}
-                href={page === 1 ? basePath : `${basePath}?page=${page}`}
-                className={`rounded-sm border px-3 py-1 text-xs font-extrabold transition ${
-                  page === currentPage
-                    ? "border-[color:var(--accent)] bg-[color:var(--panel)] text-[color:var(--accent-strong)]"
-                    : "border-[color:var(--border-soft)] bg-white text-zinc-600 hover:border-[color:var(--accent)]"
-                }`}
-              >
-                {dict.page} {page}
-              </Link>
-            ))}
+            {pageWindow.map((page, idx) =>
+              page === null ? (
+                <span
+                  key={`gap-${idx}`}
+                  className="flex items-end px-1 text-xs text-zinc-400"
+                  aria-hidden
+                >
+                  …
+                </span>
+              ) : (
+                <Link
+                  key={page}
+                  href={page === 1 ? basePath : `${basePath}?page=${page}`}
+                  className={`rounded-sm border px-3 py-1 text-xs font-extrabold transition ${
+                    page === currentPage
+                      ? "border-[color:var(--accent)] bg-[color:var(--panel)] text-[color:var(--accent-strong)]"
+                      : "border-[color:var(--border-soft)] bg-white text-zinc-600 hover:border-[color:var(--accent)]"
+                  }`}
+                >
+                  {dict.page} {page}
+                </Link>
+              ),
+            )}
           </div>
         </nav>
       ) : null}

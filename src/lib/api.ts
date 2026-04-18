@@ -168,8 +168,10 @@ type RawAuthor = {
 type RawPagination = {
   page: number;
   limit: number;
-  total: number;
-  total_pages: number;
+  total?: number;         // old snake_case shape
+  total_pages?: number;  // old snake_case shape
+  totalItems?: number;   // new camelCase shape
+  totalPages?: number;   // new camelCase shape
 };
 
 type RawPaginatedFeed = {
@@ -506,8 +508,8 @@ function normalizePaginatedFeed(raw: RawPaginatedFeed, locale: Locale = "ar"): P
       ? {
           page: raw.pagination.page,
           limit: raw.pagination.limit,
-          total: raw.pagination.total,
-          totalPages: raw.pagination.total_pages,
+          total: raw.pagination.totalItems ?? raw.pagination.total ?? 0,
+          totalPages: raw.pagination.totalPages ?? raw.pagination.total_pages ?? 1,
         }
       : null,
     langMeta,

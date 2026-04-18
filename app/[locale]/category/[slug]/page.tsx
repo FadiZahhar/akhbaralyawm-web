@@ -71,11 +71,15 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     };
   }
 
+  const categoryBase = `/${locale}/category/${section.slug}`;
+  const feed = await getArticlesBySection(section.link, page, getCategoryArchivePageSize(), locale);
+  const totalPages = feed.pagination?.totalPages ?? 1;
+
   return {
-    title: section.title,
+    title: page > 1 ? `${section.title} — ${metaDict.archive.page} ${page}` : section.title,
     description: metaDict.category.totalArticles.replace("{count}", section.title),
     alternates: {
-      canonical: page > 1 ? `/${locale}/category/${section.slug}?page=${page}` : `/${locale}/category/${section.slug}`,
+      canonical: page > 1 ? `${categoryBase}?page=${page}` : categoryBase,
     },
     openGraph: { locale: getOgLocale(locale) },
   };
@@ -149,14 +153,10 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
+      {hasPrev ? <link rel="prev" href={prevHref} /> : null}
+      {hasNext ? <link rel="next" href={nextHref} /> : null}
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex flex-col gap-8">
       <Breadcrumbs items={[
