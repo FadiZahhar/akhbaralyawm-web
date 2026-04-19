@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 
 export type DemoBanner = {
   src: string;
@@ -46,10 +46,12 @@ const DEFAULT_BANNERS: DemoBanner[] = [
 
 export function DemoBannerStack({ locale, banners = DEFAULT_BANNERS, maxItems = 3, randomize = false }: DemoBannerStackProps) {
   const normalizedMax = Math.max(1, Math.min(maxItems, 3));
-  const sourceBanners = useMemo(
-    () => (randomize ? shuffleBanners(banners) : banners),
-    [banners, randomize],
-  );
+  const [sourceBanners, setSourceBanners] = useState<DemoBanner[]>(banners);
+
+  useEffect(() => {
+    setSourceBanners(randomize ? shuffleBanners(banners) : banners);
+  }, [banners, randomize]);
+
   const visibleBanners = sourceBanners.slice(0, normalizedMax);
 
   return (
@@ -58,7 +60,6 @@ export function DemoBannerStack({ locale, banners = DEFAULT_BANNERS, maxItems = 
         <Link
           key={`${banner.src}-${index}`}
           href={banner.href}
-          locale={locale}
           aria-label={banner.alt}
           className="group block overflow-hidden rounded-sm border border-[color:var(--border-soft)] bg-white shadow-[0_10px_24px_rgba(13,35,77,0.08)]"
         >
