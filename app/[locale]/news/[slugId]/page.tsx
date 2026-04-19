@@ -18,6 +18,7 @@ import { Breadcrumbs } from "@/src/components/breadcrumbs";
 import { FallbackNotice } from "@/src/components/fallback-notice";
 import { SocialShare } from "@/src/components/article/social-share";
 import { RelatedArticles } from "@/src/components/article/related-articles";
+import { AdBanner } from "@/src/components/home/ad-banner";
 import { MostReadSlider } from "@/src/components/home/most-read-slider";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
 import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
@@ -206,6 +207,8 @@ export default async function ArticlePage({ params }: PageProps) {
       />
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
       <article className="flex flex-col gap-6">
+        <AdBanner height={222} />
+
         <Breadcrumbs items={[
           { label: dict.nav.home, href: `/${locale}` },
           ...(article.sectionTitle && article.sectionLink
@@ -223,9 +226,21 @@ export default async function ArticlePage({ params }: PageProps) {
             </p>
           ) : null}
           <h1 className="text-[1.95rem] font-black leading-snug text-[color:var(--ink)]">{article.title}</h1>
-          {article.disdate ? (
-            <p className="text-sm text-zinc-500">{formatDate(article.disdate)}</p>
-          ) : null}
+           <div className="flex flex-wrap items-center justify-between gap-3">
+             {article.disdate ? (
+               <p className="text-sm text-zinc-500">{formatDate(article.disdate)}</p>
+             ) : <span />}
+             <SocialShare
+               variant="compact"
+               url={canonicalUrl}
+               title={article.title}
+               dict={{
+                 share: dict.article.share,
+                 copyLink: dict.article.copyLink,
+                 copied: dict.article.copied,
+               }}
+             />
+           </div>
         </header>
 
         {photoUrl ? (

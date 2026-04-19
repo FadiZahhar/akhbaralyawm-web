@@ -11,6 +11,8 @@ export type AdBannerItem = {
 type AdBannerProps = {
   /** Override with dynamic data when the API supports it */
   banner?: AdBannerItem;
+  width?: number;
+  height?: number;
 };
 
 const DEFAULT_BANNER: AdBannerItem = {
@@ -19,7 +21,7 @@ const DEFAULT_BANNER: AdBannerItem = {
   alt: "إعلان",
 };
 
-export function AdBanner({ banner }: AdBannerProps) {
+export function AdBanner({ banner, width = 900, height = 232 }: AdBannerProps) {
   const { imageUrl, href, alt } = banner ?? DEFAULT_BANNER;
 
   return (
@@ -29,16 +31,16 @@ export function AdBanner({ banner }: AdBannerProps) {
         target={href.startsWith("http") ? "_blank" : undefined}
         rel={href.startsWith("http") ? "noopener noreferrer sponsored" : undefined}
         className="group mx-auto block w-full overflow-hidden rounded-lg"
-        style={{ maxWidth: 900 }}
+        style={{ maxWidth: width }}
       >
         <Image
           src={imageUrl}
           alt={alt}
-          width={900}
-          height={232}
-          sizes="(max-width: 900px) 100vw, 900px"
+          width={width}
+          height={height}
+          sizes={`(max-width: ${width}px) 100vw, ${width}px`}
           placeholder="blur"
-          blurDataURL={shimmerPlaceholder(900, 232)}
+          blurDataURL={shimmerPlaceholder(width, height)}
           className="h-auto w-full rounded-lg transition-opacity duration-200 group-hover:opacity-90"
           priority={false}
         />

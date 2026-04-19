@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useMemo } from "react";
 
 export type DemoBanner = {
   src: string;
@@ -43,7 +46,10 @@ const DEFAULT_BANNERS: DemoBanner[] = [
 
 export function DemoBannerStack({ locale, banners = DEFAULT_BANNERS, maxItems = 3, randomize = false }: DemoBannerStackProps) {
   const normalizedMax = Math.max(1, Math.min(maxItems, 3));
-  const sourceBanners = randomize ? shuffleBanners(banners) : banners;
+  const sourceBanners = useMemo(
+    () => (randomize ? shuffleBanners(banners) : banners),
+    [banners, randomize],
+  );
   const visibleBanners = sourceBanners.slice(0, normalizedMax);
 
   return (

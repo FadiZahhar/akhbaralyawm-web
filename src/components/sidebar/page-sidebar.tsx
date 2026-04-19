@@ -13,6 +13,7 @@ export function PageSidebar({ locale, label, mostRead }: PageSidebarProps) {
     <aside className="space-y-5">
       <DemoBannerStack locale={locale} randomize />
       <MostReadWidget locale={locale} label={label} items={mostRead} />
+      <DemoBannerStack locale={locale} maxItems={2} randomize />
     </aside>
   );
 }
