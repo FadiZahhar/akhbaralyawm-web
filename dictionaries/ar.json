@@ -50,7 +50,8 @@
     "share": "شارك الخبر",
     "copyLink": "نسخ الرابط",
     "copied": "تم النسخ!",
-    "relatedArticles": "قد يعجبك أيضاً"
+    "relatedArticles": "قد يعجبك أيضاً",
+    "tags": "مقالات عن"
   },
   "category": {
     "notFound": "القسم غير موجود",

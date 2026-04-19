@@ -50,7 +50,8 @@
     "share": "Share",
     "copyLink": "Copy link",
     "copied": "Copied!",
-    "relatedArticles": "You may also like"
+    "relatedArticles": "You may also like",
+    "tags": "Articles about"
   },
   "category": {
     "notFound": "Section not found",

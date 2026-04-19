@@ -44,6 +44,8 @@ export type ArticleDto = {
   sectionLink: string;
   photoPath: string | null;
   bodyHtml: string;
+  tags: string[];
+  youtubeUrl: string | null;
   disdate: string;
   statusId: number;
   langMeta: LanguageMeta;
@@ -123,6 +125,13 @@ type RawArticle = {
   photo?: string | null;
   bodyHtml?: string;
   body?: string;
+  tag?: string | null;
+  tags?: unknown;
+  youtubeUrl?: string | null;
+  youtube?: string | null;
+  youtubeLink?: string | null;
+  videoUrl?: string | null;
+  video?: string | null;
   disdate?: string;
   statusId?: number;
   requestedLanguage?: string;
@@ -409,6 +418,62 @@ function sanitizeHtml(html: string): string {
   });
 }
 
+function normalizeArticleTags(raw: RawArticle): string[] {
+  const fromArray = Array.isArray(raw.tags)
+    ? raw.tags.filter((item): item is string => typeof item === "string")
+    : [];
+
+  const fromCommaSeparated = typeof raw.tags === "string"
+      ? raw.tags.split(/[,،]/)
+    : [];
+
+  const fromSingleTag = typeof raw.tag === "string"
+      ? raw.tag.split(/[,،]/)
+    : [];
+
+  const normalized = [...fromArray, ...fromCommaSeparated, ...fromSingleTag]
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0);
+
+  return Array.from(new Set(normalized));
+}
+
+function extractYoutubeUrlFromText(value: string): string | null {
+  const iframeMatch = value.match(/<iframe[^>]+src=["']([^"']+)["'][^>]*>/i);
+  if (iframeMatch?.[1]) {
+    return iframeMatch[1].trim();
+  }
+
+  const urlMatch = value.match(/https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s"'<>]+/i);
+  if (urlMatch?.[0]) {
+    return urlMatch[0].trim();
+  }
+
+  return null;
+}
+
+function extractArticleYoutubeUrl(raw: RawArticle): string | null {
+  const directCandidates = [raw.youtubeUrl, raw.youtube, raw.youtubeLink, raw.videoUrl, raw.video];
+  const direct = directCandidates.find(
+    (value): value is string => typeof value === "string" && value.trim().length > 0,
+  );
+  if (direct) {
+    return direct.trim();
+  }
+
+  if (typeof raw.bodyHtml === "string") {
+    const fromBodyHtml = extractYoutubeUrlFromText(raw.bodyHtml);
+    if (fromBodyHtml) return fromBodyHtml;
+  }
+
+  if (typeof raw.body === "string") {
+    const fromBody = extractYoutubeUrlFromText(raw.body);
+    if (fromBody) return fromBody;
+  }
+
+  return null;
+}
+
 function normalizeArticle(raw: RawArticle, locale: Locale = "ar"): ArticleDto {
   assertRawArticle(raw, "article");
 
@@ -431,6 +496,8 @@ function normalizeArticle(raw: RawArticle, locale: Locale = "ar"): ArticleDto {
     sectionLink: raw.sectionLink || raw.categoryLink || "",
     photoPath: raw.photoPath ?? raw.photo ?? null,
     bodyHtml: sanitizeHtml(bodySource),
+    tags: normalizeArticleTags(raw),
+    youtubeUrl: extractArticleYoutubeUrl(raw),
     disdate: raw.disdate ?? "",
     statusId: raw.statusId ?? 0,
     langMeta,

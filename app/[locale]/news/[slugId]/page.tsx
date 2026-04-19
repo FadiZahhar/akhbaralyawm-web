@@ -1,7 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
 export const revalidate = 120;
@@ -18,6 +17,7 @@ import { Breadcrumbs } from "@/src/components/breadcrumbs";
 import { FallbackNotice } from "@/src/components/fallback-notice";
 import { SocialShare } from "@/src/components/article/social-share";
 import { RelatedArticles } from "@/src/components/article/related-articles";
+import { YoutubeEmbed } from "@/src/components/article/youtube-embed";
 import { AdBanner } from "@/src/components/home/ad-banner";
 import { MostReadSlider } from "@/src/components/home/most-read-slider";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
@@ -32,6 +32,7 @@ type PageProps = {
 };
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.akhbaralyawm.com").replace(/\/+$/, "");
+const YOUTUBE_FALLBACK_URL = "https://www.youtube.com/embed?listType=playlist&list=UUKbs9xURKdoJ3I99QqFygdQ";
 
 function absoluteUrl(pathOrUrl: string): string {
   if (/^https?:\/\//i.test(pathOrUrl)) {
@@ -263,6 +264,18 @@ export default async function ArticlePage({ params }: PageProps) {
             className="prose prose-zinc max-w-none text-[1.05rem] leading-9"
             dangerouslySetInnerHTML={{ __html: article.bodyHtml }}
           />
+          {article.tags.length > 0 ? (
+            <div className="mt-8 border-t border-[color:var(--border-soft)] pt-5">
+              <h2 className="mb-3 text-base font-bold text-[color:var(--ink)]">{dict.article.tags}</h2>
+              <ul className="flex flex-wrap gap-2">
+                {article.tags.map((tag) => (
+                  <li key={tag} className="rounded-full bg-[color:var(--surface-2)] px-3 py-1 text-sm font-medium text-[color:var(--ink)]">
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </section>
 
         {/* Social share buttons */}
@@ -274,6 +287,12 @@ export default async function ArticlePage({ params }: PageProps) {
             copyLink: dict.article.copyLink,
             copied: dict.article.copied,
           }}
+        />
+
+        <YoutubeEmbed
+          sourceUrl={article.youtubeUrl}
+          fallbackUrl={YOUTUBE_FALLBACK_URL}
+          title={article.title}
         />
 
         {/* Related articles */}

@@ -50,7 +50,8 @@
     "share": "Partager",
     "copyLink": "Copier le lien",
     "copied": "Copié !",
-    "relatedArticles": "À lire aussi"
+    "relatedArticles": "À lire aussi",
+    "tags": "Articles sur"
   },
   "category": {
     "notFound": "Section non trouvée",

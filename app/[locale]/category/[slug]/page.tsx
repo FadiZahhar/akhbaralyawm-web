@@ -1,5 +1,4 @@
 ﻿import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
 export const revalidate = 120;
@@ -73,8 +72,6 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   }
 
   const categoryBase = `/${locale}/category/${section.slug}`;
-  const feed = await getArticlesBySection(section.link, page, getCategoryArchivePageSize(), locale);
-  const totalPages = feed.pagination?.totalPages ?? 1;
 
   return {
     title: page > 1 ? `${section.title} — ${metaDict.archive.page} ${page}` : section.title,
@@ -114,8 +111,6 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const prevHref = page - 1 <= 1 ? categoryPath : `${categoryPath}?page=${page - 1}`;
   const nextHref = `${categoryPath}?page=${page + 1}`;
   const itemPositionStart = ((page - 1) * (feed.pagination?.limit ?? pageSize)) + 1;
-  const prevLabel = dict.common.prevPage;
-  const nextLabel = dict.common.nextPage;
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -174,26 +169,6 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             ? dict.category.totalArticles.replace("{count}", String(feed.pagination.total))
             : dict.category.latestArticles}
         </p>
-        {(hasPrev || hasNext) ? (
-          <nav className="flex flex-wrap items-center gap-2.5 border-t border-[color:var(--border-soft)] pt-4 text-sm" aria-label="pagination">
-            {hasPrev ? (
-              <Link
-                href={prevHref}
-                className="rounded-sm border border-[color:var(--border-soft)] bg-white px-4 py-2 font-extrabold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent-strong)]"
-              >
-                {prevLabel}
-              </Link>
-            ) : null}
-            {hasNext ? (
-              <Link
-                href={nextHref}
-                className="rounded-sm border border-[color:var(--border-soft)] bg-white px-4 py-2 font-extrabold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent-strong)]"
-              >
-                {nextLabel}
-              </Link>
-            ) : null}
-          </nav>
-        ) : null}
       </header>
 
       <CategoryArchiveList
