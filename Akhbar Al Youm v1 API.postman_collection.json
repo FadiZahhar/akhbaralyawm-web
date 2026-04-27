@@ -1,0 +1,638 @@
+{
+  "info": {
+    "_postman_id": "0ea1aa29-adac-4051-82d2-3f049eb07da7",
+    "name": "Akhbar Al Youm v1 API",
+    "description": "Postman collection generated from the current v1 API implementation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "19607038"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Issue Bearer Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "if (json && json.access_token) { pm.collectionVariables.set('bearerToken', json.access_token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shared_secret\": \"{{sharedSecret}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/auth/token.ashx",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "token.ashx"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Root Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Home Feed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/home/feed?lang={{locale}}&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "home",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/search?q=pilot&lang={{locale}}&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "pilot"
+                },
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "News List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/news?lang={{locale}}&page=1&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "news"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "News Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/news?id={{articleId}}&lang={{locale}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "news"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{articleId}}"
+                },
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Articles By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/articles/by-id/{{articleId}}?lang={{locale}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "articles",
+                "by-id",
+                "{{articleId}}"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Articles By Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/articles/by-slug/{{articleSlug}}?lang={{locale}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "articles",
+                "by-slug",
+                "{{articleSlug}}"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sections List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/sections?lang={{locale}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "sections"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Section Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/sections?id={{sectionId}}&lang={{locale}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "sections"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{sectionId}}"
+                },
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Authors List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/authors?lang={{locale}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "authors"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Author Detail By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/authors?id={{authorId}}&lang={{locale}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "authors"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{authorId}}"
+                },
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Author Detail By Link",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/authors?link={{authorLink}}&lang={{locale}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "authors"
+              ],
+              "query": [
+                {
+                  "key": "link",
+                  "value": "{{authorLink}}"
+                },
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pages By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/pages/by-id?id={{pageId}}&lang={{locale}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "pages",
+                "by-id"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{pageId}}"
+                },
+                {
+                  "key": "lang",
+                  "value": "{{locale}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sitemap",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/sitemap?page=1&limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "sitemap"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Preview",
+      "item": [
+        {
+          "name": "Issue Preview Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "if (json && json.token) { pm.collectionVariables.set('previewToken', json.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Shared-Secret",
+                "value": "{{sharedSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/preview/token?id={{articleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "preview",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{articleId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Preview Article By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{previewToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/preview/articles/by-id/{{articleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "preview",
+                "articles",
+                "by-id",
+                "{{articleId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Preview Article By Slug",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{previewToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/preview/articles/by-slug/{{articleSlug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "preview",
+                "articles",
+                "by-slug",
+                "{{articleSlug}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Fallback Log Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timestamp\": \"2026-03-31T10:00:00Z\",\n  \"locale\": \"{{locale}}\",\n  \"path\": \"/{{locale}}/read/{{pageId}}\",\n  \"endpoint\": \"/v1/pages/by-id\",\n  \"fallbackUsed\": true,\n  \"contentLanguage\": \"ar\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/analytics/fallback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "analytics",
+                "fallback"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "sharedSecret",
+      "value": "REPLACE_SHARED_SECRET"
+    },
+    {
+      "key": "bearerToken",
+      "value": ""
+    },
+    {
+      "key": "previewToken",
+      "value": ""
+    },
+    {
+      "key": "locale",
+      "value": "en"
+    },
+    {
+      "key": "articleId",
+      "value": "420777"
+    },
+    {
+      "key": "articleSlug",
+      "value": "sample-article-420777"
+    },
+    {
+      "key": "sectionId",
+      "value": "25"
+    },
+    {
+      "key": "authorId",
+      "value": "11"
+    },
+    {
+      "key": "authorLink",
+      "value": "pilot-author"
+    },
+    {
+      "key": "pageId",
+      "value": "1"
+    }
+  ]
+}

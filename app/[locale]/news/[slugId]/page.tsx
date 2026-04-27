@@ -21,7 +21,7 @@ import { YoutubeEmbed } from "@/src/components/article/youtube-embed";
 import { AdBanner } from "@/src/components/home/ad-banner";
 import { MostReadSlider } from "@/src/components/home/most-read-slider";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
-import { isLocale, getDictionary, getOgLocale, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDictionary, getOgLocale, locales, defaultLocale, type Locale } from "@/src/lib/i18n";
 type PageParams = {
   locale: string;
   slugId: string;
@@ -100,11 +100,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonicalPath = `/${locale}/news/${article.slugId}`;
   const photoUrl = getAssetUrl(article.photoPath);
 
+  // Per-locale hreflang alternates. Article slugs are locale-specific
+  // (post backendfix Phase 1), but the safest cross-locale link target
+  // we have without an extra round-trip is the canonical article slug
+  // for the current locale; if a locale doesn't have its own translation,
+  // the backend fallback at request time will surface it.
+  const languages: Record<string, string> = {};
+  for (const l of locales) {
+    languages[l] = `/${l}/news/${article.slugId}`;
+  }
+  languages["x-default"] = `/${defaultLocale}/news/${article.slugId}`;
+
   return {
     title: article.title,
     description: article.title,
     alternates: {
       canonical: canonicalPath,
+      languages,
     },
     openGraph: {
       title: article.title,

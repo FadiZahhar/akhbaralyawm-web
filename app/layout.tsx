@@ -9,7 +9,7 @@ import { StickyHeaderWrapper } from "@/src/components/sticky-header-wrapper";
 import { BreakingTicker } from "@/src/components/home/breaking-ticker";
 import { RouteProgressBar } from "@/src/components/route-progress";
 import { getHomeFeed, getAssetUrl } from "@/src/lib/api";
-import { isLocale, getDirection, getDictionary, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDirection, getDictionary, locales, defaultLocale, type Locale } from "@/src/lib/i18n";
 
 import "./globals.css";
 
@@ -41,6 +41,17 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
   const dict = await getDictionary(locale);
 
+  // Build per-locale hreflang alternates for the current path. We can't read
+  // the request path reliably at the root layout, so we point each locale at
+  // its own homepage as the safe default. Page-level metadata (article,
+  // category, author) overrides `alternates.canonical` and adds path-aware
+  // hreflang where it matters most for SEO.
+  const languages: Record<string, string> = {};
+  for (const l of locales) {
+    languages[l] = `${SITE_URL}/${l}`;
+  }
+  languages["x-default"] = `${SITE_URL}/${defaultLocale}`;
+
   return {
     title: {
       default: dict.site.name,
@@ -48,6 +59,10 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: dict.site.description,
     metadataBase: new URL(SITE_URL),
+    alternates: {
+      canonical: `/${locale}`,
+      languages,
+    },
     icons: {
       icon: [
         { url: "/favicon.ico", sizes: "any" },
@@ -57,6 +72,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     openGraph: {
       siteName: dict.site.name,
+      locale: locale === "ar" ? "ar_AR" : locale === "fr" ? "fr_FR" : "en_US",
+      alternateLocale: locales.filter((l) => l !== locale).map((l) => (l === "ar" ? "ar_AR" : l === "fr" ? "fr_FR" : "en_US")),
       images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     },
   };

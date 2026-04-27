@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 
+import type { Locale } from "@/src/lib/i18n";
+import { LanguageSwitcher } from "@/src/components/language-switcher";
+
 type NavItem = {
   id?: number;
   href: string;
@@ -10,6 +13,7 @@ type NavItem = {
 };
 
 type MobileNavProps = {
+  locale: Locale;
   homeHref: string;
   homeLabel: string;
   mixHref: string;
@@ -17,7 +21,7 @@ type MobileNavProps = {
   navItems: NavItem[];
 };
 
-export function MobileNav({ homeHref, homeLabel, mixHref, mixLabel, navItems }: MobileNavProps) {
+export function MobileNav({ locale, homeHref, homeLabel, mixHref, mixLabel, navItems }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -102,6 +106,11 @@ export function MobileNav({ homeHref, homeLabel, mixHref, mixLabel, navItems }: 
               </Link>
             </li>
           </ul>
+
+          {/* Language switcher inside the mobile drawer */}
+          <div className="mt-4 border-t border-[#EEEEEE] pt-4">
+            <LanguageSwitcher locale={locale} />
+          </div>
         </nav>
       </div>
     </div>

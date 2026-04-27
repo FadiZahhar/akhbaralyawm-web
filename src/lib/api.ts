@@ -161,6 +161,7 @@ type RawSection = {
   id: number;
   title: string;
   link: string;
+  slug?: string;
   orderorder: number;
   active?: boolean;
 };
@@ -169,6 +170,7 @@ type RawAuthor = {
   id: number;
   title: string;
   link: string;
+  slug?: string;
   photo?: string | null;
   body?: string | null;
   orderorder: number;
@@ -213,8 +215,9 @@ type RawCmsPage = {
   fallbackUsed?: boolean;
 };
 
-const CMS_PAGE_PATH = process.env.API_CMS_PAGE_PATH || "/v1/pages/by-id.ashx";
-const AUTHOR_ARTICLES_PATH = process.env.API_AUTHOR_ARTICLES_PATH || "/v1/news.ashx";
+// Canonical v1 paths (no .ashx). Backwards-compat env overrides retained for emergencies.
+const CMS_PAGE_PATH = process.env.API_CMS_PAGE_PATH || "/v1/pages/by-id";
+const AUTHOR_ARTICLES_PATH = process.env.API_AUTHOR_ARTICLES_PATH || "/v1/news";
 const AUTHOR_QUERY_KEY = process.env.API_AUTHOR_QUERY_KEY || "author";
 
 function isFiniteNumber(value: unknown): value is number {
@@ -363,10 +366,32 @@ function applyLocale(url: URL, locale?: Locale): URL {
 // ---------------------------------------------------------------------------
 
 function logFallback(context: string, langMeta: LanguageMeta): void {
-  if (langMeta.fallbackUsed) {
-    console.warn(
-      `[i18n-fallback] ${context}: requested="${langMeta.requestedLanguage}" served="${langMeta.contentLanguage}"`,
-    );
+  if (!langMeta.fallbackUsed) return;
+
+  console.warn(
+    `[i18n-fallback] ${context}: requested="${langMeta.requestedLanguage}" served="${langMeta.contentLanguage}"`,
+  );
+
+  // Fire-and-forget POST to backend analytics. Never blocks render.
+  if (!API_BASE_URL) return;
+  try {
+    const url = createUrl("/v1/analytics/fallback");
+    void fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        timestamp: new Date().toISOString(),
+        context,
+        requestedLanguage: langMeta.requestedLanguage,
+        contentLanguage: langMeta.contentLanguage,
+        fallbackUsed: true,
+      }),
+      cache: "no-store",
+    }).catch(() => {
+      /* swallow \u2014 analytics must never break the page */
+    });
+  } catch {
+    /* swallow */
   }
 }
 
@@ -374,22 +399,28 @@ function logFallback(context: string, langMeta: LanguageMeta): void {
 // LanguageMeta extraction
 // ---------------------------------------------------------------------------
 
-/** Default langMeta when the backend does not yet return language metadata. */
+/**
+ * Default langMeta when the backend response omits language metadata entirely.
+ * The backend (post-Phase 1 of backendfix.md) always returns these fields, so
+ * this is a last-resort fallback. We assume the requested locale was served
+ * truthfully \u2014 we do NOT silently mark it as an Arabic fallback.
+ */
 function defaultLangMeta(locale: Locale = "ar"): LanguageMeta {
   return {
     requestedLanguage: locale,
-    contentLanguage: "ar",
-    fallbackUsed: locale !== "ar",
+    contentLanguage: locale,
+    fallbackUsed: false,
   };
 }
 
-/** Extract langMeta from a raw API response, with sensible defaults. */
+/** Extract langMeta from a raw API response. Trusts backend values. */
 function extractLangMeta(
   raw: { requestedLanguage?: string; contentLanguage?: string; fallbackUsed?: boolean },
   locale: Locale = "ar",
 ): LanguageMeta {
-  const contentLang = (raw.contentLanguage ?? "ar") as Locale;
   const requestedLang = (raw.requestedLanguage ?? locale) as Locale;
+  // When backend doesn't tell us, assume it served what we asked for.
+  const contentLang = (raw.contentLanguage ?? requestedLang) as Locale;
   return {
     requestedLanguage: requestedLang,
     contentLanguage: contentLang,
@@ -504,7 +535,11 @@ function normalizeArticle(raw: RawArticle, locale: Locale = "ar"): ArticleDto {
   };
 }
 
-function normalizeFeedItem(raw: RawFeedItem, locale: Locale = "ar"): FeedItemDto {
+function normalizeFeedItem(
+  raw: RawFeedItem,
+  locale: Locale = "ar",
+  parentLangMeta?: LanguageMeta,
+): FeedItemDto {
   assertRawFeedItem(raw, "feed item");
 
   const rawSlug = raw.slugId ?? raw.slug ?? "";
@@ -522,7 +557,9 @@ function normalizeFeedItem(raw: RawFeedItem, locale: Locale = "ar"): FeedItemDto
     sectionTitle: raw.sectionTitle || raw.section_title || raw.category || "",
     sectionLink: raw.sectionLink || raw.section_link || raw.categoryLink || "",
     tag: raw.tag ?? null,
-    langMeta: defaultLangMeta(locale),
+    // Inherit langMeta from the parent list response when available so feed
+    // items reflect the truthful language served by the backend.
+    langMeta: parentLangMeta ?? defaultLangMeta(locale),
   };
 }
 
@@ -530,7 +567,11 @@ function normalizeSection(raw: RawSection, locale: Locale = "ar"): SectionDto {
   assertRawSection(raw, "section");
 
   const link = raw.link;
-  const slug = isNumericSlug(link) ? buildSectionSlug(raw.title, raw.id) : link;
+  // Prefer the backend-provided per-locale slug; fall back to legacy link;
+  // last resort: client-side slugify.
+  const slug = (raw.slug && !isNumericSlug(raw.slug))
+    ? raw.slug
+    : (!isNumericSlug(link) ? link : buildSectionSlug(raw.title, raw.id));
 
   return {
     id: raw.id,
@@ -547,7 +588,9 @@ function normalizeAuthor(raw: RawAuthor, locale: Locale = "ar"): AuthorDto {
   assertRawAuthor(raw, "author");
 
   const link = raw.link;
-  const slug = isNumericSlug(link) ? buildSectionSlug(raw.title, raw.id) : link;
+  const slug = (raw.slug && !isNumericSlug(raw.slug))
+    ? raw.slug
+    : (!isNumericSlug(link) ? link : buildSectionSlug(raw.title, raw.id));
 
   return {
     id: raw.id,
@@ -570,7 +613,7 @@ function normalizePaginatedFeed(raw: RawPaginatedFeed, locale: Locale = "ar"): P
   logFallback("paginated feed", langMeta);
 
   return {
-    items: raw.data.map((item) => normalizeFeedItem(item, locale)),
+    items: raw.data.map((item) => normalizeFeedItem(item, locale, langMeta)),
     pagination: raw.pagination
       ? {
           page: raw.pagination.page,
@@ -600,7 +643,17 @@ function normalizeCmsPage(raw: RawCmsPage, locale: Locale = "ar"): CmsPageDto {
 }
 
 export async function getArticleById(id: number, locale?: Locale): Promise<ArticleDto | null> {
-  const url = applyLocale(createUrl("/v1/articles/by-id.ashx", { id }), locale);
+  // v1 contract: GET /v1/articles/by-id/{id}?lang= (path param, no .ashx)
+  const url = applyLocale(createUrl(`/v1/articles/by-id/${id}`), locale);
+  const raw = await fetchOptionalJson<RawArticle>(url, {
+    headers: buildLocaleHeaders(locale),
+  });
+  return raw ? normalizeArticle(raw, locale) : null;
+}
+
+export async function getArticleBySlug(slug: string, locale?: Locale): Promise<ArticleDto | null> {
+  // v1 contract: GET /v1/articles/by-slug/{slug}?lang=
+  const url = applyLocale(createUrl(`/v1/articles/by-slug/${encodeURIComponent(slug)}`), locale);
   const raw = await fetchOptionalJson<RawArticle>(url, {
     headers: buildLocaleHeaders(locale),
   });
@@ -612,7 +665,24 @@ export async function getPreviewArticleById(
   token: string,
   locale?: Locale,
 ): Promise<ArticleDto | null> {
-  const url = applyLocale(createUrl("/v1/preview/articles/by-id.ashx", { id }), locale);
+  // v1 contract: GET /v1/preview/articles/by-id/{id}?lang= (path param)
+  const url = applyLocale(createUrl(`/v1/preview/articles/by-id/${id}`), locale);
+  const raw = await fetchOptionalJson<RawArticle>(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...buildLocaleHeaders(locale),
+    },
+  });
+  return raw ? normalizeArticle(raw, locale) : null;
+}
+
+export async function getPreviewArticleBySlug(
+  slug: string,
+  token: string,
+  locale?: Locale,
+): Promise<ArticleDto | null> {
+  // v1 contract: GET /v1/preview/articles/by-slug/{slug}?lang=
+  const url = applyLocale(createUrl(`/v1/preview/articles/by-slug/${encodeURIComponent(slug)}`), locale);
   const raw = await fetchOptionalJson<RawArticle>(url, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -628,7 +698,7 @@ export async function mintPreviewToken(id: number): Promise<string> {
     process.env.AKHBAR_PREVIEW_SHARED_SECRET,
   );
 
-  const url = createUrl("/v1/preview/token.ashx", { id });
+  const url = createUrl("/v1/preview/token", { id });
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -661,16 +731,18 @@ export async function mintPreviewToken(id: number): Promise<string> {
 }
 
 export async function getHomeFeed(limit = 12, locale?: Locale): Promise<FeedItemDto[]> {
-  const url = applyLocale(createUrl("/v1/home/feed.ashx", { limit }), locale);
+  const url = applyLocale(createUrl("/v1/home/feed", { limit }), locale);
   const response = await fetchJson<unknown>(url, {
     headers: buildLocaleHeaders(locale),
   });
   assertDataArray(response, "home feed");
-  return response.data.map((item) => normalizeFeedItem(item as RawFeedItem, locale));
+  const langMeta = extractLangMeta(response as RawListResponse<RawFeedItem>, locale);
+  logFallback("home feed", langMeta);
+  return response.data.map((item) => normalizeFeedItem(item as RawFeedItem, locale, langMeta));
 }
 
 export async function getSections(locale?: Locale): Promise<SectionDto[]> {
-  const url = applyLocale(createUrl("/v1/sections.ashx"), locale);
+  const url = applyLocale(createUrl("/v1/sections"), locale);
   const response = await fetchJson<unknown>(url, {
     headers: buildLocaleHeaders(locale),
   });
@@ -692,7 +764,7 @@ export async function getSectionSlug(sectionLink: string, locale?: Locale): Prom
 export async function getSectionBySlugOrId(slugOrId: string, locale?: Locale): Promise<SectionDto | null> {
   // Pure numeric ID — fetch directly by ID
   if (/^\d+$/.test(slugOrId)) {
-    const url = applyLocale(createUrl("/v1/sections.ashx", { id: slugOrId }), locale);
+    const url = applyLocale(createUrl("/v1/sections", { id: slugOrId }), locale);
     const response = await fetchOptionalJson<RawSection>(url, {
       headers: buildLocaleHeaders(locale),
     });
@@ -713,7 +785,7 @@ export async function getSectionBySlugOrId(slugOrId: string, locale?: Locale): P
   const trailingIdMatch = slugOrId.match(/-(\d+)$/);
   if (trailingIdMatch) {
     const id = trailingIdMatch[1];
-    const url = applyLocale(createUrl("/v1/sections.ashx", { id }), locale);
+    const url = applyLocale(createUrl("/v1/sections", { id }), locale);
     const response = await fetchOptionalJson<RawSection>(url, {
       headers: buildLocaleHeaders(locale),
     });
@@ -729,11 +801,20 @@ export async function getArticlesBySection(
   limit = 12,
   locale?: Locale,
 ): Promise<PaginatedFeedDto> {
-  const url = applyLocale(createUrl("/v1/news.ashx", {
-    section: sectionLink,
+  // v1 contract: GET /v1/news?lang=&page=&limit=. The backend is expected to
+  // accept either `sectionSlug` (preferred for SEO) or `sectionId` as filters.
+  // We send `sectionSlug` and keep legacy `section` alias for backwards compat
+  // until the backend confirms which key is final.
+  const params: Record<string, string | number> = {
     page,
     limit,
-  }), locale);
+    sectionSlug: sectionLink,
+    section: sectionLink, // legacy alias — remove once backend ships sectionSlug
+  };
+  if (/^\d+$/.test(sectionLink)) {
+    params.sectionId = sectionLink;
+  }
+  const url = applyLocale(createUrl("/v1/news", params), locale);
   const response = await fetchJson<RawPaginatedFeed>(url, {
     headers: buildLocaleHeaders(locale),
   });
@@ -751,7 +832,7 @@ export async function searchArticlesPaginated(
   limit = 12,
   locale?: Locale,
 ): Promise<PaginatedFeedDto> {
-  const url = applyLocale(createUrl("/v1/search.ashx", { q: query, limit }), locale);
+  const url = applyLocale(createUrl("/v1/search", { q: query, limit }), locale);
   url.searchParams.set("page", String(page));
 
   const response = await fetchJson<RawSearchResponse>(url, {
@@ -763,13 +844,13 @@ export async function searchArticlesPaginated(
   if ("pagination" in response || "data" in response) {
     const langMeta = extractLangMeta(response as RawListResponse<RawFeedItem>, locale);
     logFallback("search", langMeta);
-    const list = response.data.map((item) => normalizeFeedItem(item, locale));
+    const list = response.data.map((item) => normalizeFeedItem(item, locale, langMeta));
     const pagination = "pagination" in response && response.pagination
       ? {
           page: response.pagination.page,
           limit: response.pagination.limit,
-          total: response.pagination.total,
-          totalPages: response.pagination.total_pages,
+          total: response.pagination.totalItems ?? response.pagination.total ?? 0,
+          totalPages: response.pagination.totalPages ?? response.pagination.total_pages ?? 1,
         }
       : {
           page,
@@ -800,7 +881,7 @@ export async function searchArticlesPaginated(
 export async function getAuthorBySlugOrId(slugOrId: string, locale?: Locale): Promise<AuthorDto | null> {
   // Pure numeric ID
   if (/^\d+$/.test(slugOrId)) {
-    const url = applyLocale(createUrl("/v1/authors.ashx", { id: slugOrId }), locale);
+    const url = applyLocale(createUrl("/v1/authors", { id: slugOrId }), locale);
     const response = await fetchOptionalJson<RawAuthor>(url, {
       headers: buildLocaleHeaders(locale),
     });
@@ -808,7 +889,7 @@ export async function getAuthorBySlugOrId(slugOrId: string, locale?: Locale): Pr
   }
 
   // Try original link value
-  const url = applyLocale(createUrl("/v1/authors.ashx", { link: slugOrId }), locale);
+  const url = applyLocale(createUrl("/v1/authors", { link: slugOrId }), locale);
   const response = await fetchOptionalJson<RawAuthor>(url, {
     headers: buildLocaleHeaders(locale),
   });
@@ -817,7 +898,7 @@ export async function getAuthorBySlugOrId(slugOrId: string, locale?: Locale): Pr
   // Try extracting trailing numeric ID from slugified URL (e.g., "author-name-42")
   const trailingIdMatch = slugOrId.match(/-(\d+)$/);
   if (trailingIdMatch) {
-    const idUrl = applyLocale(createUrl("/v1/authors.ashx", { id: trailingIdMatch[1] }), locale);
+    const idUrl = applyLocale(createUrl("/v1/authors", { id: trailingIdMatch[1] }), locale);
     const idResponse = await fetchOptionalJson<RawAuthor>(idUrl, {
       headers: buildLocaleHeaders(locale),
     });

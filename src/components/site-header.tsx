@@ -6,6 +6,7 @@ import type { Locale } from "@/src/lib/i18n";
 import { SOCIAL_LINKS, SocialIcon } from "@/src/components/social-icons";
 import { MobileNav } from "@/src/components/mobile-nav";
 import { HeaderSearch } from "@/src/components/header-search";
+import { LanguageSwitcher } from "@/src/components/language-switcher";
 
 const PRIMARY_SECTION_IDS = [29, 45, 39, 30, 46, 33, 56];
 
@@ -34,21 +35,14 @@ export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderPr
     { href: `/${locale}/contact`, label: dict.nav.contact },
   ];
 
-  const langLinks = (["ar", "en", "fr"] as const)
-    .filter((l) => l !== locale)
-    .map((l) => ({ href: `/${l}`, label: l.toUpperCase() }));
-
   return (
     <header className="relative bg-white shadow-[0_2px_28px_rgba(0,0,0,0.06)]">
       {/* Top utility bar — legacy light gray */}
       <div className="header-utility-bar border-b border-[#EEEEEE] bg-[#F5F6FA]">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-2 text-xs sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[#8A8A8A]">
-            {langLinks.map((link) => (
-              <Link key={link.label} href={link.href} className="font-bold transition hover:text-[#142963]">
-                {link.label}
-              </Link>
-            ))}
+            {/* Visible language switcher: shows AR / EN / FR with the active one highlighted */}
+            <LanguageSwitcher locale={locale} />
             <div className="h-4 w-px bg-[#DCDCDC]" />
             {topLinks.map((link) => (
               <Link key={link.label} href={link.href} className="transition hover:text-[#142963]">
@@ -133,6 +127,7 @@ export async function SiteHeader({ locale = "ar" as Locale, dict }: SiteHeaderPr
 
         {/* Mobile hamburger */}
         <MobileNav
+          locale={locale}
           homeHref={`/${locale}`}
           homeLabel={dict.nav.home}
           mixHref={`/${locale}/mix`}
