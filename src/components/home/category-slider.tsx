@@ -121,17 +121,21 @@ export function CategorySlider({ items, label, locale }: CategorySliderProps) {
           </div>
         </div>
 
-        {/* Navigation arrows — RTL: top-left (next first); LTR: top-right (prev first, next last) */}
+        {/* Navigation arrows. Always rendered as [prev, next] in DOM order so
+            the visual pair reads naturally per direction:
+              - RTL (ar): pair anchored top-left, glyphs are >  < (prev points
+                right, next points left) — matches AR reading flow.
+              - LTR (en/fr): pair anchored top-right, glyphs are <  >. */}
         <div
           className={`absolute top-3 z-10 flex gap-1.5 ${
-            isRtl ? "left-3" : "right-3 flex-row-reverse"
+            isRtl ? "left-3" : "right-3"
           }`}
         >
           <button
             type="button"
-            onClick={scrollNext}
-            aria-label="Next slide"
-            className={activeBtn === "next" ? greenBtn : greyBtn}
+            onClick={scrollPrev}
+            aria-label="Previous slide"
+            className={activeBtn === "prev" ? greenBtn : greyBtn}
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d={isRtl ? "M9 18l6-6-6-6" : "M15 18l-6-6 6-6"} />
@@ -139,9 +143,9 @@ export function CategorySlider({ items, label, locale }: CategorySliderProps) {
           </button>
           <button
             type="button"
-            onClick={scrollPrev}
-            aria-label="Previous slide"
-            className={activeBtn === "prev" ? greenBtn : greyBtn}
+            onClick={scrollNext}
+            aria-label="Next slide"
+            className={activeBtn === "next" ? greenBtn : greyBtn}
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d={isRtl ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"} />
