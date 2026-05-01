@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
-import { useTransition } from "react";
+import { usePathname } from "next/navigation";
 
 import { locales, type Locale } from "@/src/lib/i18n";
 
@@ -22,15 +21,16 @@ const LOCALE_FULL: Record<Locale, string> = {
   fr: "Français",
 };
 
-// Routes whose path segments are stable across locales. Anything else uses
-// locale-specific slugs (news/{slugId}, category/{slug}, author/{slug},
-// read/{id}) and cannot be safely rewritten without a backend lookup, so we
-// drop the user at the homepage of the target locale instead of producing a
-// 404.
-const STABLE_PREFIXES = ["", "mix", "about", "contact", "search"];
+// Routes whose URL is resolvable across locales:
+//   - "" (homepage), "mix", "about", "contact", "search": stable path,
+//     no per-locale slug.
+//   - "news", "read": detail pages — the article page extracts the id /
+//     resolves the slug per-locale and 301s to the locale-correct slug.
+// "category" and "author" use per-locale slugs without an embedded id, so
+// we drop the user at the locale homepage to avoid a guaranteed 404.
+const STABLE_PREFIXES = ["", "mix", "about", "contact", "search", "news", "read"];
 
 function rewritePath(pathname: string, target: Locale): string {
-  // Strip any leading locale segment.
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length > 0 && (locales as readonly string[]).includes(segments[0])) {
     segments.shift();
@@ -48,31 +48,40 @@ function rewritePath(pathname: string, target: Locale): string {
 }
 
 export function LanguageSwitcher({ locale, ariaLabel = "Language" }: LanguageSwitcherProps) {
-  const router = useRouter();
   const pathname = usePathname();
-  const [, startTransition] = useTransition();
 
-  function handleSelect(target: Locale) {
-    if (target === locale) return;
+  // Build the target href for each locale up front. Using real <a> elements
+  // (not buttons) means the browser performs a normal full-document
+  // navigation, which is required because <html lang/dir>, the dictionary,
+  // and the chrome rendered from the root layout (`app/layout.tsx`) all
+  // depend on the request locale and cannot be swapped via a client-side
+  // RSC navigation alone.
+  //
+  // IMPORTANT: do not read `window.*` during render — the server has no
+  // window, so the href would differ between SSR and hydration and React
+  // would throw a hydration mismatch. Search-query preservation is handled
+  // in the click handler instead, where `window` is always available.
+  function buildHref(target: Locale): string {
+    return rewritePath(pathname || `/${locale}`, target);
+  }
 
-    // Persist the choice immediately so the next bare-domain visit honors it
-    // even before the middleware response cookie lands.
+  function persistChoice(target: Locale) {
     document.cookie = `NEXT_LOCALE=${target}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+  }
 
-    const nextPath = rewritePath(pathname || `/${locale}`, target);
-
-    // Preserve the search query on the search page so users keep their results.
-    let search = "";
-    if (typeof window !== "undefined" && nextPath.endsWith("/search")) {
+  function handleClick(event: React.MouseEvent<HTMLAnchorElement>, target: Locale) {
+    persistChoice(target);
+    // Preserve `?q=` when switching language on the search page. We can
+    // only do this on the client, so override the anchor navigation here.
+    const next = buildHref(target);
+    if (next.endsWith("/search")) {
       const params = new URLSearchParams(window.location.search);
       const q = params.get("q");
-      if (q) search = `?q=${encodeURIComponent(q)}`;
+      if (q) {
+        event.preventDefault();
+        window.location.assign(`${next}?q=${encodeURIComponent(q)}`);
+      }
     }
-
-    startTransition(() => {
-      router.push(`${nextPath}${search}`);
-      router.refresh();
-    });
   }
 
   return (
@@ -83,25 +92,37 @@ export function LanguageSwitcher({ locale, ariaLabel = "Language" }: LanguageSwi
     >
       {locales.map((l, idx) => {
         const isActive = l === locale;
+        const baseClasses = [
+          "px-2.5 py-1 transition select-none",
+          idx > 0 ? "border-l border-[#DCDCDC]" : "",
+        ].join(" ");
+
+        if (isActive) {
+          return (
+            <span
+              key={l}
+              aria-current="true"
+              aria-label={LOCALE_FULL[l]}
+              title={LOCALE_FULL[l]}
+              className={`${baseClasses} bg-[#142963] text-white cursor-default`}
+            >
+              {LOCALE_LABELS[l]}
+            </span>
+          );
+        }
+
         return (
-          <button
+          <a
             key={l}
-            type="button"
-            onClick={() => handleSelect(l)}
-            aria-current={isActive ? "true" : undefined}
+            href={buildHref(l)}
+            hrefLang={l}
             aria-label={LOCALE_FULL[l]}
             title={LOCALE_FULL[l]}
-            className={[
-              "px-2.5 py-1 transition",
-              idx > 0 ? "border-l border-[#DCDCDC]" : "",
-              isActive
-                ? "bg-[#142963] text-white cursor-default"
-                : "text-[#8A8A8A] hover:bg-[#F5F6FA] hover:text-[#142963]",
-            ].join(" ")}
-            disabled={isActive}
+            onClick={(event) => handleClick(event, l)}
+            className={`${baseClasses} text-[#8A8A8A] hover:bg-[#F5F6FA] hover:text-[#142963]`}
           >
             {LOCALE_LABELS[l]}
-          </button>
+          </a>
         );
       })}
     </div>

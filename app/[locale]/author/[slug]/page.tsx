@@ -86,7 +86,7 @@ export default async function AuthorPage({ params, searchParams }: PageProps) {
     permanentRedirect(`/${locale}/author/${author.slug}`);
   }
 
-  const imageUrl = getAssetUrl(author.photoPath);
+  const imageUrl = getAssetUrl(author.photoPath, locale);
   const articles = await getArticlesByAuthor(String(author.id), page, pageSize, locale);
 
   return (

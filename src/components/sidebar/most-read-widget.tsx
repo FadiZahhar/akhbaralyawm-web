@@ -25,7 +25,7 @@ export function MostReadWidget({ locale, label, items }: MostReadWidgetProps) {
 
       <div className="space-y-3">
         {items.slice(0, 5).map((item) => {
-          const imageUrl = getAssetUrl(item.photoPath);
+          const imageUrl = getAssetUrl(item.photoPath, locale);
           return (
             <Link
               key={item.id}

@@ -35,6 +35,12 @@ export type LanguageMeta = {
 // DTOs
 // ---------------------------------------------------------------------------
 
+export type ArticleAlternate = {
+  lang: Locale;
+  url: string;
+  slug?: string;
+};
+
 export type ArticleDto = {
   id: number;
   title: string;
@@ -49,6 +55,7 @@ export type ArticleDto = {
   disdate: string;
   statusId: number;
   langMeta: LanguageMeta;
+  alternates: ArticleAlternate[];
 };
 
 export type FeedItemDto = {
@@ -111,6 +118,16 @@ export type CmsPageDto = {
 
 const API_BASE_URL = process.env.API_BASE_URL;
 const ASSET_HOST = process.env.NEXT_PUBLIC_ASSET_HOST;
+// Each language is served from its own subdomain. The legacy hosting layout is:
+//   AR -> https://www.akhbaralyawm.com
+//   EN -> https://en.akhbaralyawm.com
+//   FR -> https://fr.akhbaralyawm.com
+// `NEXT_PUBLIC_ASSET_HOST` is the AR/default host. Per-locale overrides may be
+// supplied via NEXT_PUBLIC_ASSET_HOST_{AR,EN,FR}; when missing we derive the
+// EN/FR host by replacing the leading subdomain of the AR host.
+const ASSET_HOST_AR = process.env.NEXT_PUBLIC_ASSET_HOST_AR;
+const ASSET_HOST_EN = process.env.NEXT_PUBLIC_ASSET_HOST_EN;
+const ASSET_HOST_FR = process.env.NEXT_PUBLIC_ASSET_HOST_FR;
 
 type RawArticle = {
   id: number;
@@ -134,6 +151,8 @@ type RawArticle = {
   video?: string | null;
   disdate?: string;
   statusId?: number;
+  canonicalSlug?: string;
+  alternates?: Array<{ lang?: string; url?: string; slug?: string }>;
   requestedLanguage?: string;
   contentLanguage?: string;
   fallbackUsed?: boolean;
@@ -155,6 +174,9 @@ type RawFeedItem = {
   category?: string;
   categoryLink?: string;
   tag?: string | null;
+  requestedLanguage?: string;
+  contentLanguage?: string;
+  fallbackUsed?: boolean;
 };
 
 type RawSection = {
@@ -164,6 +186,9 @@ type RawSection = {
   slug?: string;
   orderorder: number;
   active?: boolean;
+  requestedLanguage?: string;
+  contentLanguage?: string;
+  fallbackUsed?: boolean;
 };
 
 type RawAuthor = {
@@ -174,6 +199,9 @@ type RawAuthor = {
   photo?: string | null;
   body?: string | null;
   orderorder: number;
+  requestedLanguage?: string;
+  contentLanguage?: string;
+  fallbackUsed?: boolean;
 };
 
 type RawPagination = {
@@ -365,34 +393,11 @@ function applyLocale(url: URL, locale?: Locale): URL {
 // Fallback logging
 // ---------------------------------------------------------------------------
 
-function logFallback(context: string, langMeta: LanguageMeta): void {
-  if (!langMeta.fallbackUsed) return;
-
-  console.warn(
-    `[i18n-fallback] ${context}: requested="${langMeta.requestedLanguage}" served="${langMeta.contentLanguage}"`,
-  );
-
-  // Fire-and-forget POST to backend analytics. Never blocks render.
-  if (!API_BASE_URL) return;
-  try {
-    const url = createUrl("/v1/analytics/fallback");
-    void fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        timestamp: new Date().toISOString(),
-        context,
-        requestedLanguage: langMeta.requestedLanguage,
-        contentLanguage: langMeta.contentLanguage,
-        fallbackUsed: true,
-      }),
-      cache: "no-store",
-    }).catch(() => {
-      /* swallow \u2014 analytics must never break the page */
-    });
-  } catch {
-    /* swallow */
-  }
+// Post-apiapp migration: backend never returns AR fallback for EN/FR (it 404s
+// instead), and `fallbackUsed` is always false. This helper is now a no-op,
+// kept only so existing call sites don't need to be touched.
+function logFallback(_context: string, _langMeta: LanguageMeta): void {
+  // intentionally empty
 }
 
 // ---------------------------------------------------------------------------
@@ -428,6 +433,21 @@ function extractLangMeta(
   };
 }
 
+/**
+ * Strict locale isolation gate.
+ *
+ * Post-apiapp migration the backend returns 404 (not AR fallback) when a
+ * translation is missing, and `fallbackUsed` is always false. This gate is
+ * therefore a permissive pass-through — kept only so existing call sites
+ * continue to compile while we drop the defensive layer.
+ */
+export function isPureLocale(
+  _langMeta: LanguageMeta | undefined,
+  _requestedLocale: Locale | undefined,
+): boolean {
+  return true;
+}
+
 // ---------------------------------------------------------------------------
 // HTML sanitization
 // ---------------------------------------------------------------------------
@@ -447,6 +467,84 @@ function sanitizeHtml(html: string): string {
       "allowfullscreen", "allow", "loading",
     ],
   });
+}
+
+// ---------------------------------------------------------------------------
+// Locale-aware slug resolution
+// ---------------------------------------------------------------------------
+
+/** Detect whether a string contains Arabic Unicode characters. */
+function containsArabic(value: string): boolean {
+  return /[\u0600-\u06FF]/.test(value);
+}
+
+/**
+ * Defensive: when the requested locale is non-AR and a backend slug is still
+ * Arabic (which would only happen if the backend's per-locale slug column is
+ * missing), prefer to slugify the locale-correct title instead. Used by
+ * `pickLocaleSlug` / `pickLocaleSectionSlug`.
+ */
+
+/**
+ * Pick the right slug for the requested locale.
+ *
+ * Order of preference:
+ *   1. The backend-provided slug, IF it is non-empty, non-numeric, AND does not
+ *      contain Arabic when the requested locale is EN/FR. (Backends sometimes
+ *      ship the AR slug on EN/FR rows when translators forget to fill in the
+ *      per-locale slug column.)
+ *   2. A slug regenerated client-side from the title we received. Because we
+ *      filter out fallback items earlier, the title at this point is in the
+ *      requested locale, so slugifying it produces a locale-correct URL.
+ *   3. The numeric ID as a last resort.
+ */
+function pickLocaleSlug(
+  rawSlug: string | undefined,
+  title: string,
+  id: number,
+  locale: Locale | undefined,
+): string {
+  const slug = (rawSlug ?? "").trim();
+  const isNonArLocale = locale && locale !== "ar";
+
+  if (slug && !isNumericSlug(slug)) {
+    if (!isNonArLocale || !containsArabic(slug)) {
+      return slug;
+    }
+    // Fall through: backend gave us an AR slug for an EN/FR request.
+  }
+
+  return buildArticleSlug(title, id);
+}
+
+/**
+ * Section variant of pickLocaleSlug: prefers a non-Arabic backend slug, then
+ * falls back to the original API `link`, then slugifies the (locale-correct)
+ * title.
+ */
+function pickLocaleSectionSlug(
+  rawSlug: string | undefined,
+  link: string,
+  title: string,
+  id: number,
+  locale: Locale | undefined,
+): string {
+  const slug = (rawSlug ?? "").trim();
+  const isNonArLocale = locale && locale !== "ar";
+
+  if (slug && !isNumericSlug(slug)) {
+    if (!isNonArLocale || !containsArabic(slug)) {
+      return slug;
+    }
+  }
+
+  if (link && !isNumericSlug(link)) {
+    if (!isNonArLocale || !containsArabic(link)) {
+      return link;
+    }
+  }
+
+  return buildSectionSlug(title, id);
 }
 
 function normalizeArticleTags(raw: RawArticle): string[] {
@@ -508,30 +606,39 @@ function extractArticleYoutubeUrl(raw: RawArticle): string | null {
 function normalizeArticle(raw: RawArticle, locale: Locale = "ar"): ArticleDto {
   assertRawArticle(raw, "article");
 
-  const rawSlug = raw.slugId ?? "";
-  const slugId = rawSlug && !isNumericSlug(rawSlug)
-    ? rawSlug
-    : buildArticleSlug(raw.title, raw.id);
+  // Backend (apiapp catalog) returns `canonicalSlug` for the requested locale.
+  // Prefer it; fall back to slugId, then to a client-side slugify.
+  const slugId = pickLocaleSlug(raw.canonicalSlug ?? raw.slugId, raw.title, raw.id, locale);
 
   const langMeta = extractLangMeta(raw, locale);
-  logFallback(`article ${raw.id}`, langMeta);
 
   const bodySource = raw.bodyHtml || raw.body || "";
+  const sanitizedBody = sanitizeHtml(bodySource);
+  const rawSectionTitle = raw.sectionTitle || raw.category || "";
+
+  const alternates: ArticleAlternate[] = Array.isArray(raw.alternates)
+    ? raw.alternates
+        .filter((alt): alt is { lang: string; url: string; slug?: string } =>
+          !!alt && typeof alt.lang === "string" && typeof alt.url === "string",
+        )
+        .map((alt) => ({ lang: alt.lang as Locale, url: alt.url, slug: alt.slug }))
+    : [];
 
   return {
     id: raw.id,
     title: raw.title,
     slugId,
     sectionId: raw.sectionId ?? 0,
-    sectionTitle: raw.sectionTitle || raw.category || "",
+    sectionTitle: rawSectionTitle,
     sectionLink: raw.sectionLink || raw.categoryLink || "",
     photoPath: raw.photoPath ?? raw.photo ?? null,
-    bodyHtml: sanitizeHtml(bodySource),
+    bodyHtml: sanitizedBody,
     tags: normalizeArticleTags(raw),
     youtubeUrl: extractArticleYoutubeUrl(raw),
     disdate: raw.disdate ?? "",
     statusId: raw.statusId ?? 0,
     langMeta,
+    alternates,
   };
 }
 
@@ -542,24 +649,33 @@ function normalizeFeedItem(
 ): FeedItemDto {
   assertRawFeedItem(raw, "feed item");
 
-  const rawSlug = raw.slugId ?? raw.slug ?? "";
-  const slugId = rawSlug && !isNumericSlug(rawSlug)
-    ? rawSlug
-    : buildArticleSlug(raw.title, raw.id);
+  const slugId = pickLocaleSlug(raw.slugId ?? raw.slug, raw.title, raw.id, locale);
+
+  // Per-item langMeta wins over the parent list's langMeta when the backend
+  // supplies it (per backendfix.md §2.3). Otherwise inherit the parent's.
+  const hasOwnLangMeta =
+    raw.requestedLanguage !== undefined ||
+    raw.contentLanguage !== undefined ||
+    raw.fallbackUsed !== undefined;
+  const langMeta = hasOwnLangMeta
+    ? extractLangMeta(raw, locale)
+    : (parentLangMeta ?? defaultLangMeta(locale));
+
+  const rawSummary = raw.smallbody || "";
+  const rawSectionTitle = raw.sectionTitle || raw.section_title || raw.category || "";
+  const rawTag = raw.tag ?? null;
 
   return {
     id: raw.id,
     title: raw.title,
     slugId,
-    summary: raw.smallbody || "",
+    summary: rawSummary,
     photoPath: raw.photoPath ?? raw.photo ?? null,
     disdate: raw.disdate ?? "",
-    sectionTitle: raw.sectionTitle || raw.section_title || raw.category || "",
+    sectionTitle: rawSectionTitle,
     sectionLink: raw.sectionLink || raw.section_link || raw.categoryLink || "",
-    tag: raw.tag ?? null,
-    // Inherit langMeta from the parent list response when available so feed
-    // items reflect the truthful language served by the backend.
-    langMeta: parentLangMeta ?? defaultLangMeta(locale),
+    tag: rawTag,
+    langMeta,
   };
 }
 
@@ -567,11 +683,7 @@ function normalizeSection(raw: RawSection, locale: Locale = "ar"): SectionDto {
   assertRawSection(raw, "section");
 
   const link = raw.link;
-  // Prefer the backend-provided per-locale slug; fall back to legacy link;
-  // last resort: client-side slugify.
-  const slug = (raw.slug && !isNumericSlug(raw.slug))
-    ? raw.slug
-    : (!isNumericSlug(link) ? link : buildSectionSlug(raw.title, raw.id));
+  const slug = pickLocaleSectionSlug(raw.slug, link, raw.title, raw.id, locale);
 
   return {
     id: raw.id,
@@ -580,7 +692,7 @@ function normalizeSection(raw: RawSection, locale: Locale = "ar"): SectionDto {
     slug,
     orderorder: raw.orderorder,
     active: raw.active,
-    langMeta: defaultLangMeta(locale),
+    langMeta: extractLangMeta(raw, locale),
   };
 }
 
@@ -588,9 +700,8 @@ function normalizeAuthor(raw: RawAuthor, locale: Locale = "ar"): AuthorDto {
   assertRawAuthor(raw, "author");
 
   const link = raw.link;
-  const slug = (raw.slug && !isNumericSlug(raw.slug))
-    ? raw.slug
-    : (!isNumericSlug(link) ? link : buildSectionSlug(raw.title, raw.id));
+  const slug = pickLocaleSectionSlug(raw.slug, link, raw.title, raw.id, locale);
+  const sanitizedBody = sanitizeHtml(raw.body || "");
 
   return {
     id: raw.id,
@@ -598,9 +709,9 @@ function normalizeAuthor(raw: RawAuthor, locale: Locale = "ar"): AuthorDto {
     link,
     slug,
     photoPath: raw.photo ?? null,
-    bodyHtml: sanitizeHtml(raw.body || ""),
+    bodyHtml: sanitizedBody,
     orderorder: raw.orderorder,
-    langMeta: defaultLangMeta(locale),
+    langMeta: extractLangMeta(raw, locale),
   };
 }
 
@@ -612,8 +723,17 @@ function normalizePaginatedFeed(raw: RawPaginatedFeed, locale: Locale = "ar"): P
   const langMeta = extractLangMeta(raw, locale);
   logFallback("paginated feed", langMeta);
 
+  // Strict locale isolation: when the list itself is an AR fallback for a
+  // non-AR request, drop all items.
+  const allowList = isPureLocale(langMeta, locale);
+  const items = allowList
+    ? raw.data
+        .map((item) => normalizeFeedItem(item, locale, langMeta))
+        .filter((item) => isPureLocale(item.langMeta, locale))
+    : [];
+
   return {
-    items: raw.data.map((item) => normalizeFeedItem(item, locale, langMeta)),
+    items,
     pagination: raw.pagination
       ? {
           page: raw.pagination.page,
@@ -648,7 +768,9 @@ export async function getArticleById(id: number, locale?: Locale): Promise<Artic
   const raw = await fetchOptionalJson<RawArticle>(url, {
     headers: buildLocaleHeaders(locale),
   });
-  return raw ? normalizeArticle(raw, locale) : null;
+  if (!raw) return null;
+  const article = normalizeArticle(raw, locale);
+  return isPureLocale(article.langMeta, locale) ? article : null;
 }
 
 export async function getArticleBySlug(slug: string, locale?: Locale): Promise<ArticleDto | null> {
@@ -657,7 +779,9 @@ export async function getArticleBySlug(slug: string, locale?: Locale): Promise<A
   const raw = await fetchOptionalJson<RawArticle>(url, {
     headers: buildLocaleHeaders(locale),
   });
-  return raw ? normalizeArticle(raw, locale) : null;
+  if (!raw) return null;
+  const article = normalizeArticle(raw, locale);
+  return isPureLocale(article.langMeta, locale) ? article : null;
 }
 
 export async function getPreviewArticleById(
@@ -673,7 +797,9 @@ export async function getPreviewArticleById(
       ...buildLocaleHeaders(locale),
     },
   });
-  return raw ? normalizeArticle(raw, locale) : null;
+  if (!raw) return null;
+  const article = normalizeArticle(raw, locale);
+  return isPureLocale(article.langMeta, locale) ? article : null;
 }
 
 export async function getPreviewArticleBySlug(
@@ -689,7 +815,9 @@ export async function getPreviewArticleBySlug(
       ...buildLocaleHeaders(locale),
     },
   });
-  return raw ? normalizeArticle(raw, locale) : null;
+  if (!raw) return null;
+  const article = normalizeArticle(raw, locale);
+  return isPureLocale(article.langMeta, locale) ? article : null;
 }
 
 export async function mintPreviewToken(id: number): Promise<string> {
@@ -732,22 +860,51 @@ export async function mintPreviewToken(id: number): Promise<string> {
 
 export async function getHomeFeed(limit = 12, locale?: Locale): Promise<FeedItemDto[]> {
   const url = applyLocale(createUrl("/v1/home/feed", { limit }), locale);
-  const response = await fetchJson<unknown>(url, {
-    headers: buildLocaleHeaders(locale),
-  });
+  let response: unknown;
+  try {
+    response = await fetchJson<unknown>(url, {
+      headers: buildLocaleHeaders(locale),
+    });
+  } catch (error) {
+    // Resilience: the home feed is rendered in the global layout. A 5xx from
+    // the backend (e.g. broken EN/FR translation row) must not take the whole
+    // app down — degrade to an empty feed and log instead.
+    if (error instanceof ApiError && error.status >= 500) {
+      console.warn(`[api] home feed ${locale ?? "ar"} returned ${error.status}; rendering empty feed`);
+      return [];
+    }
+    throw error;
+  }
   assertDataArray(response, "home feed");
   const langMeta = extractLangMeta(response as RawListResponse<RawFeedItem>, locale);
   logFallback("home feed", langMeta);
-  return response.data.map((item) => normalizeFeedItem(item as RawFeedItem, locale, langMeta));
+  // Strict locale isolation: drop the entire feed for non-AR if backend fell back to AR.
+  if (!isPureLocale(langMeta, locale)) return [];
+  return response.data
+    .map((item) => normalizeFeedItem(item as RawFeedItem, locale, langMeta))
+    .filter((item) => isPureLocale(item.langMeta, locale));
 }
 
 export async function getSections(locale?: Locale): Promise<SectionDto[]> {
   const url = applyLocale(createUrl("/v1/sections"), locale);
-  const response = await fetchJson<unknown>(url, {
-    headers: buildLocaleHeaders(locale),
-  });
+  let response: unknown;
+  try {
+    response = await fetchJson<unknown>(url, {
+      headers: buildLocaleHeaders(locale),
+    });
+  } catch (error) {
+    // Resilience: sections drive the primary nav rendered in the global layout.
+    // Treat 5xx as "no sections available" rather than crashing the entire app.
+    if (error instanceof ApiError && error.status >= 500) {
+      console.warn(`[api] sections ${locale ?? "ar"} returned ${error.status}; rendering empty nav`);
+      return [];
+    }
+    throw error;
+  }
   assertDataArray(response, "sections");
-  return response.data.map((item) => normalizeSection(item as RawSection, locale));
+  return response.data
+    .map((item) => normalizeSection(item as RawSection, locale))
+    .filter((section) => isPureLocale(section.langMeta, locale));
 }
 
 /**
@@ -768,7 +925,9 @@ export async function getSectionBySlugOrId(slugOrId: string, locale?: Locale): P
     const response = await fetchOptionalJson<RawSection>(url, {
       headers: buildLocaleHeaders(locale),
     });
-    return response ? normalizeSection(response, locale) : null;
+    if (!response) return null;
+    const section = normalizeSection(response, locale);
+    return isPureLocale(section.langMeta, locale) ? section : null;
   }
 
   const sections = await getSections(locale);
@@ -789,7 +948,9 @@ export async function getSectionBySlugOrId(slugOrId: string, locale?: Locale): P
     const response = await fetchOptionalJson<RawSection>(url, {
       headers: buildLocaleHeaders(locale),
     });
-    return response ? normalizeSection(response, locale) : null;
+    if (!response) return null;
+    const section = normalizeSection(response, locale);
+    return isPureLocale(section.langMeta, locale) ? section : null;
   }
 
   return null;
@@ -815,9 +976,25 @@ export async function getArticlesBySection(
     params.sectionId = sectionLink;
   }
   const url = applyLocale(createUrl("/v1/news", params), locale);
-  const response = await fetchJson<RawPaginatedFeed>(url, {
-    headers: buildLocaleHeaders(locale),
-  });
+  let response: RawPaginatedFeed;
+  try {
+    response = await fetchJson<RawPaginatedFeed>(url, {
+      headers: buildLocaleHeaders(locale),
+    });
+  } catch (error) {
+    // Resilience: the home page fans out one of these calls per section. A
+    // single bad section must not crash the whole layout — degrade to an
+    // empty paginated feed and log instead.
+    if (error instanceof ApiError && error.status >= 500) {
+      console.warn(`[api] section "${sectionLink}" (${locale ?? "ar"}) returned ${error.status}; rendering empty list`);
+      return {
+        items: [],
+        pagination: { page, limit, total: 0, totalPages: 1 },
+        langMeta: defaultLangMeta(locale),
+      };
+    }
+    throw error;
+  }
   return normalizePaginatedFeed(response, locale);
 }
 
@@ -844,7 +1021,12 @@ export async function searchArticlesPaginated(
   if ("pagination" in response || "data" in response) {
     const langMeta = extractLangMeta(response as RawListResponse<RawFeedItem>, locale);
     logFallback("search", langMeta);
-    const list = response.data.map((item) => normalizeFeedItem(item, locale, langMeta));
+    const allowList = isPureLocale(langMeta, locale);
+    const list = allowList
+      ? response.data
+          .map((item) => normalizeFeedItem(item, locale, langMeta))
+          .filter((item) => isPureLocale(item.langMeta, locale))
+      : [];
     const pagination = "pagination" in response && response.pagination
       ? {
           page: response.pagination.page,
@@ -885,7 +1067,9 @@ export async function getAuthorBySlugOrId(slugOrId: string, locale?: Locale): Pr
     const response = await fetchOptionalJson<RawAuthor>(url, {
       headers: buildLocaleHeaders(locale),
     });
-    return response ? normalizeAuthor(response, locale) : null;
+    if (!response) return null;
+    const author = normalizeAuthor(response, locale);
+    return isPureLocale(author.langMeta, locale) ? author : null;
   }
 
   // Try original link value
@@ -893,7 +1077,10 @@ export async function getAuthorBySlugOrId(slugOrId: string, locale?: Locale): Pr
   const response = await fetchOptionalJson<RawAuthor>(url, {
     headers: buildLocaleHeaders(locale),
   });
-  if (response) return normalizeAuthor(response, locale);
+  if (response) {
+    const author = normalizeAuthor(response, locale);
+    if (isPureLocale(author.langMeta, locale)) return author;
+  }
 
   // Try extracting trailing numeric ID from slugified URL (e.g., "author-name-42")
   const trailingIdMatch = slugOrId.match(/-(\d+)$/);
@@ -902,7 +1089,9 @@ export async function getAuthorBySlugOrId(slugOrId: string, locale?: Locale): Pr
     const idResponse = await fetchOptionalJson<RawAuthor>(idUrl, {
       headers: buildLocaleHeaders(locale),
     });
-    return idResponse ? normalizeAuthor(idResponse, locale) : null;
+    if (!idResponse) return null;
+    const author = normalizeAuthor(idResponse, locale);
+    return isPureLocale(author.langMeta, locale) ? author : null;
   }
 
   return null;
@@ -914,7 +1103,9 @@ export async function getCmsPageById(id: number, locale?: Locale): Promise<CmsPa
     headers: buildLocaleHeaders(locale),
     next: { revalidate: 120 },
   });
-  return response ? normalizeCmsPage(response, locale) : null;
+  if (!response) return null;
+  const page = normalizeCmsPage(response, locale);
+  return isPureLocale(page.langMeta, locale) ? page : null;
 }
 
 export async function getArticlesByAuthor(
@@ -935,7 +1126,41 @@ export async function getArticlesByAuthor(
   return response ? normalizePaginatedFeed(response, locale) : null;
 }
 
-export function getAssetUrl(photoPath: string | null | undefined): string | null {
+function deriveLocaleHost(baseHost: string, locale: string): string {
+  // Replace the leading hostname label, e.g. `www.akhbaralyawm.com` ->
+  // `en.akhbaralyawm.com`. If the URL has no recognisable subdomain we fall
+  // back to prefixing.
+  try {
+    const url = new URL(baseHost);
+    const parts = url.hostname.split(".");
+    if (parts.length >= 3) {
+      // Replace the first label (e.g. "www" or existing locale code).
+      parts[0] = locale;
+    } else {
+      // bare apex like example.com -> en.example.com
+      parts.unshift(locale);
+    }
+    url.hostname = parts.join(".");
+    return trimSlash(url.toString());
+  } catch {
+    return baseHost;
+  }
+}
+
+function resolveAssetHost(locale?: string): string {
+  const baseAr = trimSlash(
+    ASSET_HOST_AR ?? requireEnv("NEXT_PUBLIC_ASSET_HOST", ASSET_HOST),
+  );
+  if (!locale || locale === "ar") return baseAr;
+  if (locale === "en") return trimSlash(ASSET_HOST_EN ?? deriveLocaleHost(baseAr, "en"));
+  if (locale === "fr") return trimSlash(ASSET_HOST_FR ?? deriveLocaleHost(baseAr, "fr"));
+  return baseAr;
+}
+
+export function getAssetUrl(
+  photoPath: string | null | undefined,
+  locale?: string,
+): string | null {
   if (!photoPath) {
     return null;
   }
@@ -944,7 +1169,7 @@ export function getAssetUrl(photoPath: string | null | undefined): string | null
     return photoPath;
   }
 
-  const host = trimSlash(requireEnv("NEXT_PUBLIC_ASSET_HOST", ASSET_HOST));
+  const host = resolveAssetHost(locale);
   const path = photoPath.startsWith("/") ? photoPath : `/${photoPath}`;
   return `${host}${path}`;
 }

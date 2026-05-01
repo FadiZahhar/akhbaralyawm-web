@@ -18,13 +18,15 @@ type SlideItem = {
 type CategorySliderProps = {
   items: SlideItem[];
   label: string;
+  locale?: string;
 };
 
 const AUTOPLAY_DELAY = 5000;
 
-export function CategorySlider({ items, label }: CategorySliderProps) {
+export function CategorySlider({ items, label, locale }: CategorySliderProps) {
+  const isRtl = (locale ?? items[0]?.locale ?? "ar") === "ar";
   const [emblaRef, emblaApi] = useEmblaCarousel(
-    { loop: true, direction: "rtl", align: "center" },
+    { loop: true, direction: isRtl ? "rtl" : "ltr", align: "center" },
   );
 
   const [activeBtn, setActiveBtn] = useState<"prev" | "next">("next");
@@ -119,8 +121,12 @@ export function CategorySlider({ items, label }: CategorySliderProps) {
           </div>
         </div>
 
-        {/* Navigation arrows — top-left pair */}
-        <div className="absolute left-3 top-3 z-10 flex gap-1.5">
+        {/* Navigation arrows — RTL: top-left (next first); LTR: top-right (prev first, next last) */}
+        <div
+          className={`absolute top-3 z-10 flex gap-1.5 ${
+            isRtl ? "left-3" : "right-3 flex-row-reverse"
+          }`}
+        >
           <button
             type="button"
             onClick={scrollNext}
@@ -128,7 +134,7 @@ export function CategorySlider({ items, label }: CategorySliderProps) {
             className={activeBtn === "next" ? greenBtn : greyBtn}
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18l6-6-6-6" />
+              <path d={isRtl ? "M9 18l6-6-6-6" : "M15 18l-6-6 6-6"} />
             </svg>
           </button>
           <button
@@ -138,7 +144,7 @@ export function CategorySlider({ items, label }: CategorySliderProps) {
             className={activeBtn === "prev" ? greenBtn : greyBtn}
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
+              <path d={isRtl ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"} />
             </svg>
           </button>
         </div>

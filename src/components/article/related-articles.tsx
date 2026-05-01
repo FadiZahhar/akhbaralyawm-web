@@ -25,7 +25,7 @@ export async function RelatedArticles({ locale, sectionLink, excludeId, label }:
       </h2>
       <div className="grid gap-4 sm:grid-cols-2">
         {items.map((item) => {
-          const photoUrl = getAssetUrl(item.photoPath);
+          const photoUrl = getAssetUrl(item.photoPath, locale);
           return (
             <Link
               key={item.id}

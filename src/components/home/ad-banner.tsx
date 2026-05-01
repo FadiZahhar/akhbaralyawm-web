@@ -18,14 +18,14 @@ type AdBannerProps = {
 const DEFAULT_BANNER: AdBannerItem = {
   imageUrl: "/assets/img/banner-placeholder.svg",
   href: "#",
-  alt: "إعلان",
+  alt: "Advertisement",
 };
 
 export function AdBanner({ banner, width = 900, height = 232 }: AdBannerProps) {
   const { imageUrl, href, alt } = banner ?? DEFAULT_BANNER;
 
   return (
-    <section className="w-full" aria-label="إعلان">
+    <section className="w-full" aria-label={alt}>
       <Link
         href={href}
         target={href.startsWith("http") ? "_blank" : undefined}

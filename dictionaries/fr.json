@@ -25,16 +25,23 @@
     "prevPage": "Page précédente",
     "nextPage": "Page suivante",
     "notFound": "Page non trouvée",
+    "unavailableTitle": "Pas encore disponible en français",
+    "unavailableBody": "Ce contenu n’a pas encore été traduit en français. Veuillez revenir plus tard.",
+    "backHome": "Retour à l’accueil",
     "serverError": "Une erreur serveur s'est produite. Veuillez réessayer plus tard.",
     "badRequest": "Requête invalide.",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "newsTag": "Actualités",
+    "ad": "Publicité",
+    "noContent": "Pas encore disponible dans cette langue."
   },
   "fallback": {
-    "notice": "Ce contenu est actuellement disponible uniquement en arabe."
+    "notice": "Pas encore disponible dans cette langue."
   },
   "home": {
     "title": "Akhbar Alyawm",
-    "breakingNews": "Dernières nouvelles"
+    "breakingNews": "Dernières nouvelles",
+    "programsLabel": "Programmes"
   },
   "search": {
     "title": "Recherche",

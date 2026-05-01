@@ -134,7 +134,7 @@ export function CategoryArchiveList({
     <div className="space-y-5">
       <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
-          const imageUrl = getAssetUrl(item.photoPath);
+          const imageUrl = getAssetUrl(item.photoPath, locale);
 
           return (
             <article

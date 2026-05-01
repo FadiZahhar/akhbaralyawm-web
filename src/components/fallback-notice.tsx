@@ -6,17 +6,12 @@ type FallbackNoticeProps = {
   message: string;
 };
 
-export function FallbackNotice({ langMeta, locale, message }: FallbackNoticeProps) {
-  if (!langMeta.fallbackUsed || locale === "ar") {
-    return null;
-  }
-
-  return (
-    <div
-      className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
-      role="status"
-    >
-      {message}
-    </div>
-  );
+/**
+ * Post-apiapp migration: the backend never serves AR fallbacks for EN/FR;
+ * it returns 404 instead, and `fallbackUsed` is always `false`. The "showing
+ * Arabic version" notice is therefore unreachable. Kept as a no-op so all
+ * existing call sites continue to compile while we phase the component out.
+ */
+export function FallbackNotice(_props: FallbackNoticeProps) {
+  return null;
 }

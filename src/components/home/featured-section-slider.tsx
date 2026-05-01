@@ -27,9 +27,10 @@ export function FeaturedSectionSlider({
   sectionLink,
   items,
 }: FeaturedSectionSliderProps) {
+  const isRtl = locale === "ar";
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: true,
-    direction: "rtl",
+    direction: isRtl ? "rtl" : "ltr",
     align: "start",
     slidesToScroll: 1,
   });
@@ -88,21 +89,21 @@ export function FeaturedSectionSlider({
           <button
             type="button"
             onClick={scrollPrev}
-            aria-label="السابق"
+            aria-label="Previous"
             className="flex h-8 w-8 items-center justify-center rounded-sm border border-[color:var(--border-soft)] bg-white text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
+              <polyline points={isRtl ? "9 18 15 12 9 6" : "15 18 9 12 15 6"} />
             </svg>
           </button>
           <button
             type="button"
             onClick={scrollNext}
-            aria-label="التالي"
+            aria-label="Next"
             className="flex h-8 w-8 items-center justify-center rounded-sm border border-[color:var(--border-soft)] bg-white text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
+              <polyline points={isRtl ? "15 18 9 12 15 6" : "9 18 15 12 9 6"} />
             </svg>
           </button>
         </div>

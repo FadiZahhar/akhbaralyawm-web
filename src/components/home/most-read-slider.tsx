@@ -17,12 +17,14 @@ type MostReadItem = {
 type MostReadSliderProps = {
   label: string;
   items: MostReadItem[];
+  locale?: string;
 };
 
-export function MostReadSlider({ label, items }: MostReadSliderProps) {
+export function MostReadSlider({ label, items, locale }: MostReadSliderProps) {
+  const isRtl = (locale ?? items[0]?.locale ?? "ar") === "ar";
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: true,
-    direction: "rtl",
+    direction: isRtl ? "rtl" : "ltr",
     align: "start",
     slidesToScroll: 1,
   });
@@ -78,21 +80,21 @@ export function MostReadSlider({ label, items }: MostReadSliderProps) {
             <button
               type="button"
               onClick={scrollPrev}
-              aria-label="السابق"
+              aria-label="Previous"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-white/30 text-white transition hover:bg-white hover:text-[#2FA14B]"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
+                <polyline points={isRtl ? "9 18 15 12 9 6" : "15 18 9 12 15 6"} />
               </svg>
             </button>
             <button
               type="button"
               onClick={scrollNext}
-              aria-label="التالي"
+              aria-label="Next"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-white/30 text-white transition hover:bg-white hover:text-[#2FA14B]"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6" />
+                <polyline points={isRtl ? "15 18 9 12 15 6" : "9 18 15 12 9 6"} />
               </svg>
             </button>
           </div>

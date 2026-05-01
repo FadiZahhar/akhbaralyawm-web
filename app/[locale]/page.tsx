@@ -71,7 +71,7 @@ export default async function Home({ params }: PageProps) {
       id: story.id,
       slugId: story.slugId,
       title: story.title,
-      imageUrl: getAssetUrl(story.photoPath),
+      imageUrl: getAssetUrl(story.photoPath, locale),
       locale,
     }));
   }
@@ -83,24 +83,21 @@ export default async function Home({ params }: PageProps) {
   let videoItems: { id: number; title: string; thumbnail: string | null; youtubeId: string }[] = [];
   if (programsSection && programsSection.link !== "/") {
     const programStories = await getArticlesBySection(programsSection.link, 1, 20, locale);
-    videoItems = programStories.items.map((story) => ({
-      id: story.id,
-      title: story.title,
-      thumbnail: getAssetUrl(story.photoPath),
-      youtubeId: "", // API doesn't provide YouTube IDs yet
-    }));
+    videoItems = programStories.items
+      // Backend doesn't yet supply YouTube IDs; until it does we can't render
+      // the embedded player. Drop items rather than show a fake fallback list.
+      .map((story) => ({
+        id: story.id,
+        title: story.title,
+        thumbnail: getAssetUrl(story.photoPath, locale),
+        youtubeId: "",
+      }))
+      .filter((v) => v.youtubeId.length > 0);
   }
-  // Fallback: use Akhbar Alyawm YouTube channel videos until API supports video URLs
-  const FALLBACK_VIDEOS = [
-    { id: 9001, title: "بالفيديو- هل سيصمد سعر الصرف والاقتصاد؟! ... الاموال الموجودة في مصرف لبنان ليست له", thumbnail: "https://img.youtube.com/vi/JGwWNGJdvx8/hqdefault.jpg", youtubeId: "JGwWNGJdvx8" },
-    { id: 9002, title: "بالفيديو – ملف الاسلاميين الذين غادروا إلى سوريا فتح بقوة والحل بعفو عام", thumbnail: "https://img.youtube.com/vi/LXb3EKWsInQ/hqdefault.jpg", youtubeId: "LXb3EKWsInQ" },
-    { id: 9003, title: "حوار خاص مع الوزير السابق حول مستقبل الاقتصاد اللبناني", thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg", youtubeId: "dQw4w9WgXcQ" },
-    { id: 9004, title: "ندوة حول الاصلاحات المطلوبة في القطاع المصرفي", thumbnail: "https://img.youtube.com/vi/9bZkp7q19f0/hqdefault.jpg", youtubeId: "9bZkp7q19f0" },
-    { id: 9005, title: "تقرير خاص: التحديات الامنية على الحدود الشمالية", thumbnail: "https://img.youtube.com/vi/kJQP7kiw5Fk/hqdefault.jpg", youtubeId: "kJQP7kiw5Fk" },
-    { id: 9006, title: "مقابلة حصرية حول ملف النازحين والعودة الطوعية", thumbnail: "https://img.youtube.com/vi/RgKAFK5djSk/hqdefault.jpg", youtubeId: "RgKAFK5djSk" },
-  ];
-  // Use API items if they have youtubeIds, otherwise use fallback
-  const finalVideos = videoItems.some((v) => v.youtubeId) ? videoItems : FALLBACK_VIDEOS;
+
+  // Use API items only — no Arabic fallback list. When no videos are
+  // available the VideoPrograms block is hidden in the JSX below.
+  const finalVideos = videoItems;
 
   // Build slider items from the first article of each loaded section
   const sliderItems = homeSections
@@ -110,7 +107,7 @@ export default async function Home({ params }: PageProps) {
         slugId: story.slugId,
         title: story.title,
         sectionTitle: group.section.title,
-        imageUrl: getAssetUrl(story.photoPath),
+        imageUrl: getAssetUrl(story.photoPath, locale),
         locale,
       })),
     )
@@ -128,18 +125,27 @@ export default async function Home({ params }: PageProps) {
   return (
     <>
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-4 py-8 sm:px-6 lg:px-8">
+      {locale !== "ar" && feed.length === 0 && homeSections.length === 0 && (
+        <section
+          className="rounded-sm border border-amber-200 bg-amber-50 px-6 py-8 text-center text-amber-900"
+          role="status"
+        >
+          <h2 className="text-lg font-extrabold">{dict.common.unavailableTitle}</h2>
+          <p className="mt-2 text-sm">{dict.common.unavailableBody}</p>
+        </section>
+      )}
       {/* Three-column hero area — ticker(4) | slider(6) | cards(3) */}
       <section className="grid gap-5 lg:grid-cols-[4fr_6fr_3fr]">
         {/* Right column (RTL first): لحظة بلحظة vertical ticker */}
         <HomeHero locale={locale} updates={updates} dict={{ lastMoment: dict.sidebar.lastMoment, live: dict.sidebar.live }} />
 
         {/* Middle column: large image swiper */}
-        <CategorySlider items={sliderItems} label={dict.sidebar.latestCategories} />
+        <CategorySlider items={sliderItems} label={dict.sidebar.latestCategories} locale={locale} />
 
         {/* Left column (RTL last): cards from different categories — match slider height */}
         <div className="flex flex-col gap-2">
           {sideCards.map((item) => {
-            const photoUrl = getAssetUrl(item.photoPath);
+            const photoUrl = getAssetUrl(item.photoPath, locale);
             return (
               <Link
                 key={item.id}
@@ -163,7 +169,7 @@ export default async function Home({ params }: PageProps) {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-2.5">
                     <span className="inline-block w-fit rounded-sm bg-[#2FA14B] px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
-                      {item.sectionTitle || "أخبار"}
+                      {item.sectionTitle || dict.common.newsTag}
                     </span>
                     <h3 className="line-clamp-2 text-xs font-bold leading-snug text-white drop-shadow-sm">
                       {item.title}
@@ -202,14 +208,14 @@ export default async function Home({ params }: PageProps) {
             {/* Second banner after the first section (politics) */}
             {index === 0 && (
               <div className="mt-8">
-                <AdBanner banner={{ imageUrl: "/assets/img/banner-placeholder-2.svg", href: "#", alt: "إعلان" }} />
+                <AdBanner banner={{ imageUrl: "/assets/img/banner-placeholder-2.svg", href: "#", alt: dict.common.ad }} />
               </div>
             )}
-            {/* Programs video section after second banner */}
-            {index === 0 && (
+            {/* Programs video section after second banner — only when real video data is available */}
+            {index === 0 && finalVideos.length > 0 && (
               <div className="mt-8">
                 <VideoPrograms
-                  sectionTitle={programsSection?.title ?? "البرامج"}
+                  sectionTitle={programsSection?.title ?? dict.home.programsLabel}
                   items={finalVideos}
                 />
               </div>
@@ -222,11 +228,12 @@ export default async function Home({ params }: PageProps) {
     {/* Most Read — full-width green slider before footer */}
     <MostReadSlider
       label={dict.sidebar.mostRead}
+      locale={locale}
       items={feed.slice(0, 15).map((item) => ({
         id: item.id,
         slugId: item.slugId,
         title: item.title,
-        imageUrl: getAssetUrl(item.photoPath),
+        imageUrl: getAssetUrl(item.photoPath, locale),
         locale,
       }))}
     />

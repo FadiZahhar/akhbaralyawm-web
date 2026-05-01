@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "en.akhbaralyawm.com",
+      },
+      {
+        protocol: "https",
+        hostname: "fr.akhbaralyawm.com",
+      },
+      {
+        protocol: "https",
         hostname: "akhbaralyawm.com",
       },
       {

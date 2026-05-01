@@ -7,9 +7,11 @@ export const revalidate = 120;
 
 import {
   getArticleById,
+  getArticleBySlug,
   getAssetUrl,
   getHomeFeed,
   getPreviewArticleById,
+  getPreviewArticleBySlug,
   getSectionSlug,
   type ArticleDto,
 } from "@/src/lib/api";
@@ -21,7 +23,7 @@ import { YoutubeEmbed } from "@/src/components/article/youtube-embed";
 import { AdBanner } from "@/src/components/home/ad-banner";
 import { MostReadSlider } from "@/src/components/home/most-read-slider";
 import { PageSidebar } from "@/src/components/sidebar/page-sidebar";
-import { isLocale, getDictionary, getOgLocale, locales, defaultLocale, type Locale } from "@/src/lib/i18n";
+import { isLocale, getDictionary, getOgLocale, defaultLocale, type Locale } from "@/src/lib/i18n";
 type PageParams = {
   locale: string;
   slugId: string;
@@ -76,20 +78,40 @@ async function fetchArticle(id: number, locale?: Locale): Promise<ArticleDto | n
   return getArticleById(id, locale);
 }
 
+/**
+ * Resolve an article from a URL segment that may be either a numeric id,
+ * a slug ending in `-{id}` (the canonical form post backendfix Phase 1),
+ * or a bare per-locale slug returned by `/v1/articles/by-slug/{slug}`.
+ * Returns the resolved article (already locale-correct) or null.
+ */
+async function fetchArticleBySlugId(slugId: string, locale: Locale): Promise<ArticleDto | null> {
+  const id = parseArticleIdFromSlugId(slugId);
+  if (id) {
+    const byId = await fetchArticle(id, locale);
+    if (byId) return byId;
+  }
+
+  // No trailing id (or by-id missed) — try the per-locale slug endpoint.
+  const cookieStore = await cookies();
+  const previewToken = cookieStore.get("previewToken")?.value;
+  if (previewToken) {
+    try {
+      const previewBySlug = await getPreviewArticleBySlug(slugId, previewToken, locale);
+      if (previewBySlug) return previewBySlug;
+    } catch {
+      /* fall through to public */
+    }
+  }
+  return getArticleBySlug(slugId, locale);
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale: rawLocale, slugId: rawSlugId } = await params;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
   const slugId = decodeURIComponent(rawSlugId);
   const metaDict = await getDictionary(locale);
-  const id = parseArticleIdFromSlugId(slugId);
 
-  if (!id) {
-    return {
-      title: metaDict.article.notFound,
-    };
-  }
-
-  const article = await fetchArticle(id, locale);
+  const article = await fetchArticleBySlugId(slugId, locale);
 
   if (!article) {
     return {
@@ -98,18 +120,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const canonicalPath = `/${locale}/news/${article.slugId}`;
-  const photoUrl = getAssetUrl(article.photoPath);
+  const photoUrl = getAssetUrl(article.photoPath, locale);
 
-  // Per-locale hreflang alternates. Article slugs are locale-specific
-  // (post backendfix Phase 1), but the safest cross-locale link target
-  // we have without an extra round-trip is the canonical article slug
-  // for the current locale; if a locale doesn't have its own translation,
-  // the backend fallback at request time will surface it.
-  const languages: Record<string, string> = {};
-  for (const l of locales) {
-    languages[l] = `/${l}/news/${article.slugId}`;
+  // Per-locale hreflang alternates. Post-apiapp migration the backend ships
+  // an `alternates[]` array on /v1/articles/by-id with sibling-locale URLs.
+  // We emit only the locales that actually have a translation (plus a self
+  // reference for the current locale and an x-default). When `alternates[]`
+  // is empty we emit nothing extra — per the new contract we MUST NOT
+  // synthesize sibling URLs that don't exist.
+  const languages: Record<string, string> = {
+    [locale]: canonicalPath,
+  };
+  for (const alt of article.alternates) {
+    if (alt.lang && alt.url && alt.lang !== locale) {
+      languages[alt.lang] = alt.url;
+    }
   }
-  languages["x-default"] = `/${defaultLocale}/news/${article.slugId}`;
+  if (article.alternates.length > 0) {
+    languages["x-default"] = languages[defaultLocale] ?? canonicalPath;
+  }
 
   return {
     title: article.title,
@@ -132,13 +161,8 @@ export default async function ArticlePage({ params }: PageProps) {
   const { locale: rawLocale, slugId: rawSlugId } = await params;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
   const slugId = decodeURIComponent(rawSlugId);
-  const id = parseArticleIdFromSlugId(slugId);
 
-  if (!id) {
-    notFound();
-  }
-
-  const article = await fetchArticle(id, locale);
+  const article = await fetchArticleBySlugId(slugId, locale);
 
   if (!article) {
     notFound();
@@ -148,7 +172,7 @@ export default async function ArticlePage({ params }: PageProps) {
     permanentRedirect(`/${locale}/news/${article.slugId}`);
   }
 
-  const photoUrl = getAssetUrl(article.photoPath);
+  const photoUrl = getAssetUrl(article.photoPath, locale);
   const canonicalUrl = absoluteUrl(`/${locale}/news/${article.slugId}`);
   const dict = await getDictionary(locale);
   const mostRead = await getHomeFeed(5, locale);
@@ -322,11 +346,12 @@ export default async function ArticlePage({ params }: PageProps) {
     </main>
     <MostReadSlider
       label={dict.sidebar.mostRead}
+      locale={locale}
       items={mostRead.map((item) => ({
         id: item.id,
         slugId: item.slugId,
         title: item.title,
-        imageUrl: getAssetUrl(item.photoPath),
+        imageUrl: getAssetUrl(item.photoPath, locale),
         locale,
       }))}
     />

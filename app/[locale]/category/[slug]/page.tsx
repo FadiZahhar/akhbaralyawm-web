@@ -195,11 +195,12 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     </main>
     <MostReadSlider
       label={dict.sidebar.mostRead}
+      locale={locale}
       items={mostRead.map((item) => ({
         id: item.id,
         slugId: item.slugId,
         title: item.title,
-        imageUrl: getAssetUrl(item.photoPath),
+        imageUrl: getAssetUrl(item.photoPath, locale),
         locale,
       }))}
     />

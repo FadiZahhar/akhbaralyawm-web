@@ -98,7 +98,7 @@ export default async function RootLayout({
     id: item.id,
     slugId: item.slugId,
     title: item.title,
-    photoUrl: getAssetUrl(item.photoPath),
+    photoUrl: getAssetUrl(item.photoPath, locale),
   }));
 
   const organizationJsonLd = {

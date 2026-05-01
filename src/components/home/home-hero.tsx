@@ -41,7 +41,7 @@ export function HomeHero({ locale, updates, dict }: HomeHeroProps) {
       {/* Scrollable list — max 5 visible rows, rest scroll */}
       <div className="ticker-scroll max-h-[325px] divide-y divide-[color:var(--border-soft)]">
         {items.map((item) => {
-          const photoUrl = getAssetUrl(item.photoPath);
+          const photoUrl = getAssetUrl(item.photoPath, locale);
           return (
             <Link
               key={item.id}

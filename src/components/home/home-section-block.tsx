@@ -38,7 +38,7 @@ export function HomeSectionBlock({ locale, section, stories, formatDate, dict }:
             href={`/${locale}/news/${story.slugId}`}
             title={story.title}
             summary={story.summary}
-            imageUrl={getAssetUrl(story.photoPath)}
+            imageUrl={getAssetUrl(story.photoPath, locale)}
             eyebrow={formatDate(story.disdate)}
             compact
           />
