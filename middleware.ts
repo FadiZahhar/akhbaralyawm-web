@@ -54,6 +54,7 @@ export function middleware(request: NextRequest) {
     const locale = pathname.split("/")[1] as SupportedLocale;
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-locale", locale);
+    requestHeaders.set("x-pathname", pathname);
 
     const response = NextResponse.next({
       request: { headers: requestHeaders },

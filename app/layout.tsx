@@ -93,6 +93,11 @@ export default async function RootLayout({
   const dir = getDirection(locale);
   const dict = await getDictionary(locale);
 
+  // Mimic (v2) routes render a self-contained header/footer; skip the
+  // global chrome here so we don't duplicate top bars on /[locale]/v2.
+  const pathname = headerStore.get("x-pathname") ?? "";
+  const isMimicRoute = /^\/[a-z]{2}\/v2(?:\/|$)/.test(pathname);
+
   const feed = await getHomeFeed(20, locale);
   const tickerItems = feed.map((item) => ({
     id: item.id,
@@ -147,12 +152,14 @@ export default async function RootLayout({
         <div className="min-h-full">
           <RouteProgressBar />
           {isPreviewMode ? <PreviewModeBanner activeLabel={dict.preview.active} exitLabel={dict.preview.exit} /> : null}
-          <StickyHeaderWrapper>
-            <SiteHeader locale={locale} dict={{ nav: dict.nav, site: dict.site }} />
-            <BreakingTicker locale={locale} label={dict.ticker.breaking} items={tickerItems} />
-          </StickyHeaderWrapper>
+          {!isMimicRoute && (
+            <StickyHeaderWrapper>
+              <SiteHeader locale={locale} dict={{ nav: dict.nav, site: dict.site }} />
+              <BreakingTicker locale={locale} label={dict.ticker.breaking} items={tickerItems} />
+            </StickyHeaderWrapper>
+          )}
           <div className="flex min-h-[calc(100vh-12rem)] flex-col">{children}</div>
-          <SiteFooter locale={locale} dict={dict.footer} navDict={dict.nav} />
+          {!isMimicRoute && <SiteFooter locale={locale} dict={dict.footer} navDict={dict.nav} />}
         </div>
       </body>
     </html>
