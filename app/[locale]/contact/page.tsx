@@ -61,7 +61,7 @@ export default async function ContactPage({ params }: PageProps) {
       {cmsPage ? (
         <section className="space-y-6 rounded-sm border border-[color:var(--border-soft)] bg-white p-6 shadow-[0_16px_46px_rgba(13,35,77,0.07)] sm:p-8">
           <article
-            className="prose prose-zinc max-w-none text-[1.02rem] leading-9"
+            className="prose prose-zinc max-w-none text-[1.02rem] leading-9 [overflow-wrap:anywhere]"
             dangerouslySetInnerHTML={{ __html: cmsPage.bodyHtml }}
           />
         </section>
