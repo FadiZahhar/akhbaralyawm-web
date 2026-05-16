@@ -1,0 +1,12 @@
+[
+  {
+    "target": "home-ar",
+    "viewport": "desktop",
+    "legacy": "/legacy-snapshot/home-ar/index.html",
+    "candidate": "/ar/v2",
+    "width": 1440,
+    "height": 7149,
+    "mismatchedPixels": 3207440,
+    "mismatchPercent": 31.157
+  }
+]

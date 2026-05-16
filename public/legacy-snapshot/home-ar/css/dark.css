@@ -1,0 +1,177 @@
+@charset "utf-8";
+
+.switch-box { position: fixed; z-index: 1; left: 0px; top: 150px; transform: translateY(-50%); background-color: rgb(255, 255, 255); height: 45px; width: 50px; padding-top: 5px; padding-right: 10px; border-radius: 0px 30px 30px 0px; box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px; }
+
+.switch-box .switch { position: relative; display: inline-block; width: 35px; height: 35px; }
+
+.switch-box .switch input { opacity: 0; width: 0px; height: 0px; }
+
+.switch-box .slider { position: absolute; cursor: pointer; inset: 0px; transition: 0.4s; }
+
+.switch-box .slider::before { position: absolute; content: ""; color: rgb(0, 0, 0); font-size: 24px; font-weight: 700; text-align: center; top: 0px; left: 6px; transition: 0.4s; font-family: IcoFont !important; }
+
+.switch-box input:checked + .slider::before { content: ""; }
+
+.switch-box .slider.round { border-radius: 50px; }
+
+.switch-box .slider.round::before { border-radius: 50%; }
+
+.theme-dark body { background-color: rgb(0, 0, 0); color: rgb(241, 241, 241); }
+
+.theme-dark p { color: rgb(241, 241, 241); }
+
+.theme-dark p a { color: rgb(241, 241, 241) !important; }
+
+.theme-dark a { color: rgb(255, 255, 255); }
+
+.theme-dark .h1, .theme-dark .h2, .theme-dark .h3, .theme-dark .h4, .theme-dark .h5, .theme-dark .h6, .theme-dark h1, .theme-dark h2, .theme-dark h3, .theme-dark h4, .theme-dark h5, .theme-dark h6 { color: rgb(255, 255, 255) !important; }
+
+.theme-dark .h1 a, .theme-dark .h2 a, .theme-dark .h3 a, .theme-dark .h4 a, .theme-dark .h5 a, .theme-dark .h6 a, .theme-dark h1 a, .theme-dark h2 a, .theme-dark h3 a, .theme-dark h4 a, .theme-dark h5 a, .theme-dark h6 a { color: rgb(255, 255, 255) !important; }
+
+.theme-dark .navbar-light .navbar-brand { filter: invert(1); }
+
+.theme-dark .sinmun-nav nav .navbar-nav .nav-item a { color: rgb(255, 255, 255); }
+
+.theme-dark .sinmun-nav nav .navbar-nav .nav-item a.active { color: rgb(47, 161, 75); }
+
+.theme-dark .sinmun-nav nav .navbar-nav .nav-item a:hover { color: rgb(47, 161, 75); }
+
+.theme-dark .sinmun-nav nav .others-options a { color: rgb(255, 255, 255); }
+
+.theme-dark .sinmun-nav.is-sticky { background-color: rgb(42, 42, 42) !important; }
+
+.theme-dark .breaking-news-content { background-color: rgb(14, 14, 14); }
+
+.theme-dark .breaking-news-content .breaking-title { color: rgb(47, 161, 75) !important; }
+
+.theme-dark .default-news-area { background-color: rgb(14, 14, 14); }
+
+.theme-dark .single-default-inner-news .news-content { background-color: rgb(20, 20, 20); }
+
+.theme-dark .default-video-news { background-color: rgb(20, 20, 20); }
+
+.theme-dark .single-international-news { background-color: rgb(14, 14, 14); }
+
+.theme-dark .international-news-list .news-media { background-color: rgb(14, 14, 14); }
+
+.theme-dark .single-politics-news .news-content { border: 1px solid rgb(108, 107, 107); }
+
+.theme-dark .single-health-lifestyle-news .news-content { border: 1px solid rgb(108, 107, 107); }
+
+.theme-dark .single-around-the-world-news { background-color: rgb(14, 14, 14); }
+
+.theme-dark .around-the-world-news-media { background-color: rgb(14, 14, 14); }
+
+.theme-dark .gallery-news-area { background-color: rgb(14, 14, 14); }
+
+.theme-dark .gallery-news-list .gallery-news-media { background-color: rgb(0, 0, 0); }
+
+.theme-dark .gallery-news-inner-slides { background-color: rgb(0, 0, 0); }
+
+.theme-dark .single-gallery-box .gallery-content { background-color: rgb(14, 14, 14); }
+
+.theme-dark .north-america-inner-news { background-color: rgb(14, 14, 14); }
+
+.theme-dark .north-america-inner-news .single-north-america-inner-news { border-bottom: 1px solid rgb(104, 102, 102); }
+
+.theme-dark .food-inner-news { background-color: rgb(14, 14, 14); }
+
+.theme-dark .food-inner-news .single-food-inner-news { border-bottom: 1px solid rgb(104, 102, 102); }
+
+.theme-dark .fashion-inner-news { background-color: rgb(14, 14, 14); }
+
+.theme-dark .fashion-inner-news .single-fashion-inner-news { border-bottom: 1px solid rgb(104, 102, 102); }
+
+.theme-dark .new-news-area { background-color: rgb(14, 14, 14); }
+
+.theme-dark .stay-connected li { background-color: rgb(14, 14, 14); }
+
+.theme-dark .stay-connected li a { border-color: rgb(128, 127, 127); }
+
+.theme-dark .stay-connected li a b { color: rgb(255, 255, 255); }
+
+.theme-dark .main-content-area { background-color: rgb(14, 14, 14); }
+
+.theme-dark .blog-box { background-color: rgb(0, 0, 0); margin-bottom: 30px; }
+
+.theme-dark .blog-box .posts-content .posts-meta span a { color: rgb(255, 255, 255); }
+
+.theme-dark .blog-box .posts-content .posts-meta span a:hover { color: rgb(47, 161, 75); }
+
+.theme-dark .widget-area .widget ul li a { color: rgb(255, 255, 255); }
+
+.theme-dark .widget-area .widget ul li a:hover { color: rgb(47, 161, 75); }
+
+.theme-dark .widget-area .tagcloud a { color: rgb(255, 255, 255); border: 1px solid rgb(139, 137, 137); }
+
+.theme-dark .page-title-content { background-color: rgb(14, 14, 14); }
+
+.theme-dark .page-title-content ul li a { color: rgb(255, 255, 255); }
+
+.theme-dark .page-title-content ul li a:hover { color: rgb(47, 161, 75); }
+
+.theme-dark .breadcrumb { background-color: rgb(14, 14, 14); }
+
+.theme-dark .breadcrumb li a { color: rgb(255, 255, 255); }
+
+.theme-dark .breadcrumb li a:hover { color: rgb(47, 161, 75); }
+
+.theme-dark blockquote { background-color: rgb(14, 14, 14); }
+
+.theme-dark .news-details .article-content { border: 1px solid rgb(128, 126, 126); }
+
+.theme-dark .post-controls-buttons { border: 1px solid rgb(128, 126, 126); }
+
+.theme-dark .post-controls-buttons div a { border: 1px solid rgb(128, 126, 126); color: rgb(255, 255, 255); }
+
+.theme-dark .comments-area .comment-author .fn { color: rgb(255, 255, 255); }
+
+.theme-dark .comments-area .comment-respond { background: rgb(14, 14, 14); border: 1px solid rgb(39, 38, 38); }
+
+.theme-dark .comments-area .comment-respond label { color: rgb(255, 255, 255); }
+
+.theme-dark .comments-area .comment-respond input { background-color: rgb(0, 0, 0); color: rgb(255, 255, 255); border: 1px solid rgb(39, 38, 38); }
+
+.theme-dark .comments-area .comment-respond textarea { background-color: rgb(0, 0, 0); color: rgb(255, 255, 255); border: 1px solid rgb(39, 38, 38); }
+
+.theme-dark .author-box { background-color: rgb(14, 14, 14); }
+
+.theme-dark .author-box .author-info ul.post-meta-info li a { color: rgb(255, 255, 255); }
+
+.theme-dark .author-box .author-info ul.post-meta-info li a:hover { color: rgb(47, 161, 75); }
+
+.theme-dark .contact-form .form-group .form-control { background-color: rgb(14, 14, 14); color: rgb(255, 255, 255); border-color: rgb(64, 63, 63) !important; }
+
+.theme-dark .contact-form .form-group .form-control::-webkit-input-placeholder { color: rgb(255, 255, 255); }
+
+.theme-dark .contact-form .form-group .form-control::placeholder { color: rgb(255, 255, 255); }
+
+.theme-dark .login-area::before { background: linear-gradient(-9deg, rgb(37, 38, 42) 0%, rgb(40, 41, 46) 40%, rgb(63, 43, 47) 100%); }
+
+.theme-dark .login-form { background-color: rgb(14, 14, 14); }
+
+.theme-dark .login-form::before { background-color: rgb(0, 0, 0); }
+
+.theme-dark .login-form form .form-group label { border-right: 1px solid rgb(112, 111, 111); }
+
+.theme-dark .login-form form .form-group .form-control { background-color: rgb(0, 0, 0); color: rgb(255, 255, 255); border-color: rgb(112, 111, 111) !important; }
+
+.theme-dark .login-form form .form-group .form-control::-webkit-input-placeholder { color: rgb(255, 255, 255); }
+
+.theme-dark .login-form form .form-group .form-control::placeholder { color: rgb(255, 255, 255); }
+
+.theme-dark .signup-area::before { background: linear-gradient(-9deg, rgb(37, 38, 42) 0%, rgb(40, 41, 46) 40%, rgb(63, 43, 47) 100%); }
+
+.theme-dark .signup-form { background-color: rgb(14, 14, 14); }
+
+.theme-dark .signup-form::before { background-color: rgb(0, 0, 0); }
+
+.theme-dark .signup-form form .form-group label { border-right: 1px solid rgb(112, 111, 111); }
+
+.theme-dark .signup-form form .form-group .form-control { background-color: rgb(0, 0, 0); color: rgb(255, 255, 255); border-color: rgb(112, 111, 111) !important; }
+
+.theme-dark .signup-form form .form-group .form-control::-webkit-input-placeholder { color: rgb(255, 255, 255); }
+
+.theme-dark .signup-form form .form-group .form-control::placeholder { color: rgb(255, 255, 255); }
+
+.theme-dark .coming-soon-area::before { background: linear-gradient(-9deg, rgb(37, 38, 42) 0%, rgb(40, 41, 46) 40%, rgb(63, 43, 47) 100%); }

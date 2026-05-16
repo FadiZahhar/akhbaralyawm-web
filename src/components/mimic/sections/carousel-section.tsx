@@ -19,11 +19,12 @@ type Props = {
   sectionTitle: string;
   sectionHref: string;
   items: Item[];
-  /** Visual variant. `popular` = grey panel, `default` = white, `hot` = green strip card. */
-  variant?: "popular" | "default" | "hot";
+  /** Visual variant. `popular` = featured, `default` = white grid, `hot` = horizontal strip, `most-read` = dark more-news area. */
+  variant?: "popular" | "default" | "hot" | "most-read";
+  sectionClassName?: string;
 };
 
-export function CarouselSection({ locale, sectionTitle, sectionHref, items, variant = "popular" }: Props) {
+export function CarouselSection({ locale, sectionTitle, sectionHref, items, variant = "popular", sectionClassName }: Props) {
   const isRtl = locale === "ar";
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: items.length > 4,
@@ -37,6 +38,49 @@ export function CarouselSection({ locale, sectionTitle, sectionHref, items, vari
   const scrollNext = useCallback(() => { emblaApi?.scrollNext(); setActiveBtn("next"); }, [emblaApi]);
 
   if (items.length === 0) return null;
+
+  if (variant === "most-read") {
+    return (
+      <section className={`more-news-area ${sectionClassName ?? ""}`.trim()}>
+        <div className="container">
+          <div className="more-news-inner">
+            <div className="section-title">
+              <h2>{sectionTitle}</h2>
+            </div>
+
+            <div className={`embla more-news-slides`} ref={emblaRef}>
+              <div className="embla__container" style={{ gap: 30 }}>
+                {items.map((it) => (
+                  <div
+                    key={it.id}
+                    className="mimic-carousel-slide"
+                    style={{ flex: "0 0 calc(33.333% - 20px)", minWidth: 0 }}
+                  >
+                    <div className="col-lg-12 col-md-12">
+                      <div className="single-more-news">
+                        <Link href={`/${locale}/news/${it.slugId}`}>
+                          {it.imageUrl ? (
+                            <Image src={it.imageUrl} alt="" width={420} height={320} unoptimized />
+                          ) : (
+                            <div style={{ width: "100%", aspectRatio: "4 / 3", background: "var(--mm-panel)" }} />
+                          )}
+                        </Link>
+                        <div className="news-content">
+                          <h3>
+                            <Link href={`/${locale}/news/${it.slugId}`}>{it.title}</Link>
+                          </h3>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (variant === "default") {
     return (
@@ -82,92 +126,118 @@ export function CarouselSection({ locale, sectionTitle, sectionHref, items, vari
     );
   }
 
-  const sectionClass =
-    variant === "popular"
-      ? "popular-news-area ptb-40"
-      : variant === "hot"
-        ? "hot-news-area"
-        : "default-news-area ptb-40";
-  const useAroundWorldCard = variant === "popular";
-  const cardClass = variant === "hot" ? "hot-news-card" : "popular-card";
-
-  return (
-    <section className={sectionClass}>
-      <div className="container">
-        <div className="section-title">
-          <Link href={sectionHref} style={variant === "popular" ? { color: "#142963" } : undefined}>
-            <h2>{sectionTitle}</h2>
-          </Link>
-          <div className="slider-nav is-static" style={{ position: "static", display: "inline-flex", gap: 6 }}>
-            <button
-              type="button"
-              onClick={scrollPrev}
-              aria-label="Previous"
-              className={activeBtn === "prev" ? "active" : ""}
-            >
-              {isRtl ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-            </button>
-            <button
-              type="button"
-              onClick={scrollNext}
-              aria-label="Next"
-              className={activeBtn === "next" ? "active" : ""}
-            >
-              {isRtl ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </button>
-          </div>
-        </div>
-
-        <div className={`embla ${variant === "popular" ? "popular-news-slides" : ""}`} ref={emblaRef}>
-          <div className="embla__container" style={{ gap: 16 }}>
-            {items.map((it) => (
-              <div
-                key={it.id}
-                className="mimic-carousel-slide"
-                style={{ flex: "0 0 calc(25% - 12px)", minWidth: 0 }}
-              >
-                {useAroundWorldCard ? (
-                  <div className="col-lg-12 col-md-12">
-                    <div className="single-around-the-world-news">
-                      <div className="news-image">
-                        <Link href={`/${locale}/news/${it.slugId}`}>
-                          {it.imageUrl ? (
-                            <Image src={it.imageUrl} alt="" width={400} height={300} unoptimized />
-                          ) : (
-                            <div style={{ width: "100%", aspectRatio: "4 / 3", background: "var(--mm-panel)" }} />
-                          )}
-                        </Link>
-                      </div>
-                      <div className="news-content">
-                        <h3>
-                          <Link href={`/${locale}/news/${it.slugId}`}>{it.title}</Link>
-                        </h3>
-                      </div>
+  if (variant === "hot") {
+    return (
+      <section className={`hot-news-area ${sectionClassName ?? ""}`.trim()}>
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-12 col-md-12">
+              <div className="row">
+                <div className="col-lg-12 col-md-12">
+                  <div className="around-the-world-news pt-40">
+                    <div className="section-title">
+                      <h2>{sectionTitle}</h2>
+                      <Link href={sectionHref} className="view-more">
+                        عرض المزيد <IcoFontIcon name="rounded-double-left" />
+                      </Link>
+                    </div>
+                    <div className="row">
+                      {items.map((it) => (
+                        <div key={it.id} className="col-lg-4 col-md-6">
+                          <div className="single-around-the-world-news">
+                            <div className="news-image">
+                              <Link href={`/${locale}/news/${it.slugId}`}>
+                                {it.imageUrl ? (
+                                  <Image src={it.imageUrl} alt="" width={400} height={300} unoptimized />
+                                ) : (
+                                  <div style={{ width: "100%", aspectRatio: "4 / 3", background: "var(--mm-panel)" }} />
+                                )}
+                              </Link>
+                            </div>
+                            <div className="news-content">
+                              <h3>
+                                <Link href={`/${locale}/news/${it.slugId}`}>{it.title}</Link>
+                              </h3>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ) : (
-                  <div className={`single-default-news ${cardClass}`}>
-                    <Link href={`/${locale}/news/${it.slugId}`}>
-                      {it.imageUrl ? (
-                        <Image src={it.imageUrl} alt="" width={400} height={300} unoptimized />
-                      ) : (
-                        <div style={{ width: "100%", aspectRatio: "4 / 3", background: "var(--mm-panel)" }} />
-                      )}
-                    </Link>
-                    <div className="news-content">
-                      <h3>
-                        <Link href={`/${locale}/news/${it.slugId}`}>{it.title}</Link>
-                      </h3>
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
+      </section>
+    );
+  }
 
+  // variant === "popular"
+  return (
+    <section className={`popular-news-area ptb-40 ${sectionClassName ?? ""}`.trim()}>
+      <div className="container">
+        <div className="row">
+          <div className="col-lg-12 col-md-12">
+            <div className="section-title">
+              <Link href={sectionHref} style={{ color: "#142963" }}>
+                <h2>{sectionTitle}</h2>
+              </Link>
+              <div className="slider-nav is-static" style={{ position: "static", display: "inline-flex", gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={scrollPrev}
+                  aria-label="Previous"
+                  className={activeBtn === "prev" ? "active" : ""}
+                >
+                  {isRtl ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+                </button>
+                <button
+                  type="button"
+                  onClick={scrollNext}
+                  aria-label="Next"
+                  className={activeBtn === "next" ? "active" : ""}
+                >
+                  {isRtl ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+                </button>
+              </div>
+            </div>
+            <div className="row">
+              <div className="embla popular-news-slides" ref={emblaRef} style={{ width: "100%" }}>
+                <div className="embla__container" style={{ gap: 30 }}>
+                  {items.map((it) => (
+                    <div
+                      key={it.id}
+                      className="mimic-carousel-slide"
+                      style={{ flex: "0 0 calc(33.333% - 20px)", minWidth: 0 }}
+                    >
+                      <div className="col-lg-12 col-md-12">
+                        <div className="single-around-the-world-news">
+                          <div className="news-image">
+                            <Link href={`/${locale}/news/${it.slugId}`}>
+                              {it.imageUrl ? (
+                                <Image src={it.imageUrl} alt="" width={400} height={300} unoptimized />
+                              ) : (
+                                <div style={{ width: "100%", aspectRatio: "4 / 3", background: "var(--mm-panel)" }} />
+                              )}
+                            </Link>
+                          </div>
+                          <div className="news-content">
+                            <h3>
+                              <Link href={`/${locale}/news/${it.slugId}`}>{it.title}</Link>
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <style>{`
-          @media (max-width: 991px){ .mimic-root .mimic-carousel-slide{ flex: 0 0 calc(50% - 8px) !important; } }
+          @media (max-width: 991px){ .mimic-root .mimic-carousel-slide{ flex: 0 0 calc(50% - 15px) !important; } }
           @media (max-width: 575px){ .mimic-root .mimic-carousel-slide{ flex: 0 0 100% !important; } }
         `}</style>
       </div>

@@ -1,0 +1,42 @@
+[
+  {
+    "target": "home-ar",
+    "viewport": "desktop",
+    "legacy": "/legacy-snapshot/home-ar/index.html",
+    "candidate": "/ar/v2",
+    "width": 1440,
+    "height": 7136,
+    "mismatchedPixels": 3208229,
+    "mismatchPercent": 31.221,
+    "zones": [
+      {
+        "zone": "full",
+        "top": 0,
+        "height": 7136,
+        "mismatchedPixels": 3208229,
+        "mismatchPercent": 31.221
+      },
+      {
+        "zone": "header",
+        "top": 0,
+        "height": 250,
+        "mismatchedPixels": 109788,
+        "mismatchPercent": 30.497
+      },
+      {
+        "zone": "body-fold",
+        "top": 250,
+        "height": 900,
+        "mismatchedPixels": 473186,
+        "mismatchPercent": 36.511
+      },
+      {
+        "zone": "footer",
+        "top": 6486,
+        "height": 650,
+        "mismatchedPixels": 741414,
+        "mismatchPercent": 79.211
+      }
+    ]
+  }
+]

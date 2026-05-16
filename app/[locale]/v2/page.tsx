@@ -14,13 +14,16 @@ import { NewsTickerStrip } from "@/src/components/mimic/sections/news-ticker-str
 import { HeroNewsArea } from "@/src/components/mimic/sections/hero-news-area";
 import { CarouselSection } from "@/src/components/mimic/sections/carousel-section";
 import { VideoNewsArea } from "@/src/components/mimic/sections/video-news-area";
+import { MostReadStrip } from "@/src/components/mimic/sections/most-read-strip";
 import { GoTopButton } from "@/src/components/mimic/sections/go-top-button";
 
 export const revalidate = 120;
 
 const FEATURED_SECTION_ID = 29; // خاص اليوم
 const PROGRAMS_SECTION_ID = 56; // البرامج
-const HOT_SECTION_IDS = [45, 30, 39, 46, 33];
+const LOCAL_NEWS_SECTION_ID = 45; // أخبار محلية
+const WORLD_SECTION_ID = 30; // العرب والعالم
+const MISC_SECTION_ID = 39; // متفرقات
 
 type PageProps = {
   params: Promise<{ locale: string }>;
@@ -56,16 +59,26 @@ export default async function MimicHomePage({ params }: PageProps) {
     ? (await getArticlesBySection(programsSection.link, 1, 8, locale)).items
     : [];
 
-  // One row of horizontal "popular" cards per featured ID (in parallel).
-  const hotGroups = await Promise.all(
-    HOT_SECTION_IDS.map(async (id) => {
-      const sec = await getSectionBySlugOrId(String(id), locale);
+  const [localNewsGroup, worldGroup, miscGroup] = await Promise.all([
+    (async () => {
+      const sec = await getSectionBySlugOrId(String(LOCAL_NEWS_SECTION_ID), locale);
       if (!sec) return null;
       const list = await getArticlesBySection(sec.link, 1, 8, locale);
       return { section: sec, items: list.items };
-    }),
-  );
-  const validHotGroups = hotGroups.filter((g): g is NonNullable<typeof g> => g !== null && g.items.length > 0);
+    })(),
+    (async () => {
+      const sec = await getSectionBySlugOrId(String(WORLD_SECTION_ID), locale);
+      if (!sec) return null;
+      const list = await getArticlesBySection(sec.link, 1, 8, locale);
+      return { section: sec, items: list.items };
+    })(),
+    (async () => {
+      const sec = await getSectionBySlugOrId(String(MISC_SECTION_ID), locale);
+      if (!sec) return null;
+      const list = await getArticlesBySection(sec.link, 1, 8, locale);
+      return { section: sec, items: list.items };
+    })(),
+  ]);
 
   // Slice the feed into the various hero pieces.
   const tickerStrip = feed.slice(0, 5).map((f) => ({
@@ -87,7 +100,19 @@ export default async function MimicHomePage({ params }: PageProps) {
     sectionTitle: f.sectionTitle,
     imageUrl: getAssetUrl(f.photoPath, locale),
   }));
+  // 3 small cards rendered in the right-hand col-lg-2 column of the hero,
+  // matching the legacy `single-new-news` stack. Skip the first slide (which
+  // is already shown as the big carousel card) so we don't repeat the lead.
+  const sideCards = feed.slice(6, 9).map((f) => ({
+    id: f.id,
+    slugId: f.slugId,
+    title: f.title,
+    sectionTitle: f.sectionTitle,
+    imageUrl: getAssetUrl(f.photoPath, locale),
+  }));
   const moreNewsItems = feed.slice(10, 13);
+  const liveUpdatesLabel = locale === "ar" ? "لحظة بلحظة" : dict.sidebar.lastMoment;
+  const mostReadLabel = locale === "ar" ? "الأكثر قراءةً" : dict.sidebar.mostRead;
 
   return (
     <>
@@ -96,100 +121,134 @@ export default async function MimicHomePage({ params }: PageProps) {
       {/* Compact top stories strip under the logo/navigation */}
       <MoreNewsArea locale={locale} items={moreNewsItems} />
 
-      {/* Hero: left live updates + right carousel */}
-      <HeroNewsArea
-        locale={locale}
-        liveLabel={dict.sidebar.lastMoment}
-        slides={slides}
-        updates={updates}
-      />
+      <div className="default-news-area pt-5 pb-4">
+        {/* Hero: left live updates + right carousel */}
+        <HeroNewsArea
+          locale={locale}
+          liveLabel={liveUpdatesLabel}
+          slides={slides}
+          updates={updates}
+          sideCards={sideCards}
+        />
 
-      <div className="text-center pt-5 pb-5">
-        <a target="_blank" rel="noopener noreferrer" href="https://lexuslebanon.com/newvehicles/60/nx">
-          <img
-            src="/%D8%A7%D9%84%D9%8A%D9%88%D9%85_files/yaris.jpg"
-            alt="Lexus banner"
-            style={{ maxWidth: 900, width: "100%", transform: "scale(1)" }}
+        <div className="text-center pt-5 pb-5">
+          <a target="_blank" rel="noopener noreferrer" href="https://lexuslebanon.com/newvehicles/60/nx">
+            <img
+              src="/%D8%A7%D9%84%D9%8A%D9%88%D9%85_files/yaris.jpg"
+              alt="Lexus banner"
+              style={{ maxWidth: 900, width: "100%", transform: "scale(1)" }}
+            />
+          </a>
+        </div>
+
+        {/* Featured (خاص اليوم) carousel */}
+        {featuredSection && featuredItems.length > 0 && (
+          <CarouselSection
+            locale={locale}
+            sectionTitle={featuredSection.title}
+            sectionHref={`/${locale}/category/${featuredSection.slug}`}
+            items={featuredItems.map((s) => ({
+              id: s.id,
+              slugId: s.slugId,
+              title: s.title,
+              imageUrl: getAssetUrl(s.photoPath, locale),
+            }))}
+            variant="popular"
           />
-        </a>
-      </div>
+        )}
 
-      {/* Featured (خاص اليوم) carousel */}
-      {featuredSection && featuredItems.length > 0 && (
-        <CarouselSection
-          locale={locale}
-          sectionTitle={featuredSection.title}
-          sectionHref={`/${locale}/category/${featuredSection.slug}`}
-          items={featuredItems.map((s) => ({
-            id: s.id,
-            slugId: s.slugId,
-            title: s.title,
-            imageUrl: getAssetUrl(s.photoPath, locale),
-          }))}
-          variant="popular"
-        />
-      )}
+        <div className="text-center pt-5 pb-5">
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://www.whish.money/download?utm_source=Download+Akhbar+Al+Yawm+&utm_medium=970+x+250+px"
+          >
+            <img
+              src="/%D8%A7%D9%84%D9%8A%D9%88%D9%85_files/whishbig.jpg"
+              alt="Whish banner"
+              style={{ maxWidth: 900, width: "100%", transform: "scale(1)" }}
+            />
+          </a>
+        </div>
 
-      <div className="text-center pt-5 pb-5">
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://www.whish.money/download?utm_source=Download+Akhbar+Al+Yawm+&utm_medium=970+x+250+px"
-        >
-          <img
-            src="/%D8%A7%D9%84%D9%8A%D9%88%D9%85_files/whishbig.jpg"
-            alt="Whish banner"
-            style={{ maxWidth: 900, width: "100%", transform: "scale(1)" }}
+        {/* أخبار محلية appears before programs on live homepage */}
+        {localNewsGroup && localNewsGroup.items.length > 0 && (
+          <CarouselSection
+            locale={locale}
+            sectionTitle={localNewsGroup.section.title}
+            sectionHref={`/${locale}/category/${localNewsGroup.section.slug}`}
+            items={localNewsGroup.items.map((s) => ({
+              id: s.id,
+              slugId: s.slugId,
+              title: s.title,
+              imageUrl: getAssetUrl(s.photoPath, locale),
+            }))}
+            variant="default"
           />
-        </a>
+        )}
+
+        {/* Programs (البرامج) videos */}
+        {programsSection && programsItems.length > 0 && (
+          <VideoNewsArea
+            locale={locale}
+            sectionTitle={programsSection.title}
+            sectionHref={`/${locale}/category/${programsSection.slug}`}
+            items={programsItems.map((s) => ({
+              id: s.id,
+              slugId: s.slugId,
+              title: s.title,
+              imageUrl: getAssetUrl(s.photoPath, locale),
+              sectionTitle: s.sectionTitle,
+            }))}
+          />
+        )}
+
+        {/* العرب والعالم */}
+        {worldGroup && worldGroup.items.length > 0 && (
+          <CarouselSection
+            locale={locale}
+            sectionTitle={worldGroup.section.title}
+            sectionHref={`/${locale}/category/${worldGroup.section.slug}`}
+            items={worldGroup.items.map((s) => ({
+              id: s.id,
+              slugId: s.slugId,
+              title: s.title,
+              imageUrl: getAssetUrl(s.photoPath, locale),
+            }))}
+            variant="hot"
+            sectionClassName="ptb-40"
+          />
+        )}
+
+        {/* متفرقات */}
+        {miscGroup && miscGroup.items.length > 0 && (
+          <CarouselSection
+            locale={locale}
+            sectionTitle={miscGroup.section.title}
+            sectionHref={`/${locale}/category/${miscGroup.section.slug}`}
+            items={miscGroup.items.map((s) => ({
+              id: s.id,
+              slugId: s.slugId,
+              title: s.title,
+              imageUrl: getAssetUrl(s.photoPath, locale),
+            }))}
+            variant="hot"
+            sectionClassName="pb-40"
+          />
+        )}
+
+        {/* Most-read closing strip */}
+        <MostReadStrip
+          locale={locale}
+          sectionTitle={mostReadLabel}
+          items={feed.slice(0, 12).map((f) => ({
+            id: f.id,
+            slugId: f.slugId,
+            title: f.title,
+            imageUrl: getAssetUrl(f.photoPath, locale),
+          }))}
+        />
       </div>
-
-      {/* Programs (البرامج) videos */}
-      {programsSection && programsItems.length > 0 && (
-        <VideoNewsArea
-          locale={locale}
-          sectionTitle={programsSection.title}
-          sectionHref={`/${locale}/category/${programsSection.slug}`}
-          items={programsItems.map((s) => ({
-            id: s.id,
-            slugId: s.slugId,
-            title: s.title,
-            imageUrl: getAssetUrl(s.photoPath, locale),
-            sectionTitle: s.sectionTitle,
-          }))}
-        />
-      )}
-
-      {/* Hot sections (one carousel per section) */}
-      {validHotGroups.map((g, i) => (
-        <CarouselSection
-          key={g.section.id}
-          locale={locale}
-          sectionTitle={g.section.title}
-          sectionHref={`/${locale}/category/${g.section.slug}`}
-          items={g.items.map((s) => ({
-            id: s.id,
-            slugId: s.slugId,
-            title: s.title,
-            imageUrl: getAssetUrl(s.photoPath, locale),
-          }))}
-          variant="default"
-        />
-      ))}
-
-      {/* Most-read closing strip */}
-      <CarouselSection
-        locale={locale}
-        sectionTitle={dict.sidebar.mostRead}
-        sectionHref={`/${locale}/v2`}
-        items={feed.slice(0, 12).map((f) => ({
-          id: f.id,
-          slugId: f.slugId,
-          title: f.title,
-          imageUrl: getAssetUrl(f.photoPath, locale),
-        }))}
-        variant="hot"
-      />
 
       <SiteFooterMimic
         locale={locale}

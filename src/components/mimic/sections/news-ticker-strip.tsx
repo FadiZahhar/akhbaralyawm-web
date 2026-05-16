@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { IcoFontIcon } from "../icons";
-
 type Item = { id: number; slugId: string; title: string; locale: string };
 
 type Props = {
@@ -34,16 +32,15 @@ export function NewsTickerStrip({ label, items, intervalMs = 5000 }: Props) {
   return (
     <>
       <div id="close" className="new-slides mimic-top-ticker">
-        <section className="new-news-area bg-color-none mb-0">
+        <section className="new-news-area bg-color-none mb-4">
           <div className="container">
             <button type="button" className="mimic-ticker-close" aria-label="Close" onClick={() => setVisible(false)}>
-              <IcoFontIcon name="close" />
+              ×
             </button>
-            <div className="news-ticker-strip" dir="ltr" role="status" aria-live="polite">
-              <span className="label">{label}</span>
+            <div className="mimic-ticker-track" dir="ltr" role="status" aria-live="polite">
               <Link
                 href={`/${current.locale}/news/${current.slugId}`}
-                className="item"
+                className="mimic-ticker-link"
                 key={current.id}
                 dir="rtl"
                 style={{ animation: "mimic-fade .35s ease" }}

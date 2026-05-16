@@ -34,9 +34,11 @@ export function middleware(request: NextRequest) {
   if (
     pathname.startsWith("/api/") ||
     pathname.startsWith("/_next/") ||
+    pathname.startsWith("/legacy-snapshot/") ||
     pathname.startsWith("/favicon") ||
     pathname.endsWith(".xml") ||
     pathname.endsWith(".txt") ||
+    pathname.endsWith(".html") ||
     pathname.endsWith(".ico") ||
     pathname.endsWith(".png") ||
     pathname.endsWith(".jpg") ||

@@ -10,7 +10,9 @@
     "seo:pagination-check": "node scripts/seo-pagination-check.mjs",
     "baseline:capture": "node scripts/capture-visual-baseline.mjs",
     "test:backend-i18n": "node scripts/test-backend-i18n.mjs",
-    "mimic:build-css": "node scripts/build-mimic-legacy-css.mjs"
+    "mimic:build-css": "node scripts/build-mimic-legacy-css.mjs",
+    "mimic:extract": "node scripts/extract-mhtml.mjs public/sourcehtml/homear.mhtml home-ar && node scripts/extract-mhtml.mjs public/sourcehtml/homefr.mhtml home-fr && node scripts/extract-mhtml.mjs public/sourcehtml/homepageen.mhtml home-en",
+    "mimic:diff": "node scripts/visual-diff.mjs"
   },
   "dependencies": {
     "@types/dompurify": "^3.0.5",
@@ -31,7 +33,9 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "lighthouse": "^13.0.3",
+    "pixelmatch": "^7.2.0",
     "playwright": "^1.52.0",
+    "pngjs": "^7.0.0",
     "postcss": "^8.5.14",
     "postcss-prefix-selector": "^2.1.1",
     "tailwindcss": "^4",

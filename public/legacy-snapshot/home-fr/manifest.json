@@ -1,0 +1,7 @@
+{
+  "source": "public/sourcehtml/homefr.mhtml",
+  "extractedAt": "2026-05-16T20:05:14.809Z",
+  "htmlBytes": 116318,
+  "cssParts": 17,
+  "note": "Asset URLs in index.html remain absolute (https://www.akhbaralyawm.com/...). Network required to render."
+}
