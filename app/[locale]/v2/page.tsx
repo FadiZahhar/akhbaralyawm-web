@@ -12,7 +12,8 @@ import { SiteFooterMimic } from "@/src/components/mimic/site-footer-mimic";
 import { MoreNewsArea } from "@/src/components/mimic/sections/more-news-area";
 import { NewsTickerStrip } from "@/src/components/mimic/sections/news-ticker-strip";
 import { HeroNewsArea } from "@/src/components/mimic/sections/hero-news-area";
-import { CarouselSection } from "@/src/components/mimic/sections/carousel-section";
+import { PopularNewsCarousel } from "@/src/components/mimic/sections/popular-news-carousel";
+import { SectionGrid } from "@/src/components/mimic/sections/section-grid";
 import { VideoNewsArea } from "@/src/components/mimic/sections/video-news-area";
 import { MostReadStrip } from "@/src/components/mimic/sections/most-read-strip";
 import { GoTopButton } from "@/src/components/mimic/sections/go-top-button";
@@ -46,7 +47,7 @@ export default async function MimicHomePage({ params }: PageProps) {
   // Parallel fetch — the home page is one big fan-out, but every leaf already
   // degrades gracefully on 5xx (see api.ts), so failures here are bounded.
   const [feed, sections, featuredSection, programsSection] = await Promise.all([
-    getHomeFeed(20, locale),
+    getHomeFeed(100, locale),
     getSections(locale),
     getSectionBySlugOrId(String(FEATURED_SECTION_ID), locale),
     getSectionBySlugOrId(String(PROGRAMS_SECTION_ID), locale),
@@ -87,7 +88,7 @@ export default async function MimicHomePage({ params }: PageProps) {
     title: f.title,
     locale,
   }));
-  const updates = feed.slice(0, 12).map((f) => ({
+  const updates = feed.slice(0, 100).map((f) => ({
     id: f.id,
     slugId: f.slugId,
     title: f.title,
@@ -143,7 +144,7 @@ export default async function MimicHomePage({ params }: PageProps) {
 
         {/* Featured (خاص اليوم) carousel */}
         {featuredSection && featuredItems.length > 0 && (
-          <CarouselSection
+          <PopularNewsCarousel
             locale={locale}
             sectionTitle={featuredSection.title}
             sectionHref={`/${locale}/category/${featuredSection.slug}`}
@@ -153,7 +154,6 @@ export default async function MimicHomePage({ params }: PageProps) {
               title: s.title,
               imageUrl: getAssetUrl(s.photoPath, locale),
             }))}
-            variant="popular"
           />
         )}
 
@@ -173,11 +173,11 @@ export default async function MimicHomePage({ params }: PageProps) {
 
         {/* أخبار محلية appears before programs on live homepage */}
         {localNewsGroup && localNewsGroup.items.length > 0 && (
-          <CarouselSection
+          <SectionGrid
             locale={locale}
             sectionTitle={localNewsGroup.section.title}
             sectionHref={`/${locale}/category/${localNewsGroup.section.slug}`}
-            items={localNewsGroup.items.map((s) => ({
+            items={localNewsGroup.items.slice(0, 3).map((s) => ({
               id: s.id,
               slugId: s.slugId,
               title: s.title,
@@ -205,11 +205,11 @@ export default async function MimicHomePage({ params }: PageProps) {
 
         {/* العرب والعالم */}
         {worldGroup && worldGroup.items.length > 0 && (
-          <CarouselSection
+          <SectionGrid
             locale={locale}
             sectionTitle={worldGroup.section.title}
             sectionHref={`/${locale}/category/${worldGroup.section.slug}`}
-            items={worldGroup.items.map((s) => ({
+            items={worldGroup.items.slice(0, 3).map((s) => ({
               id: s.id,
               slugId: s.slugId,
               title: s.title,
@@ -222,11 +222,11 @@ export default async function MimicHomePage({ params }: PageProps) {
 
         {/* متفرقات */}
         {miscGroup && miscGroup.items.length > 0 && (
-          <CarouselSection
+          <SectionGrid
             locale={locale}
             sectionTitle={miscGroup.section.title}
             sectionHref={`/${locale}/category/${miscGroup.section.slug}`}
-            items={miscGroup.items.map((s) => ({
+            items={miscGroup.items.slice(0, 3).map((s) => ({
               id: s.id,
               slugId: s.slugId,
               title: s.title,

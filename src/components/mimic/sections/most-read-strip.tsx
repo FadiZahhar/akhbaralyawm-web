@@ -58,10 +58,12 @@ export function MostReadStrip({ locale, sectionTitle, items }: Props) {
           </div>
           <div className="row">
             <div className="more-news-slides owl-carousel owl-theme owl-rtl owl-loaded owl-drag">
-              <div className="owl-stage-outer">
+              <div className="owl-stage-outer" style={{ overflow: "hidden" }}>
                 <div
                   className="owl-stage"
                   style={{
+                    display: "flex",
+                    flexWrap: "nowrap",
                     transform: "translate3d(0px, 0px, 0px)",
                     transition: "0.25s",
                     width: `${stageWidth}px`,
@@ -71,7 +73,11 @@ export function MostReadStrip({ locale, sectionTitle, items }: Props) {
                     <div
                       key={`${item.id}-${idx}`}
                       className={`owl-item${kind ? ` ${kind}` : ""}`}
-                      style={{ width: `${CARD_WIDTH_PX}px`, marginLeft: `${CARD_GUTTER_PX}px` }}
+                      style={{
+                        flex: "0 0 auto",
+                        width: `${CARD_WIDTH_PX}px`,
+                        marginLeft: `${CARD_GUTTER_PX}px`,
+                      }}
                     >
                       <div className="col-lg-12 col-md-12">
                         <div className="single-more-news">

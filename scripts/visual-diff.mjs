@@ -73,6 +73,32 @@ async function capture(page, url, outPath) {
   await page.goto(url, { waitUntil: "load", timeout: 60000 });
   await page.waitForTimeout(2500);
   await page.screenshot({ path: outPath, fullPage: true });
+
+  // Collect bounding boxes of every <img> (and <picture>, <video>, <iframe>)
+  // so the diff can exclude these areas from the mismatch count. The legacy
+  // snapshot is frozen Apr 18, the candidate fetches live API responses;
+  // article photos will always differ at the pixel level. Without this mask,
+  // structural progress is invisible after iteration 3.
+  const imgBoxes = await page.evaluate(() => {
+    const rects = [];
+    const nodes = document.querySelectorAll("img, picture, video, iframe, [style*='background-image']");
+    for (const el of nodes) {
+      const r = el.getBoundingClientRect();
+      // getBoundingClientRect is viewport-relative; for full-page screenshots
+      // we need page coordinates.
+      const top = r.top + window.scrollY;
+      const left = r.left + window.scrollX;
+      if (r.width <= 0 || r.height <= 0) continue;
+      rects.push({
+        top: Math.max(0, Math.floor(top)),
+        left: Math.max(0, Math.floor(left)),
+        width: Math.ceil(r.width),
+        height: Math.ceil(r.height),
+      });
+    }
+    return rects;
+  });
+  return imgBoxes;
 }
 
 function loadPng(filePath) {
@@ -117,7 +143,29 @@ function cropToCommonSize(a, b) {
   return [crop(a), crop(b), width, height];
 }
 
-async function diffPair(legacyPath, candidatePath, diffPath) {
+function buildImgExclusionMask(width, height, boxesA, boxesB) {
+  // Bitmap: 1 byte per pixel, 1 = excluded.
+  const mask = new Uint8Array(width * height);
+  const paint = (boxes) => {
+    for (const box of boxes) {
+      const top = Math.max(0, Math.min(height, box.top));
+      const left = Math.max(0, Math.min(width, box.left));
+      const right = Math.max(0, Math.min(width, box.left + box.width));
+      const bottom = Math.max(0, Math.min(height, box.top + box.height));
+      for (let y = top; y < bottom; y += 1) {
+        const rowStart = y * width;
+        for (let x = left; x < right; x += 1) {
+          mask[rowStart + x] = 1;
+        }
+      }
+    }
+  };
+  paint(boxesA);
+  paint(boxesB);
+  return mask;
+}
+
+async function diffPair(legacyPath, candidatePath, diffPath, imgMaskPath, legacyBoxes = [], candidateBoxes = []) {
   const [rawA, rawB] = await Promise.all([loadPng(legacyPath), loadPng(candidatePath)]);
   const legacyHeight = rawA.height;
   const candidateHeight = rawB.height;
@@ -143,11 +191,40 @@ async function diffPair(legacyPath, candidatePath, diffPath) {
 
   const total = width * height;
 
+  // Image-exclusion mask: union of all <img>/<picture>/<video>/<iframe> boxes
+  // from both legacy and candidate, clipped to the shared frame. Pixels under
+  // this mask are dominated by photo content, which is data-driven and will
+  // always differ between the frozen Apr 18 snapshot and the live API.
+  // Excluding them gives a structural-mismatch number that actually moves
+  // as layout/typography/chrome converge.
+  const exclude = buildImgExclusionMask(width, height, legacyBoxes, candidateBoxes);
+  let excludedTotal = 0;
+  for (let i = 0; i < exclude.length; i += 1) if (exclude[i]) excludedTotal += 1;
+
+  // Also write the exclusion mask as a PNG (red = excluded) so reviewers can
+  // see what's being ignored.
+  if (imgMaskPath) {
+    const maskPng = new PNG({ width, height });
+    for (let i = 0; i < exclude.length; i += 1) {
+      const off = i * 4;
+      if (exclude[i]) {
+        maskPng.data[off] = 255;
+        maskPng.data[off + 1] = 0;
+        maskPng.data[off + 2] = 0;
+        maskPng.data[off + 3] = 128;
+      } else {
+        maskPng.data[off + 3] = 0;
+      }
+    }
+    await fs.writeFile(imgMaskPath, PNG.sync.write(maskPng));
+  }
+
   // Anchor footer zone to the *legacy* footer position. If the candidate is
   // taller, this measures legacy-footer vs candidate-at-that-row (likely the
   // candidate's middle content), surfacing height drift without inflating the
   // zone metric to ~100%.
   const zoneStats = [];
+  let structuralMismatchedTotal = 0;
   for (const zone of ZONES) {
     let top;
     let zoneHeight;
@@ -164,21 +241,39 @@ async function diffPair(legacyPath, candidatePath, diffPath) {
     if (zoneHeight <= 0) continue;
 
     let zoneMismatched = 0;
-    const rowStart = top * width * 4;
-    const rowEnd = (top + zoneHeight) * width * 4;
-    for (let p = rowStart + 3; p < rowEnd; p += 4) {
-      if (mask.data[p] !== 0) zoneMismatched += 1;
+    let zoneStructural = 0;
+    let zoneExcluded = 0;
+    for (let y = top; y < top + zoneHeight; y += 1) {
+      const rowStart = y * width;
+      const alphaRowStart = rowStart * 4 + 3;
+      for (let x = 0; x < width; x += 1) {
+        const isExcluded = exclude[rowStart + x] === 1;
+        if (isExcluded) zoneExcluded += 1;
+        if (mask.data[alphaRowStart + x * 4] !== 0) {
+          zoneMismatched += 1;
+          if (!isExcluded) zoneStructural += 1;
+        }
+      }
     }
+    if (zone.name === "full") structuralMismatchedTotal = zoneStructural;
     const zoneTotal = width * zoneHeight;
+    const structuralDenominator = zoneTotal - zoneExcluded;
     zoneStats.push({
       zone: zone.name,
       top,
       height: zoneHeight,
       mismatchedPixels: zoneMismatched,
       mismatchPercent: zoneTotal === 0 ? 0 : Number(((zoneMismatched / zoneTotal) * 100).toFixed(3)),
+      structuralMismatchedPixels: zoneStructural,
+      structuralMismatchPercent:
+        structuralDenominator === 0
+          ? 0
+          : Number(((zoneStructural / structuralDenominator) * 100).toFixed(3)),
+      excludedPixels: zoneExcluded,
     });
   }
 
+  const structuralDenom = total - excludedTotal;
   return {
     width,
     height,
@@ -187,6 +282,10 @@ async function diffPair(legacyPath, candidatePath, diffPath) {
     heightDeltaPx: candidateHeight - legacyHeight,
     mismatchedPixels: mismatched,
     mismatchPercent: total === 0 ? 0 : (mismatched / total) * 100,
+    excludedPixels: excludedTotal,
+    structuralMismatchedPixels: structuralMismatchedTotal,
+    structuralMismatchPercent:
+      structuralDenom === 0 ? 0 : Number(((structuralMismatchedTotal / structuralDenom) * 100).toFixed(3)),
     zones: zoneStats,
   };
 }
@@ -209,9 +308,17 @@ async function main() {
         const diffShot = path.join(outDir, `${target.key}-${viewport.name}.diff.png`);
 
         try {
-          await capture(page, `${BASE_URL}${target.legacy}`, legacyShot);
-          await capture(page, `${BASE_URL}${target.candidate}`, candidateShot);
-          const result = await diffPair(legacyShot, candidateShot, diffShot);
+          const legacyBoxes = await capture(page, `${BASE_URL}${target.legacy}`, legacyShot);
+          const candidateBoxes = await capture(page, `${BASE_URL}${target.candidate}`, candidateShot);
+          const imgMaskShot = path.join(outDir, `${target.key}-${viewport.name}.imgmask.png`);
+          const result = await diffPair(
+            legacyShot,
+            candidateShot,
+            diffShot,
+            imgMaskShot,
+            legacyBoxes,
+            candidateBoxes,
+          );
           report.push({
             target: target.key,
             viewport: viewport.name,
@@ -222,12 +329,12 @@ async function main() {
           });
           // eslint-disable-next-line no-console
           console.log(
-            `${target.key} [${viewport.name}]: ${result.mismatchPercent.toFixed(2)}% mismatch (${result.mismatchedPixels} px at ${result.width}x${result.height}, heightDelta=${result.heightDeltaPx >= 0 ? "+" : ""}${result.heightDeltaPx}px)`,
+            `${target.key} [${viewport.name}]: raw=${result.mismatchPercent.toFixed(2)}%  structural=${result.structuralMismatchPercent.toFixed(2)}%  (excluded ${result.excludedPixels} img-px, heightDelta=${result.heightDeltaPx >= 0 ? "+" : ""}${result.heightDeltaPx}px)`,
           );
           for (const zone of result.zones) {
             // eslint-disable-next-line no-console
             console.log(
-              `  └─ ${zone.zone.padEnd(10)} ${zone.mismatchPercent.toFixed(2).padStart(6)}%  (${zone.mismatchedPixels} px in ${result.width}x${zone.height})`,
+              `  └─ ${zone.zone.padEnd(10)} raw=${zone.mismatchPercent.toFixed(2).padStart(6)}%  structural=${zone.structuralMismatchPercent.toFixed(2).padStart(6)}%`,
             );
           }
         } catch (err) {
