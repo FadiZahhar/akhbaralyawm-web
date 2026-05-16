@@ -10,6 +10,15 @@
    All rules are scoped under `.mimic-root`.
    ============================================================ */
 
+/* Sticky site header — wraps the legacy `.header-area` so the
+   top nav follows the viewport on scroll across every page. */
+.mimic-root.mimic-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1050;
+  background: #fff;
+}
+
 /* Brand tokens still used by some custom components below */
 .mimic-root {
   --mm-navy: #142963;
@@ -86,15 +95,16 @@
 .mimic-root .sinmun-mobile-nav {
   display: none;
 }
-/* Legacy renders BOTH `.mm` and `.ll` logo copies side by side on desktop
-   inside `.navbar-brand` (the .ll override only kicks in on mobile, see
-   the @media block below). We mirror that for the /v2 mimic so the brand
-   bbox width matches (~400px instead of ~200px). */
+/* Legacy desktop: `.mm` visible (display:block, width=200), `.ll` hidden
+   (display:none). Mobile: inverse. Verified against properly-styled legacy
+   snapshot via probe (LEG mm:block/w=200 ll:none/w=0). */
+.mimic-root .sinmun-nav .navbar-brand .mm {
+  display: block;
+}
+.mimic-root .sinmun-nav .navbar-brand .ll,
 .mimic-root .sinmun-mobile-nav .logo .ll {
   display: none;
 }
-.mimic-root .sinmun-nav .navbar-brand .mm,
-.mimic-root .sinmun-nav .navbar-brand .ll,
 .mimic-root .sinmun-mobile-nav .logo .mm {
   display: inline;
 }
@@ -150,6 +160,11 @@
   text-align: end;
 }
 .mimic-root .new-news-slides { position: relative; }
+/* Owl carousel server-rendered skeleton: clip the stage so the RTL
+   negative-positioned items don't trigger a horizontal scroll on
+   mobile (where the carousel JS may not have initialized yet). */
+.mimic-root .owl-carousel,
+.mimic-root .owl-stage-outer { overflow: hidden; }
 /* mimic-home-nav removed — not in original design */
 .mimic-root .slider-nav {
   position: absolute; top: 12px; z-index: 5;
@@ -173,16 +188,35 @@
 .mimic-root .embla__slide { flex: 0 0 100%; min-width: 0; }
 
 /* ===== .tb = dark-blue oval-card strip (more-news-area) ===== */
-/* These rules replicate the inline <style> from the original page
-   that our bundled/scoped legacy CSS does not contain.
-   Legacy metrics (from probe-morenews-top): margin-top:48px (mt-5),
-   padding:0/70px. We must NOT override margin-top here or mt-5 won't
-   apply — the legacy didn't set margin-top on .tb. */
+/* Verbatim from the original page's inline <style> (captured in the MHTML
+   blink-css blob). The bundled style.css does not contain these rules. */
+.mimic-root .newsUpdates {
+  background: rgb(245, 246, 250);
+}
+.mimic-root .newsUpdates a {
+  color: rgb(20, 41, 99);
+  font-size: 15px;
+}
+.mimic-root .newsUpdates a:hover {
+  color: rgb(47, 161, 75);
+  font-size: 15px;
+}
+.mimic-root .newsUpdates .container {
+  height: 409px;
+  overflow: auto;
+}
+.mimic-root .newsUpdates h2 {
+  background: rgb(47, 161, 75);
+  padding: 7px 10px;
+  font-size: 20px;
+  color: white;
+}
 .mimic-root .tb {
   border-top: 1px solid #cfcfcf;
-  padding-top: 0;
-  padding-bottom: 70px;
-  background: #142963 !important;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  background: #142963;
+  margin-top: 0 !important;
 }
 .mimic-root .tb .single-around-the-world-news {
   background-color: transparent !important;
@@ -193,6 +227,16 @@
   background-color: transparent !important;
   overflow: hidden;
   padding-inline: 0;
+}
+.mimic-root .tb img {
+  object-fit: cover;
+  height: 100px;
+  width: 100px;
+  margin: auto;
+  display: block;
+  border: 1px solid white;
+  border-radius: 50% !important;
+  transform: scale(1) !important;
 }
 .mimic-root .tb .news-content a,
 .mimic-root .tb h3.txt a,
@@ -253,4 +297,127 @@
 /* Hide Next.js dev badge/portal during mimic parity checks. */
 nextjs-portal {
   display: none !important;
+}
+
+/* ===== Mobile hamburger drawer (mimic) =================================
+   Legacy desktop nav is hidden below 991px by the scoped responsive CSS,
+   so on mobile we surface this React-built drawer instead. The toggle
+   button sits inside `.sinmun-mobile-nav` and is hidden on >=992px. */
+.mimic-mobile-nav-toggle {
+  display: none;
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 12px;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 36px;
+  padding: 6px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  z-index: 9920;
+}
+.mimic-mobile-nav-toggle span {
+  display: block;
+  width: 100%;
+  height: 3px;
+  margin: 4px 0;
+  background: #142963;
+  border-radius: 2px;
+  transition: transform .2s ease, opacity .2s ease;
+}
+@media (max-width: 991px) {
+  .mimic-mobile-nav-toggle { display: inline-block; }
+}
+.mimic-mobile-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+  z-index: 9998;
+}
+.mimic-mobile-nav-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.mimic-mobile-nav-drawer {
+  position: fixed;
+  top: 0;
+  inset-inline-end: 0;
+  width: min(86vw, 320px);
+  height: 100vh;
+  background: #fff;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, .12);
+  transform: translateX(100%);
+  transition: transform .25s ease;
+  z-index: 9999;
+  overflow-y: auto;
+  font-family: "Cairo", "Noto Kufi Arabic", sans-serif;
+}
+[dir="rtl"] .mimic-mobile-nav-drawer { transform: translateX(-100%); }
+.mimic-mobile-nav-drawer.is-open { transform: translateX(0); }
+.mimic-mobile-nav-head {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px;
+  border-bottom: 1px solid #e5e7ef;
+}
+.mimic-mobile-nav-close {
+  background: transparent;
+  border: 0;
+  font-size: 22px;
+  line-height: 1;
+  color: #142963;
+  cursor: pointer;
+  padding: 4px 10px;
+}
+.mimic-mobile-nav-search {
+  display: flex;
+  gap: 6px;
+  padding: 12px;
+  border-bottom: 1px solid #e5e7ef;
+}
+.mimic-mobile-nav-search input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #e5e7ef;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font: inherit;
+}
+.mimic-mobile-nav-search button {
+  background: #2fa14b;
+  color: #fff;
+  border: 0;
+  border-radius: 4px;
+  padding: 0 14px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.mimic-mobile-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+.mimic-mobile-nav-list li { margin: 0; }
+.mimic-mobile-nav-list a {
+  display: block;
+  padding: 12px 18px;
+  color: #142963;
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  border-bottom: 1px solid #f0f1f6;
+}
+.mimic-mobile-nav-list a:hover,
+.mimic-mobile-nav-list a.is-active {
+  background: #f5f6fa;
+  color: #2fa14b;
+}
+.mimic-mobile-nav-sep {
+  margin-top: 8px;
+  border-top: 1px solid #e5e7ef;
+  padding-top: 8px;
 }

@@ -32,7 +32,7 @@ const TARGETS = [
   {
     key: "home-ar",
     legacy: "/legacy-snapshot/home-ar/index.html",
-    candidate: "/ar/v2",
+    candidate: "/ar/v2?fixture=1",
   },
   // Add more as snapshots get extracted, e.g.
   // { key: "home-fr", legacy: "/legacy-snapshot/home-fr/index.html", candidate: "/fr/v2" },

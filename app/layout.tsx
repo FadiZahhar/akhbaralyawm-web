@@ -93,10 +93,11 @@ export default async function RootLayout({
   const dir = getDirection(locale);
   const dict = await getDictionary(locale);
 
-  // Mimic (v2) routes render a self-contained header/footer; skip the
-  // global chrome here so we don't duplicate top bars on /[locale]/v2.
+  // The locale subtree (`/{locale}/*`) now ships its own legacy-style
+  // header+footer via app/[locale]/layout.tsx, so skip the modern chrome
+  // for every locale-scoped route — not just /v2 as before.
   const pathname = headerStore.get("x-pathname") ?? "";
-  const isMimicRoute = /^\/[a-z]{2}\/v2(?:\/|$)/.test(pathname);
+  const isMimicRoute = /^\/[a-z]{2}(?:\/|$)/.test(pathname);
 
   const feed = await getHomeFeed(20, locale);
   const tickerItems = feed.map((item) => ({

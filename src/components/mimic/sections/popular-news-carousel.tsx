@@ -91,6 +91,15 @@ export function PopularNewsCarousel({ locale, sectionTitle, sectionHref, items }
                     ))}
                   </div>
                 </div>
+                <div className="owl-nav">
+                  <button type="button" role="presentation" className="owl-prev">
+                    <i className="icofont-rounded-right"></i>
+                  </button>
+                  <button type="button" role="presentation" className="owl-next">
+                    <i className="icofont-rounded-left"></i>
+                  </button>
+                </div>
+                <div className="owl-dots disabled"></div>
               </div>
             </div>
           </div>

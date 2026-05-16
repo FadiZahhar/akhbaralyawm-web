@@ -1,242 +1,302 @@
-import Image from "next/image";
-import Link from "next/link";
+// Default home page = the mimic/legacy layout (was /v2 before May 17 2026).
+// The legacy CSS, fonts, header and footer live in app/[locale]/layout.tsx
+// so they wrap every locale-scoped page (category, news, author, …).
+// The pre-mimic modern home is preserved at /[locale]/v1.
 
-import { getArticlesBySection, getAssetUrl, getHomeFeed, getSectionBySlugOrId } from "@/src/lib/api";
+import fs from "node:fs/promises";
+import path from "node:path";
 
-export const revalidate = 120;
-import { HomeHero } from "@/src/components/home/home-hero";
-import { HomeSectionBlock } from "@/src/components/home/home-section-block";
-import { CategorySlider } from "@/src/components/home/category-slider";
-import { AdBanner } from "@/src/components/home/ad-banner";
-import { FeaturedSectionSlider } from "@/src/components/home/featured-section-slider";
-import { VideoPrograms } from "@/src/components/home/video-programs";
-import { MostReadSlider } from "@/src/components/home/most-read-slider";
+import {
+  getArticlesBySection,
+  getAssetUrl,
+  getHomeFeed,
+  getSectionBySlugOrId,
+} from "@/src/lib/api";
 import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
 
-const FEATURED_SECTION_ID = 29;
-const PROGRAMS_SECTION_ID = 56;
-const HOME_SECTION_IDS = [29, 45, 30, 39];
+import { MoreNewsArea } from "@/src/components/mimic/sections/more-news-area";
+import { NewsTickerStrip } from "@/src/components/mimic/sections/news-ticker-strip";
+import { HeroNewsArea } from "@/src/components/mimic/sections/hero-news-area";
+import { PopularNewsCarousel } from "@/src/components/mimic/sections/popular-news-carousel";
+import { SectionGrid } from "@/src/components/mimic/sections/section-grid";
+import { VideoNewsArea } from "@/src/components/mimic/sections/video-news-area-mimic";
+import { MostReadStrip } from "@/src/components/mimic/sections/most-read-strip";
+
+export const revalidate = 120;
+
+const FEATURED_SECTION_ID = 29; // خاص اليوم
+const PROGRAMS_SECTION_ID = 56; // البرامج
+const LOCAL_NEWS_SECTION_ID = 45; // أخبار محلية
+const WORLD_SECTION_ID = 30; // العرب والعالم
+const MISC_SECTION_ID = 39; // متفرقات
 
 type PageProps = {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function Home({ params }: PageProps) {
+function formatTime(value: string): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+export default async function MimicHomePage({ params, searchParams }: PageProps) {
   const { locale: rawLocale } = await params;
+  const sp = await searchParams;
+  const useFixture = sp.fixture === "1";
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
   const dict = await getDictionary(locale);
 
-  function formatDate(value: string): string {
-    if (!value) {
-      return "";
+  const [feed, featuredSection, programsSection] = await Promise.all([
+    getHomeFeed(100, locale),
+    getSectionBySlugOrId(String(FEATURED_SECTION_ID), locale),
+    getSectionBySlugOrId(String(PROGRAMS_SECTION_ID), locale),
+  ]);
+
+  const featuredItems = featuredSection
+    ? (await getArticlesBySection(featuredSection.link, 1, 12, locale)).items
+    : [];
+  const programsItems = programsSection
+    ? (await getArticlesBySection(programsSection.link, 1, 8, locale)).items
+    : [];
+
+  const [localNewsGroup, worldGroup, miscGroup] = await Promise.all([
+    (async () => {
+      const sec = await getSectionBySlugOrId(String(LOCAL_NEWS_SECTION_ID), locale);
+      if (!sec) return null;
+      const list = await getArticlesBySection(sec.link, 1, 8, locale);
+      return { section: sec, items: list.items };
+    })(),
+    (async () => {
+      const sec = await getSectionBySlugOrId(String(WORLD_SECTION_ID), locale);
+      if (!sec) return null;
+      const list = await getArticlesBySection(sec.link, 1, 8, locale);
+      return { section: sec, items: list.items };
+    })(),
+    (async () => {
+      const sec = await getSectionBySlugOrId(String(MISC_SECTION_ID), locale);
+      if (!sec) return null;
+      const list = await getArticlesBySection(sec.link, 1, 8, locale);
+      return { section: sec, items: list.items };
+    })(),
+  ]);
+
+  const tickerStrip = feed.slice(0, 5).map((f) => ({
+    id: f.id,
+    slugId: f.slugId,
+    title: f.title,
+    locale,
+  }));
+  const updates = feed.slice(0, 100).map((f) => ({
+    id: f.id,
+    slugId: f.slugId,
+    title: f.title,
+    time: formatTime(f.disdate),
+  }));
+
+  // Pixel-parity fixture mode (?fixture=1, ar only). Freezes newsUpdates +
+  // section card titles to the Apr 18 reference snapshot for visual diff.
+  let updatesForRender = updates;
+  let sectionTitles: Record<string, string[]> = {};
+  if (locale === "ar" && useFixture) {
+    try {
+      const fixturePath = path.join(
+        process.cwd(),
+        "tests/fixtures/legacy-newsupdates-ar.json",
+      );
+      const raw = await fs.readFile(fixturePath, "utf8");
+      const parsed = JSON.parse(raw) as Array<{
+        id: number;
+        slugId: string;
+        title: string;
+        time: string;
+      }>;
+      updatesForRender = parsed.slice(0, 100);
+    } catch (err) {
+      console.warn("[home] failed to load newsUpdates fixture:", err);
     }
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return value;
-    }
-
-    return new Intl.DateTimeFormat(locale === "ar" ? "ar-LB" : locale, {
-      dateStyle: "medium",
-    }).format(date);
-  }
-
-  const feed = await getHomeFeed(20, locale);
-  const [lead, ...rest] = feed;
-  const updates = feed.slice(0, 10);
-  const sections = await Promise.all(
-    HOME_SECTION_IDS.map(async (id) => {
-      const section = await getSectionBySlugOrId(String(id), locale);
-
-      if (!section || section.link === "/") {
-        return null;
+    try {
+      const secPath = path.join(
+        process.cwd(),
+        "tests/fixtures/legacy-sections-ar.json",
+      );
+      const secRaw = await fs.readFile(secPath, "utf8");
+      const secParsed = JSON.parse(secRaw) as Record<
+        string,
+        Array<{ href: string; title: string }>
+      >;
+      for (const [k, arr] of Object.entries(secParsed)) {
+        sectionTitles[k.replace(/\s+/g, " ").trim()] = arr.map((a) => a.title);
       }
-
-      const stories = await getArticlesBySection(section.link, 1, 3, locale);
-      return {
-        section,
-        stories: stories.items,
-      };
-    }),
-  );
-
-  const homeSections = sections.filter((section) => section !== null);
-
-  // Fetch 20 articles for the featured slider section
-  const featuredGroup = homeSections.find((g) => g.section.id === FEATURED_SECTION_ID);
-  let featuredSliderItems: { id: number; slugId: string; title: string; imageUrl: string | null; locale: string }[] = [];
-  if (featuredGroup) {
-    const featuredStories = await getArticlesBySection(featuredGroup.section.link, 1, 20, locale);
-    featuredSliderItems = featuredStories.items.map((story) => ({
-      id: story.id,
-      slugId: story.slugId,
-      title: story.title,
-      imageUrl: getAssetUrl(story.photoPath, locale),
-      locale,
-    }));
+    } catch (err) {
+      console.warn("[home] failed to load sections fixture:", err);
+    }
   }
+  const applyTitles = <T extends { title: string }>(
+    items: T[],
+    key: string | undefined,
+  ): T[] => {
+    if (!useFixture || !key) return items;
+    const normKey = key.replace(/\s+/g, " ").trim();
+    const titles = sectionTitles[normKey];
+    if (!titles?.length) return items;
+    return items.map((it, i) =>
+      i < titles.length ? { ...it, title: titles[i] } : it,
+    );
+  };
 
-  const regularSections = homeSections.filter((g) => g.section.id !== FEATURED_SECTION_ID);
-
-  // Fetch programs (البرامج) section for video slider
-  const programsSection = await getSectionBySlugOrId(String(PROGRAMS_SECTION_ID), locale);
-  let videoItems: { id: number; title: string; thumbnail: string | null; youtubeId: string }[] = [];
-  if (programsSection && programsSection.link !== "/") {
-    const programStories = await getArticlesBySection(programsSection.link, 1, 20, locale);
-    videoItems = programStories.items
-      // Backend doesn't yet supply YouTube IDs; until it does we can't render
-      // the embedded player. Drop items rather than show a fake fallback list.
-      .map((story) => ({
-        id: story.id,
-        title: story.title,
-        thumbnail: getAssetUrl(story.photoPath, locale),
-        youtubeId: "",
-      }))
-      .filter((v) => v.youtubeId.length > 0);
-  }
-
-  // Use API items only — no Arabic fallback list. When no videos are
-  // available the VideoPrograms block is hidden in the JSX below.
-  const finalVideos = videoItems;
-
-  // Build slider items from the first article of each loaded section
-  const sliderItems = homeSections
-    .flatMap((group) =>
-      group.stories.slice(0, 2).map((story) => ({
-        id: story.id,
-        slugId: story.slugId,
-        title: story.title,
-        sectionTitle: group.section.title,
-        imageUrl: getAssetUrl(story.photoPath, locale),
-        locale,
-      })),
-    )
-    .slice(0, 8);
-
-  // Pick one article from each different category for the side cards (max 3)
-  const sideCards = homeSections
-    .slice(0, 3)
-    .map((group) => ({
-      ...group.stories[0],
-      sectionTitle: group.section.title,
-    }))
-    .filter((item) => item.id);
+  const slides = feed.slice(0, 6).map((f) => ({
+    id: f.id,
+    slugId: f.slugId,
+    title: f.title,
+    sectionTitle: f.sectionTitle,
+    imageUrl: getAssetUrl(f.photoPath, locale),
+  }));
+  const sideCards = feed.slice(6, 9).map((f) => ({
+    id: f.id,
+    slugId: f.slugId,
+    title: f.title,
+    sectionTitle: f.sectionTitle,
+    imageUrl: getAssetUrl(f.photoPath, locale),
+  }));
+  const moreNewsItems = feed.slice(10, 13);
+  const liveUpdatesLabel = locale === "ar" ? "لحظة بلحظة" : dict.sidebar.lastMoment;
+  const mostReadLabel = locale === "ar" ? "الأكثر قراءةً" : dict.sidebar.mostRead;
 
   return (
-    <>
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-4 py-8 sm:px-6 lg:px-8">
-      {locale !== "ar" && feed.length === 0 && homeSections.length === 0 && (
-        <section
-          className="rounded-sm border border-amber-200 bg-amber-50 px-6 py-8 text-center text-amber-900"
-          role="status"
-        >
-          <h2 className="text-lg font-extrabold">{dict.common.unavailableTitle}</h2>
-          <p className="mt-2 text-sm">{dict.common.unavailableBody}</p>
-        </section>
-      )}
-      {/* Three-column hero area — ticker(4) | slider(6) | cards(3) */}
-      <section className="grid gap-5 lg:grid-cols-[4fr_6fr_3fr]">
-        {/* Right column (RTL first): لحظة بلحظة vertical ticker */}
-        <HomeHero locale={locale} updates={updates} dict={{ lastMoment: dict.sidebar.lastMoment, live: dict.sidebar.live }} />
+    <div className="mimic-root">
+      <MoreNewsArea locale={locale} items={moreNewsItems} />
 
-        {/* Middle column: large image swiper */}
-        <CategorySlider items={sliderItems} label={dict.sidebar.latestCategories} locale={locale} />
-
-        {/* Left column (RTL last): cards from different categories — match slider height */}
-        <div className="flex flex-col gap-2">
-          {sideCards.map((item) => {
-            const photoUrl = getAssetUrl(item.photoPath, locale);
-            return (
-              <Link
-                key={item.id}
-                href={`/${locale}/news/${item.slugId}`}
-                className="group relative block flex-1 overflow-hidden rounded-sm"
-              >
-                <article className="relative h-full min-h-[60px] w-full">
-                  {photoUrl ? (
-                    <Image
-                      src={photoUrl}
-                      alt={item.title}
-                      fill
-                      sizes="(max-width: 1024px) 100vw, 16vw"
-                      placeholder="blur"
-                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlMmU1ZWMiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2YwZjJmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZTJlNWVjIiBvZmZzZXQ9IjgwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZTJlNWVjIi8+PC9zdmc+"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-[#142963]" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-2.5">
-                    <span className="inline-block w-fit rounded-sm bg-[#2FA14B] px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
-                      {item.sectionTitle || dict.common.newsTag}
-                    </span>
-                    <h3 className="line-clamp-2 text-xs font-bold leading-snug text-white drop-shadow-sm">
-                      {item.title}
-                    </h3>
-                  </div>
-                </article>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Banner ad between hero and sections */}
-      <AdBanner />
-
-      {/* Featured section — one-by-one slider */}
-      {featuredGroup && featuredSliderItems.length > 0 && (
-        <FeaturedSectionSlider
+      <div className="default-news-area pt-5 pb-4">
+        <HeroNewsArea
           locale={locale}
-          sectionTitle={featuredGroup.section.title}
-          sectionLink={featuredGroup.section.link}
-          items={featuredSliderItems}
+          liveLabel={liveUpdatesLabel}
+          slides={slides}
+          updates={updatesForRender}
+          sideCards={sideCards}
+        />
+      </div>
+
+      <div className="text-center pt-5 pb-5">
+        <a target="_blank" rel="noopener noreferrer" href="https://lexuslebanon.com/newvehicles/60/nx">
+          <img
+            src="/%D8%A7%D9%84%D9%8A%D9%88%D9%85_files/yaris.jpg"
+            alt="Lexus banner"
+            style={{ maxWidth: 900, width: "100%", transform: "scale(1)" }}
+          />
+        </a>
+      </div>
+
+      <hr />
+
+      {featuredSection && featuredItems.length > 0 && (
+        <PopularNewsCarousel
+          locale={locale}
+          sectionTitle={featuredSection.title}
+          sectionHref={`/${locale}/category/${featuredSection.slug}`}
+          items={applyTitles(featuredItems.map((s) => ({
+            id: s.id,
+            slugId: s.slugId,
+            title: s.title,
+            imageUrl: getAssetUrl(s.photoPath, locale),
+          })), featuredSection?.title)}
         />
       )}
 
-      <section className="grid gap-8">
-        {regularSections.map((group, index) => (
-          <div key={group.section.id}>
-            <HomeSectionBlock
-              locale={locale}
-              section={group.section}
-              stories={group.stories}
-              formatDate={formatDate}
-              dict={{ section: dict.sidebar.section, showMore: dict.common.showMore }}
-            />
-            {/* Second banner after the first section (politics) */}
-            {index === 0 && (
-              <div className="mt-8">
-                <AdBanner banner={{ imageUrl: "/assets/img/banner-placeholder-2.svg", href: "#", alt: dict.common.ad }} />
-              </div>
-            )}
-            {/* Programs video section after second banner — only when real video data is available */}
-            {index === 0 && finalVideos.length > 0 && (
-              <div className="mt-8">
-                <VideoPrograms
-                  sectionTitle={programsSection?.title ?? dict.home.programsLabel}
-                  items={finalVideos}
-                />
-              </div>
-            )}
-          </div>
-        ))}
-      </section>
-    </main>
+      {localNewsGroup && localNewsGroup.items.length > 0 && (
+        <SectionGrid
+          locale={locale}
+          sectionTitle={localNewsGroup.section.title}
+          sectionHref={`/${locale}/category/${localNewsGroup.section.slug}`}
+          items={applyTitles(localNewsGroup.items.slice(0, 3).map((s) => ({
+            id: s.id,
+            slugId: s.slugId,
+            title: s.title,
+            imageUrl: getAssetUrl(s.photoPath, locale),
+          })), localNewsGroup.section.title)}
+          variant="default"
+        />
+      )}
 
-    {/* Most Read — full-width green slider before footer */}
-    <MostReadSlider
-      label={dict.sidebar.mostRead}
-      locale={locale}
-      items={feed.slice(0, 15).map((item) => ({
-        id: item.id,
-        slugId: item.slugId,
-        title: item.title,
-        imageUrl: getAssetUrl(item.photoPath, locale),
-        locale,
-      }))}
-    />
-    </>
+      <div className="text-center pt-5 pb-5">
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          href="https://www.whish.money/download?utm_source=Download+Akhbar+Al+Yawm+&utm_medium=970+x+250+px"
+        >
+          <img
+            src="/%D8%A7%D9%84%D9%8A%D9%88%D9%85_files/whishbig.jpg"
+            alt="Whish banner"
+            style={{ maxWidth: 900, width: "100%", transform: "scale(1)" }}
+          />
+        </a>
+      </div>
+
+      {programsSection && programsItems.length > 0 && (
+        <VideoNewsArea
+          locale={locale}
+          sectionTitle={programsSection.title}
+          sectionHref={`/${locale}/category/${programsSection.slug}`}
+          items={applyTitles(programsItems.map((s) => ({
+            id: s.id,
+            slugId: s.slugId,
+            title: s.title,
+            imageUrl: getAssetUrl(s.photoPath, locale),
+            sectionTitle: s.sectionTitle,
+          })), programsSection?.title)}
+        />
+      )}
+
+      {worldGroup && worldGroup.items.length > 0 && (
+        <SectionGrid
+          locale={locale}
+          sectionTitle={worldGroup.section.title}
+          sectionHref={`/${locale}/category/${worldGroup.section.slug}`}
+          items={applyTitles(worldGroup.items.slice(0, 3).map((s) => ({
+            id: s.id,
+            slugId: s.slugId,
+            title: s.title,
+            imageUrl: getAssetUrl(s.photoPath, locale),
+          })), worldGroup.section.title)}
+          variant="hot"
+          sectionClassName="ptb-40"
+        />
+      )}
+
+      <hr />
+
+      {miscGroup && miscGroup.items.length > 0 && (
+        <SectionGrid
+          locale={locale}
+          sectionTitle={miscGroup.section.title}
+          sectionHref={`/${locale}/category/${miscGroup.section.slug}`}
+          items={applyTitles(miscGroup.items.slice(0, 3).map((s) => ({
+            id: s.id,
+            slugId: s.slugId,
+            title: s.title,
+            imageUrl: getAssetUrl(s.photoPath, locale),
+          })), miscGroup.section.title)}
+          variant="hot"
+          sectionClassName="pb-40"
+        />
+      )}
+
+      <MostReadStrip
+        locale={locale}
+        sectionTitle={mostReadLabel}
+        items={applyTitles(feed.slice(0, 12).map((f) => ({
+          id: f.id,
+          slugId: f.slugId,
+          title: f.title,
+          imageUrl: getAssetUrl(f.photoPath, locale),
+        })), mostReadLabel)}
+      />
+
+      <NewsTickerStrip label={dict.ticker.breaking} items={tickerStrip} />
+    </div>
   );
 }

@@ -16,6 +16,7 @@ import Link from "next/link";
 
 import type { SectionDto } from "@/src/lib/api";
 import type { Locale } from "@/src/lib/i18n";
+import { MobileNavMimic } from "./mobile-nav-mimic";
 
 type HeaderDict = {
   nav: { home: string; about: string; contact: string };
@@ -67,7 +68,7 @@ const LEGACY_NAV_ITEMS_AR: { title: string; slug: string }[] = [
 const LOGO_SRC = "/assets/img/logo.png";
 
 export function SiteHeaderMimic({ locale, dict, sections, activeSectionSlug }: Props) {
-  const homeHref = `/${locale}/v2`;
+  const homeHref = `/${locale}`;
 
   return (
     <header className="header-area ">
@@ -121,6 +122,15 @@ export function SiteHeaderMimic({ locale, dict, sections, activeSectionSlug }: P
               <img width={200} src={LOGO_SRC} alt="logo" className="ll" />
             </Link>
           </div>
+          <MobileNavMimic
+            locale={locale}
+            homeLabel={dict.nav.home}
+            aboutLabel={dict.nav.about}
+            contactLabel={dict.nav.contact}
+            searchPlaceholder={dict.site.searchPlaceholder}
+            items={LEGACY_NAV_ITEMS_AR}
+            activeSectionSlug={activeSectionSlug}
+          />
         </div>
         <div className="sinmun-nav">
           <div className="container">

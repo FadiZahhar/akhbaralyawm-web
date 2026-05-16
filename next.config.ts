@@ -33,6 +33,16 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/:locale(ar|en|fr)/v2",
+        destination: "/:locale",
+        permanent: true,
+      },
+      {
+        source: "/:locale(ar|en|fr)/v2/:path*",
+        destination: "/:locale/:path*",
+        permanent: true,
+      },
+      {
         source: "/Default.aspx",
         destination: "/ar",
         permanent: true,
