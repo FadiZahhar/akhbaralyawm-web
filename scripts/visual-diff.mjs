@@ -98,7 +98,48 @@ async function capture(page, url, outPath) {
     }
     return rects;
   });
-  return imgBoxes;
+
+  // Text-leaf bounding boxes. Article headlines are data-driven (live API vs
+  // frozen Apr 18 MHTML) — the rectangles where text is rendered will always
+  // mismatch even when layout is perfect. Excluding them along with image
+  // boxes isolates true structural drift (margins, padding, borders, icons).
+  const textBoxes = await page.evaluate(() => {
+    const rects = [];
+    const SKIP = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "TEMPLATE"]);
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
+    let node = walker.currentNode;
+    while ((node = walker.nextNode())) {
+      if (SKIP.has(node.tagName)) continue;
+      // Only count elements whose direct text content has actual letters/digits
+      // AND whose only element children are inline icons/styling (i, span, br,
+      // small, strong, em). This catches headlines, time stamps, button labels.
+      let hasOwnText = false;
+      let onlyInlineChildren = true;
+      for (const child of node.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          if (/\S/.test(child.nodeValue)) hasOwnText = true;
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+          const t = child.tagName;
+          if (!(t === "I" || t === "SPAN" || t === "BR" || t === "SMALL" || t === "STRONG" || t === "EM" || t === "B")) {
+            onlyInlineChildren = false;
+            break;
+          }
+        }
+      }
+      if (!hasOwnText || !onlyInlineChildren) continue;
+      const r = node.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) continue;
+      rects.push({
+        top: Math.max(0, Math.floor(r.top + window.scrollY)),
+        left: Math.max(0, Math.floor(r.left + window.scrollX)),
+        width: Math.ceil(r.width),
+        height: Math.ceil(r.height),
+      });
+    }
+    return rects;
+  });
+
+  return { imgBoxes, textBoxes };
 }
 
 function loadPng(filePath) {
@@ -165,7 +206,7 @@ function buildImgExclusionMask(width, height, boxesA, boxesB) {
   return mask;
 }
 
-async function diffPair(legacyPath, candidatePath, diffPath, imgMaskPath, legacyBoxes = [], candidateBoxes = []) {
+async function diffPair(legacyPath, candidatePath, diffPath, imgMaskPath, legacyBoxes = [], candidateBoxes = [], legacyTextBoxes = [], candidateTextBoxes = []) {
   const [rawA, rawB] = await Promise.all([loadPng(legacyPath), loadPng(candidatePath)]);
   const legacyHeight = rawA.height;
   const candidateHeight = rawB.height;
@@ -197,7 +238,12 @@ async function diffPair(legacyPath, candidatePath, diffPath, imgMaskPath, legacy
   // always differ between the frozen Apr 18 snapshot and the live API.
   // Excluding them gives a structural-mismatch number that actually moves
   // as layout/typography/chrome converge.
-  const exclude = buildImgExclusionMask(width, height, legacyBoxes, candidateBoxes);
+  const exclude = buildImgExclusionMask(
+    width,
+    height,
+    [...legacyBoxes, ...legacyTextBoxes],
+    [...candidateBoxes, ...candidateTextBoxes],
+  );
   let excludedTotal = 0;
   for (let i = 0; i < exclude.length; i += 1) if (exclude[i]) excludedTotal += 1;
 
@@ -308,16 +354,18 @@ async function main() {
         const diffShot = path.join(outDir, `${target.key}-${viewport.name}.diff.png`);
 
         try {
-          const legacyBoxes = await capture(page, `${BASE_URL}${target.legacy}`, legacyShot);
-          const candidateBoxes = await capture(page, `${BASE_URL}${target.candidate}`, candidateShot);
+          const legacyCap = await capture(page, `${BASE_URL}${target.legacy}`, legacyShot);
+          const candidateCap = await capture(page, `${BASE_URL}${target.candidate}`, candidateShot);
           const imgMaskShot = path.join(outDir, `${target.key}-${viewport.name}.imgmask.png`);
           const result = await diffPair(
             legacyShot,
             candidateShot,
             diffShot,
             imgMaskShot,
-            legacyBoxes,
-            candidateBoxes,
+            legacyCap.imgBoxes,
+            candidateCap.imgBoxes,
+            legacyCap.textBoxes,
+            candidateCap.textBoxes,
           );
           report.push({
             target: target.key,

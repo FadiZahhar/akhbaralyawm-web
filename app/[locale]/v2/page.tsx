@@ -14,7 +14,7 @@ import { NewsTickerStrip } from "@/src/components/mimic/sections/news-ticker-str
 import { HeroNewsArea } from "@/src/components/mimic/sections/hero-news-area";
 import { PopularNewsCarousel } from "@/src/components/mimic/sections/popular-news-carousel";
 import { SectionGrid } from "@/src/components/mimic/sections/section-grid";
-import { VideoNewsArea } from "@/src/components/mimic/sections/video-news-area";
+import { VideoNewsArea } from "@/src/components/mimic/sections/video-news-area-mimic";
 import { MostReadStrip } from "@/src/components/mimic/sections/most-read-strip";
 import { GoTopButton } from "@/src/components/mimic/sections/go-top-button";
 

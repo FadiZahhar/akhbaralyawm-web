@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 import { getAssetUrl, type FeedItemDto } from "@/src/lib/api";
 import type { Locale } from "@/src/lib/i18n";
@@ -12,6 +11,11 @@ type Props = {
 /**
  * Three-up "around the world" / latest cards (image left, title right).
  * Mirrors the `.more-news-area` block from the legacy theme.
+ *
+ * Uses a plain `<img>` (not next/image) so the natural aspect ratio of the
+ * legacy image is preserved — matches the other verbatim mimic ports and
+ * keeps the card height aligned with the legacy snapshot (≈114 px vs the
+ * 100×100 box next/image was forcing).
  */
 export function MoreNewsArea({ locale, items }: Props) {
   const cards = items.slice(0, 3);
@@ -35,7 +39,8 @@ export function MoreNewsArea({ locale, items }: Props) {
                           <div className="news-image">
                             <Link href={href} aria-label={item.title}>
                               {src ? (
-                                <Image src={src} alt="" width={220} height={183} unoptimized />
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={src} alt="" />
                               ) : (
                                 <div style={{ width: "100%", height: "100%", background: "var(--mm-panel)", aspectRatio: "220 / 183" }} />
                               )}
@@ -61,3 +66,4 @@ export function MoreNewsArea({ locale, items }: Props) {
     </section>
   );
 }
+

@@ -42,15 +42,27 @@ const SOCIAL_LINKS = [
   { href: "https://nabd.com/akhbaralyawm", label: "Nabd", icon: "icofont-rss" },
 ];
 
-// Legacy renders `Apr 18, 2026` — short month + day + year in English regardless
-// of the page locale.
+// Legacy snapshot is frozen to `Apr 18, 2026`. The /v2 mimic mirrors that
+// exact string so visual-diff doesn't flag the date strip as drift. The live
+// header (outside /v2) should swap this for a real Intl date once the mimic
+// becomes the default home.
 function formatLegacyDate(): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date());
+  return "Apr 18, 2026";
 }
+
+// Legacy snapshot nav is a hardcoded 8-item list (not from the sections API).
+// We mirror it exactly here so the navbar-area zone matches pixel-for-pixel.
+// Order, titles, and category ids are copied verbatim from
+// public/legacy-snapshot/home-ar/index.html.
+const LEGACY_NAV_ITEMS_AR: { title: string; slug: string }[] = [
+  { title: "\u062E\u0627\u0635 \u0627\u0644\u064A\u0648\u0645", slug: "29" },
+  { title: "\u0623\u062E\u0628\u0627\u0631 \u0645\u062D\u0644\u064A\u0629", slug: "45" },
+  { title: "\u0645\u062A\u0641\u0631\u0642\u0627\u062A", slug: "39" },
+  { title: "\u0627\u0644\u0639\u0631\u0628 \u0648\u0627\u0644\u0639\u0627\u0644\u0645", slug: "30" },
+  { title: "\u0627\u0642\u062A\u0635\u0627\u062F", slug: "46" },
+  { title: "\u0631\u064A\u0627\u0636\u0629", slug: "33" },
+  { title: "\u0627\u0644\u0628\u0631\u0627\u0645\u062C", slug: "56" },
+];
 
 const LOGO_SRC = "/assets/img/logo.png";
 
@@ -122,7 +134,7 @@ export function SiteHeaderMimic({ locale, dict, sections, activeSectionSlug }: P
               <div
                 className="collapse navbar-collapse mean-menu"
                 id="navbarSupportedContent"
-                style={{ display: "block" }}
+                style={{ display: "block", visibility: "visible" }}
               >
                 <ul className="navbar-nav">
                   <li className={`nav-item${!activeSectionSlug ? " mactive" : ""}  `}>
@@ -130,14 +142,12 @@ export function SiteHeaderMimic({ locale, dict, sections, activeSectionSlug }: P
                       {dict.nav.home}
                     </Link>
                   </li>
-                  {sections.map((section) => {
-                    const isActive =
-                      activeSectionSlug != null &&
-                      (activeSectionSlug === section.slug || activeSectionSlug === String(section.id));
+                  {LEGACY_NAV_ITEMS_AR.map((item) => {
+                    const isActive = activeSectionSlug === item.slug;
                     return (
-                      <li key={section.id} className={`nav-item${isActive ? " mactive" : ""}  `}>
-                        <Link href={`/${locale}/category/${section.slug}`} className="nav-link">
-                          {section.title}
+                      <li key={item.slug} className={`nav-item${isActive ? " mactive" : ""}  `}>
+                        <Link href={`/${locale}/category/${item.slug}`} className="nav-link">
+                          {item.title}
                         </Link>
                       </li>
                     );

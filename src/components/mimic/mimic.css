@@ -21,6 +21,14 @@
   --mm-radius-lg: 8px;
 }
 
+/* Legacy CSS declares `font-family: "Cairo", sans-serif` everywhere, but the
+   legacy snapshot never actually loaded Cairo — it loaded Noto Kufi Arabic via
+   Google Fonts, and the browser fell back to Noto for the Cairo declaration.
+   v2 layout loads the same Google Fonts stylesheet so the same fallback
+   happens here. We do NOT override font-family to var(--font-noto-kufi-arabic)
+   because the next/font subset has slightly different glyph metrics than the
+   Google CDN file — and pixel-parity requires the Google CDN one. */
+
 /* ===== NEWS TICKER STRIP (top breaking-news bar — our component) ===== */
 .mimic-root .news-ticker-strip {
   background: var(--mm-green); color: #fff; border-radius: var(--mm-radius);
@@ -78,13 +86,17 @@
 .mimic-root .sinmun-mobile-nav {
   display: none;
 }
-.mimic-root .sinmun-nav .navbar-brand .ll,
+/* Legacy renders BOTH `.mm` and `.ll` logo copies side by side on desktop
+   inside `.navbar-brand` (the .ll override only kicks in on mobile, see
+   the @media block below). We mirror that for the /v2 mimic so the brand
+   bbox width matches (~400px instead of ~200px). */
 .mimic-root .sinmun-mobile-nav .logo .ll {
   display: none;
 }
 .mimic-root .sinmun-nav .navbar-brand .mm,
+.mimic-root .sinmun-nav .navbar-brand .ll,
 .mimic-root .sinmun-mobile-nav .logo .mm {
-  display: inline-block;
+  display: inline;
 }
 .mimic-root .sinmun-mobile-nav {
   position: relative;
@@ -162,29 +174,19 @@
 
 /* ===== .tb = dark-blue oval-card strip (more-news-area) ===== */
 /* These rules replicate the inline <style> from the original page
-   that our bundled/scoped legacy CSS does not contain. */
+   that our bundled/scoped legacy CSS does not contain.
+   Legacy metrics (from probe-morenews-top): margin-top:48px (mt-5),
+   padding:0/70px. We must NOT override margin-top here or mt-5 won't
+   apply — the legacy didn't set margin-top on .tb. */
 .mimic-root .tb {
   border-top: 1px solid #cfcfcf;
-  margin-top: 0 !important;
-  padding-top: 30px;
-  padding-bottom: 30px;
+  padding-top: 0;
+  padding-bottom: 70px;
   background: #142963 !important;
 }
 .mimic-root .tb .single-around-the-world-news {
   background-color: transparent !important;
   box-shadow: unset !important;
-}
-/* Circular 100×100 thumbnails */
-.mimic-root .tb .news-image img,
-.mimic-root .tb img {
-  object-fit: cover !important;
-  border-radius: 50% !important;
-  height: 100px !important;
-  width: 100px !important;
-  margin: auto !important;
-  display: block !important;
-  border: 1px solid white !important;
-  transform: scale(1) !important;
 }
 .mimic-root .tb .single-around-the-world-news .news-content,
 .mimic-root .tb .single-around-the-world-news .news-content.here {
