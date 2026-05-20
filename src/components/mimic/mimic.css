@@ -10,13 +10,19 @@
    All rules are scoped under `.mimic-root`.
    ============================================================ */
 
-/* Sticky site header — wraps the legacy `.header-area` so the
-   top nav follows the viewport on scroll across every page. */
-.mimic-root.mimic-sticky-header {
+/* Sticky navbar — only the lower `.navbar-area` row (logo + main nav)
+   follows the viewport on scroll. The upper `.top-header` utility strip
+   (date / social / FR EN / about / contact) scrolls away normally, freeing
+   vertical space. `position: sticky` on `.navbar-area` pins relative to the
+   <header> ancestor, which is itself non-scrolling, so the row sticks to
+   the viewport top once the utility strip has scrolled past. Subtle shadow
+   is permanent (option (a): pure-CSS, no JS detection). */
+.mimic-root .navbar-area {
   position: sticky;
   top: 0;
   z-index: 1050;
   background: #fff;
+  box-shadow: 0 4px 14px rgba(13, 35, 77, 0.08);
 }
 
 /* Brand tokens still used by some custom components below */
@@ -28,6 +34,11 @@
   --mm-border: #e5e7ef;
   --mm-radius: 5px;
   --mm-radius-lg: 8px;
+  /* Bootstrap row negative margins + col paddings cumulatively exceed the
+     container on narrow viewports (esp. LTR), causing a 30–80px horizontal
+     scroll. Clip x-axis at the .mimic-root boundary so those overshoot
+     pixels never bubble up to <body>. (y-axis stays visible for sticky.) */
+  overflow-x: clip;
 }
 
 /* Legacy CSS declares `font-family: "Cairo", sans-serif` everywhere, but the
@@ -421,3 +432,210 @@ nextjs-portal {
   border-top: 1px solid #e5e7ef;
   padding-top: 8px;
 }
+
+/* ============================================================
+   Top-down search overlay (mimic-search-*)
+   Triggered from the desktop nav (.others-options) and the
+   mobile bar (.sinmun-mobile-nav). Compact bar slides down
+   from the top of the viewport, dark backdrop covers the rest.
+   ============================================================ */
+.mimic-root .mimic-search-trigger {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: #142963;
+  font-size: 22px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+.mimic-root .mimic-search-trigger:hover { color: #2fa14b; }
+.mimic-root .mimic-search-trigger--mobile {
+  margin-inline-end: 4px;
+  color: #142963;
+}
+
+.mimic-search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+.mimic-search-overlay.is-open { pointer-events: auto; }
+.mimic-search-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+.mimic-search-overlay.is-open .mimic-search-backdrop { opacity: 1; }
+.mimic-search-panel {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(13, 35, 77, 0.18);
+  transform: translateY(-100%);
+  transition: transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  padding: 24px 20px;
+}
+.mimic-search-overlay.is-open .mimic-search-panel { transform: translateY(0); }
+.mimic-search-form {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.mimic-search-form input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 20px;
+  padding: 14px 16px;
+  border: 1px solid #d8dae2;
+  border-radius: 6px;
+  background: #fff;
+  color: #142963;
+  outline: none;
+}
+.mimic-search-form input:focus {
+  border-color: #2fa14b;
+  box-shadow: 0 0 0 3px rgba(47, 161, 75, 0.18);
+}
+.mimic-search-submit,
+.mimic-search-close {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: #142963;
+  font-size: 22px;
+  line-height: 1;
+  padding: 12px 14px;
+  border-radius: 6px;
+}
+.mimic-search-submit { background: #2fa14b; color: #fff; }
+.mimic-search-submit:hover { background: #268a3e; }
+.mimic-search-close:hover { background: #f5f6fa; }
+
+@media (max-width: 575px) {
+  .mimic-search-panel { padding: 14px 12px; }
+  .mimic-search-form input { font-size: 16px; padding: 10px 12px; }
+}
+
+/* ============================================================
+   Footer notification bell (mimic-notify-bell)
+   Icon-only round button sitting beside the copyright text.
+   ============================================================ */
+.mimic-root .mimic-notify-bell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-inline-end: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.mimic-root .mimic-notify-bell:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.mimic-root .mimic-notify-bell--on {
+  background: #2fa14b;
+  border-color: #2fa14b;
+  color: #fff;
+}
+.mimic-root .mimic-notify-bell--on:hover:not(:disabled) {
+  background: #268a3e;
+  border-color: #268a3e;
+}
+.mimic-root .mimic-notify-bell--loading,
+.mimic-root .mimic-notify-bell--denied,
+.mimic-root .mimic-notify-bell--unavailable {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Footer social row override (.connect-social)
+   Legacy CSS gave the <a> width/height but no display:inline-block,
+   so the round bg never rendered and icons collapsed onto each other.
+   Flex + gap gives even spacing and turns the <a> into the real circle.
+   ============================================================ */
+.mimic-root .single-footer-widget .connect-social ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.mimic-root .single-footer-widget .connect-social ul li {
+  display: inline-flex;
+  margin: 0;
+}
+.mimic-root .single-footer-widget .connect-social ul li a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: #fff;
+  color: #142963;
+  line-height: 1;
+  overflow: hidden;
+}
+.mimic-root .single-footer-widget .connect-social ul li a img {
+  width: 35px;
+  height: 35px;
+  margin: 0;
+  padding: 0;
+  object-fit: contain;
+  display: block;
+}
+
+/* ============================================================
+   Owl-embla carousel nav: lift owl-nav above section headings so
+   clicks land on .owl-prev/.owl-next instead of the <h2> beside them.
+   ============================================================ */
+.mimic-root .owl-carousel .owl-nav { z-index: 5; }
+.mimic-root .owl-carousel .owl-nav [class*=owl-] { pointer-events: auto; cursor: pointer; }
+
+/* ============================================================
+   All home carousels: pin nav arrows to top-left (visual end in RTL)
+   and ensure the section title doesn't intercept the click area.
+   ============================================================ */
+.mimic-root .more-news-slides .owl-nav,
+.mimic-root .popular-news-slides .owl-nav,
+.mimic-root .video-news-slides .owl-nav,
+.mimic-root .new-news-slides .owl-nav {
+  right: auto !important;
+  left: 0 !important;
+  top: -53px !important;
+}
+.mimic-root .more-news-area .section-title,
+.mimic-root .popular-news-area .section-title,
+.mimic-root .video-news-area .section-title,
+.mimic-root .default-news-area .section-title { pointer-events: none; }
+.mimic-root .more-news-area .section-title h2,
+.mimic-root .popular-news-area .section-title h2,
+.mimic-root .video-news-area .section-title h2,
+.mimic-root .default-news-area .section-title h2 { pointer-events: auto; }

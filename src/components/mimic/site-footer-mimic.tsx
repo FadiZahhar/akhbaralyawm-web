@@ -10,6 +10,7 @@
 import Link from "next/link";
 
 import type { Locale } from "@/src/lib/i18n";
+import { NotificationBellMimic } from "./notification-bell-mimic";
 
 type FooterDict = {
   followUs?: string;
@@ -62,6 +63,12 @@ export function SiteFooterMimic({ locale, dict, navDict, siteName }: Props) {
       : locale === "fr"
         ? `${siteName} Tous droits réservés`
         : `${siteName} All rights reserved`);
+  const notifyLabel =
+    locale === "ar"
+      ? "اشترك في الإشعارات"
+      : locale === "fr"
+        ? "S'abonner aux notifications"
+        : "Subscribe to notifications";
 
   return (
     <footer className="footer-area">
@@ -76,12 +83,7 @@ export function SiteFooterMimic({ locale, dict, navDict, siteName }: Props) {
                     <li key={label}>
                       <a target="_blank" rel="noopener noreferrer" href={href} aria-label={label}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={image}
-                          style={{ padding: "0 7px", marginTop: "-3px" }}
-                          width={35}
-                          alt={label}
-                        />
+                        <img src={image} width={35} height={35} alt={label} />
                       </a>
                     </li>
                   ))}
@@ -146,7 +148,10 @@ export function SiteFooterMimic({ locale, dict, navDict, siteName }: Props) {
         <div className="container">
           <div className="row align-items-center">
             <div className="col-lg-6 col-md-12">
-              <p>{copyright}</p>
+              <p>
+                <NotificationBellMimic ariaLabel={notifyLabel} />
+                <span>{copyright}</span>
+              </p>
             </div>
 
             <div className="col-lg-6 col-md-12">

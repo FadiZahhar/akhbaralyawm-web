@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { Locale } from "@/src/lib/i18n";
+import { OwlEmblaCarousel } from "../owl-embla-carousel";
 
 type SlideItem = {
   id: number;
@@ -78,43 +79,34 @@ export function HeroNewsArea({ locale, liveLabel, slides, updates, sideCards }: 
 
           {/* Column 2 — main owl-carousel hero (col-lg-6) */}
           <div className="col-lg-6 col-md-12">
-            <div className="new-news-slides owl-carousel owl-theme owl-rtl owl-loaded owl-drag">
-              <div className="owl-stage-outer">
-                <div className="owl-stage" style={{ width: "636px" }}>
-                  {slides.slice(0, 1).map((s) => (
-                    <div key={s.id} className="owl-item active" style={{ width: "636px" }}>
-                      <div className="single-default-news">
-                        {s.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={s.imageUrl} alt="" />
-                        ) : (
-                          <div style={{ aspectRatio: "636 / 397", background: "var(--mm-navy)" }} />
-                        )}
-                        <div className="news-content">
-                          <h3>
-                            <Link href={`/${locale}/news/${s.slugId}`}>{s.title}</Link>
-                          </h3>
-                        </div>
-                        {s.sectionTitle && (
-                          <div className="tags">
-                            <Link href={`/${locale}/news/${s.slugId}`}>{s.sectionTitle}</Link>
-                          </div>
-                        )}
-                      </div>
+            <OwlEmblaCarousel carouselClassName="new-news-slides">
+              {slides.map((s) => (
+                <div
+                  key={s.id}
+                  className="owl-item active"
+                  style={{ flex: "0 0 100%", width: "100%" }}
+                >
+                  <div className="single-default-news">
+                    {s.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={s.imageUrl} alt="" />
+                    ) : (
+                      <div style={{ aspectRatio: "636 / 397", background: "var(--mm-navy)" }} />
+                    )}
+                    <div className="news-content">
+                      <h3>
+                        <Link href={`/${locale}/news/${s.slugId}`}>{s.title}</Link>
+                      </h3>
                     </div>
-                  ))}
+                    {s.sectionTitle && (
+                      <div className="tags">
+                        <Link href={`/${locale}/news/${s.slugId}`}>{s.sectionTitle}</Link>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="owl-nav">
-                <button type="button" role="presentation" className="owl-prev">
-                  <i className="icofont-rounded-right" />
-                </button>
-                <button type="button" role="presentation" className="owl-next">
-                  <i className="icofont-rounded-left" />
-                </button>
-              </div>
-              <div className="owl-dots disabled" />
-            </div>
+              ))}
+            </OwlEmblaCarousel>
           </div>
 
           {/* Column 3 — 3 small side cards (col-lg-2) */}

@@ -1165,6 +1165,12 @@ export function getAssetUrl(
     return null;
   }
 
+  // Backend sentinel for "no image" — treat as null so callers render their
+  // own placeholder instead of requesting a known-404 URL.
+  if (/(^|\/)nopic\.(jpg|jpeg|png|webp)$/i.test(photoPath.trim())) {
+    return null;
+  }
+
   if (/^https?:\/\//i.test(photoPath)) {
     return photoPath;
   }

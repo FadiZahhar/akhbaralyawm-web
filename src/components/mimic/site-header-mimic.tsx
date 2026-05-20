@@ -17,6 +17,7 @@ import Link from "next/link";
 import type { SectionDto } from "@/src/lib/api";
 import type { Locale } from "@/src/lib/i18n";
 import { MobileNavMimic } from "./mobile-nav-mimic";
+import { SearchOverlayMimic } from "./search-overlay-mimic";
 
 type HeaderDict = {
   nav: { home: string; about: string; contact: string };
@@ -52,37 +53,62 @@ function formatLegacyDate(): string {
 }
 
 // Legacy snapshot nav is a hardcoded 8-item list (not from the sections API).
-// We mirror it exactly here so the navbar-area zone matches pixel-for-pixel.
-// Order, titles, and category ids are copied verbatim from
-// public/legacy-snapshot/home-ar/index.html.
-const LEGACY_NAV_ITEMS_AR: { title: string; slug: string }[] = [
-  { title: "\u062E\u0627\u0635 \u0627\u0644\u064A\u0648\u0645", slug: "29" },
-  { title: "\u0623\u062E\u0628\u0627\u0631 \u0645\u062D\u0644\u064A\u0629", slug: "45" },
-  { title: "\u0645\u062A\u0641\u0631\u0642\u0627\u062A", slug: "39" },
-  { title: "\u0627\u0644\u0639\u0631\u0628 \u0648\u0627\u0644\u0639\u0627\u0644\u0645", slug: "30" },
-  { title: "\u0627\u0642\u062A\u0635\u0627\u062F", slug: "46" },
-  { title: "\u0631\u064A\u0627\u0636\u0629", slug: "33" },
-  { title: "\u0627\u0644\u0628\u0631\u0627\u0645\u062C", slug: "56" },
+// Used as an Arabic fallback only when the API returns no sections.
+const LEGACY_NAV_ITEMS_AR_FALLBACK: { id: number; title: string; slug: string }[] = [
+  { id: 29, title: "\u062E\u0627\u0635 \u0627\u0644\u064A\u0648\u0645", slug: "29" },
+  { id: 45, title: "\u0623\u062E\u0628\u0627\u0631 \u0645\u062D\u0644\u064A\u0629", slug: "45" },
+  { id: 39, title: "\u0645\u062A\u0641\u0631\u0642\u0627\u062A", slug: "39" },
+  { id: 30, title: "\u0627\u0644\u0639\u0631\u0628 \u0648\u0627\u0644\u0639\u0627\u0644\u0645", slug: "30" },
+  { id: 46, title: "\u0627\u0642\u062A\u0635\u0627\u062F", slug: "46" },
+  { id: 33, title: "\u0631\u064A\u0627\u0636\u0629", slug: "33" },
+  { id: 56, title: "\u0627\u0644\u0628\u0631\u0627\u0645\u062C", slug: "56" },
 ];
+
+// Pick the visible nav items from the API sections list. Backend already
+// returns titles in the requested locale, so we just sort + cap. Drop any
+// section whose title is the localized "Home" word — we render Home as a
+// dedicated first item from the dictionary.
+function pickNavItems(sections: SectionDto[], locale: Locale, maxItems = 7) {
+  const homeWords = new Set(["home", "accueil", "\u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629"]);
+  const filtered = sections.filter((s) => {
+    if (s.active === false) return false;
+    const t = (s.title || "").trim().toLowerCase();
+    return t.length > 0 && !homeWords.has(t);
+  });
+  filtered.sort((a, b) => (a.orderorder ?? 0) - (b.orderorder ?? 0));
+  const picked = filtered.slice(0, maxItems);
+  if (picked.length === 0 && locale === "ar") return LEGACY_NAV_ITEMS_AR_FALLBACK;
+  return picked.map((s) => ({ id: s.id, title: s.title, slug: s.slug || String(s.id) }));
+}
 
 const LOGO_SRC = "/assets/img/logo.png";
 
 export function SiteHeaderMimic({ locale, dict, sections, activeSectionSlug }: Props) {
   const homeHref = `/${locale}`;
+  const navItems = pickNavItems(sections, locale);
+  const localeSwitchers: { code: Locale; label: string }[] = [
+    { code: "fr", label: "FR" },
+    { code: "en", label: "EN" },
+    { code: "ar", label: "AR" },
+  ];
 
   return (
+    <>
     <header className="header-area ">
       <div className="top-header">
         <div className="container">
           <div className="row align-items-center">
             <div className="col-lg-6 col-md-8">
               <ul className="top-nav">
-                <li>
-                  <a href="https://fr.akhbaralyawm.com/">FR</a>
-                </li>
-                <li>
-                  <a href="https://en.akhbaralyawm.com/">EN</a>
-                </li>
+                {localeSwitchers
+                  .filter(({ code }) => code !== locale)
+                  .map(({ code, label }) => (
+                    <li key={code}>
+                      <Link href={`/${code}`} hrefLang={code} aria-label={label}>
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
                 <li>
                   <Link href={`/${locale}/about`}>{dict.nav.about}</Link>
                 </li>
@@ -109,6 +135,7 @@ export function SiteHeaderMimic({ locale, dict, sections, activeSectionSlug }: P
           </div>
         </div>
       </div>
+    </header>
 
       <div className="navbar-area">
         <div className="sinmun-mobile-nav">
@@ -128,7 +155,7 @@ export function SiteHeaderMimic({ locale, dict, sections, activeSectionSlug }: P
             aboutLabel={dict.nav.about}
             contactLabel={dict.nav.contact}
             searchPlaceholder={dict.site.searchPlaceholder}
-            items={LEGACY_NAV_ITEMS_AR}
+            items={navItems.map(({ title, slug }) => ({ title, slug }))}
             activeSectionSlug={activeSectionSlug}
           />
         </div>
@@ -152,10 +179,10 @@ export function SiteHeaderMimic({ locale, dict, sections, activeSectionSlug }: P
                       {dict.nav.home}
                     </Link>
                   </li>
-                  {LEGACY_NAV_ITEMS_AR.map((item) => {
-                    const isActive = activeSectionSlug === item.slug;
+                  {navItems.map((item) => {
+                    const isActive = activeSectionSlug === item.slug || activeSectionSlug === String(item.id);
                     return (
-                      <li key={item.slug} className={`nav-item${isActive ? " mactive" : ""}  `}>
+                      <li key={`${item.id}-${item.slug}`} className={`nav-item${isActive ? " mactive" : ""}  `}>
                         <Link href={`/${locale}/category/${item.slug}`} className="nav-link">
                           {item.title}
                         </Link>
@@ -165,24 +192,11 @@ export function SiteHeaderMimic({ locale, dict, sections, activeSectionSlug }: P
                 </ul>
                 <div className="others-options">
                   <div className="header-search d-inline-block">
-                    <div className="nav-search">
-                      <div className="nav-search-button">
-                        <i className="icofont-ui-search" />
-                      </div>
-                      <form method="get" action={`/${locale}/search`} role="search">
-                        <span className="nav-search-close-button" tabIndex={0}>
-                          ✕
-                        </span>
-                        <div className="nav-search-inner">
-                          <input
-                            name="q"
-                            id="id"
-                            placeholder="Search here...."
-                            aria-label={dict.site.searchPlaceholder}
-                          />
-                        </div>
-                      </form>
-                    </div>
+                    <SearchOverlayMimic
+                      locale={locale}
+                      placeholder={dict.site.searchPlaceholder}
+                      triggerAriaLabel={dict.site.searchPlaceholder}
+                    />
                   </div>
                 </div>
               </div>
@@ -190,6 +204,6 @@ export function SiteHeaderMimic({ locale, dict, sections, activeSectionSlug }: P
           </div>
         </div>
       </div>
-    </header>
+    </>
   );
 }

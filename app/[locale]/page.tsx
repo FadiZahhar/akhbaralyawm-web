@@ -3,9 +3,6 @@
 // so they wrap every locale-scoped page (category, news, author, …).
 // The pre-mimic modern home is preserved at /[locale]/v1.
 
-import fs from "node:fs/promises";
-import path from "node:path";
-
 import {
   getArticlesBySection,
   getAssetUrl,
@@ -15,7 +12,6 @@ import {
 import { isLocale, getDictionary, type Locale } from "@/src/lib/i18n";
 
 import { MoreNewsArea } from "@/src/components/mimic/sections/more-news-area";
-import { NewsTickerStrip } from "@/src/components/mimic/sections/news-ticker-strip";
 import { HeroNewsArea } from "@/src/components/mimic/sections/hero-news-area";
 import { PopularNewsCarousel } from "@/src/components/mimic/sections/popular-news-carousel";
 import { SectionGrid } from "@/src/components/mimic/sections/section-grid";
@@ -32,7 +28,6 @@ const MISC_SECTION_ID = 39; // متفرقات
 
 type PageProps = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 function formatTime(value: string): string {
@@ -44,10 +39,8 @@ function formatTime(value: string): string {
   return `${hh}:${mm}`;
 }
 
-export default async function MimicHomePage({ params, searchParams }: PageProps) {
+export default async function MimicHomePage({ params }: PageProps) {
   const { locale: rawLocale } = await params;
-  const sp = await searchParams;
-  const useFixture = sp.fixture === "1";
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ar";
   const dict = await getDictionary(locale);
 
@@ -85,69 +78,12 @@ export default async function MimicHomePage({ params, searchParams }: PageProps)
     })(),
   ]);
 
-  const tickerStrip = feed.slice(0, 5).map((f) => ({
-    id: f.id,
-    slugId: f.slugId,
-    title: f.title,
-    locale,
-  }));
   const updates = feed.slice(0, 100).map((f) => ({
     id: f.id,
     slugId: f.slugId,
     title: f.title,
     time: formatTime(f.disdate),
   }));
-
-  // Pixel-parity fixture mode (?fixture=1, ar only). Freezes newsUpdates +
-  // section card titles to the Apr 18 reference snapshot for visual diff.
-  let updatesForRender = updates;
-  let sectionTitles: Record<string, string[]> = {};
-  if (locale === "ar" && useFixture) {
-    try {
-      const fixturePath = path.join(
-        process.cwd(),
-        "tests/fixtures/legacy-newsupdates-ar.json",
-      );
-      const raw = await fs.readFile(fixturePath, "utf8");
-      const parsed = JSON.parse(raw) as Array<{
-        id: number;
-        slugId: string;
-        title: string;
-        time: string;
-      }>;
-      updatesForRender = parsed.slice(0, 100);
-    } catch (err) {
-      console.warn("[home] failed to load newsUpdates fixture:", err);
-    }
-    try {
-      const secPath = path.join(
-        process.cwd(),
-        "tests/fixtures/legacy-sections-ar.json",
-      );
-      const secRaw = await fs.readFile(secPath, "utf8");
-      const secParsed = JSON.parse(secRaw) as Record<
-        string,
-        Array<{ href: string; title: string }>
-      >;
-      for (const [k, arr] of Object.entries(secParsed)) {
-        sectionTitles[k.replace(/\s+/g, " ").trim()] = arr.map((a) => a.title);
-      }
-    } catch (err) {
-      console.warn("[home] failed to load sections fixture:", err);
-    }
-  }
-  const applyTitles = <T extends { title: string }>(
-    items: T[],
-    key: string | undefined,
-  ): T[] => {
-    if (!useFixture || !key) return items;
-    const normKey = key.replace(/\s+/g, " ").trim();
-    const titles = sectionTitles[normKey];
-    if (!titles?.length) return items;
-    return items.map((it, i) =>
-      i < titles.length ? { ...it, title: titles[i] } : it,
-    );
-  };
 
   const slides = feed.slice(0, 6).map((f) => ({
     id: f.id,
@@ -176,7 +112,7 @@ export default async function MimicHomePage({ params, searchParams }: PageProps)
           locale={locale}
           liveLabel={liveUpdatesLabel}
           slides={slides}
-          updates={updatesForRender}
+          updates={updates}
           sideCards={sideCards}
         />
       </div>
@@ -186,7 +122,7 @@ export default async function MimicHomePage({ params, searchParams }: PageProps)
           <img
             src="/%D8%A7%D9%84%D9%8A%D9%88%D9%85_files/yaris.jpg"
             alt="Lexus banner"
-            style={{ maxWidth: 900, width: "100%", transform: "scale(1)" }}
+            style={{ maxWidth: 900, width: "100%", margin: "0 auto", display: "block", transform: "scale(1)" }}
           />
         </a>
       </div>
@@ -198,12 +134,12 @@ export default async function MimicHomePage({ params, searchParams }: PageProps)
           locale={locale}
           sectionTitle={featuredSection.title}
           sectionHref={`/${locale}/category/${featuredSection.slug}`}
-          items={applyTitles(featuredItems.map((s) => ({
+          items={featuredItems.map((s) => ({
             id: s.id,
             slugId: s.slugId,
             title: s.title,
             imageUrl: getAssetUrl(s.photoPath, locale),
-          })), featuredSection?.title)}
+          }))}
         />
       )}
 
@@ -212,12 +148,12 @@ export default async function MimicHomePage({ params, searchParams }: PageProps)
           locale={locale}
           sectionTitle={localNewsGroup.section.title}
           sectionHref={`/${locale}/category/${localNewsGroup.section.slug}`}
-          items={applyTitles(localNewsGroup.items.slice(0, 3).map((s) => ({
+          items={localNewsGroup.items.slice(0, 3).map((s) => ({
             id: s.id,
             slugId: s.slugId,
             title: s.title,
             imageUrl: getAssetUrl(s.photoPath, locale),
-          })), localNewsGroup.section.title)}
+          }))}
           variant="default"
         />
       )}
@@ -231,7 +167,7 @@ export default async function MimicHomePage({ params, searchParams }: PageProps)
           <img
             src="/%D8%A7%D9%84%D9%8A%D9%88%D9%85_files/whishbig.jpg"
             alt="Whish banner"
-            style={{ maxWidth: 900, width: "100%", transform: "scale(1)" }}
+            style={{ maxWidth: 900, width: "100%", margin: "0 auto", display: "block", transform: "scale(1)" }}
           />
         </a>
       </div>
@@ -241,13 +177,13 @@ export default async function MimicHomePage({ params, searchParams }: PageProps)
           locale={locale}
           sectionTitle={programsSection.title}
           sectionHref={`/${locale}/category/${programsSection.slug}`}
-          items={applyTitles(programsItems.map((s) => ({
+          items={programsItems.map((s) => ({
             id: s.id,
             slugId: s.slugId,
             title: s.title,
             imageUrl: getAssetUrl(s.photoPath, locale),
             sectionTitle: s.sectionTitle,
-          })), programsSection?.title)}
+          }))}
         />
       )}
 
@@ -256,12 +192,12 @@ export default async function MimicHomePage({ params, searchParams }: PageProps)
           locale={locale}
           sectionTitle={worldGroup.section.title}
           sectionHref={`/${locale}/category/${worldGroup.section.slug}`}
-          items={applyTitles(worldGroup.items.slice(0, 3).map((s) => ({
+          items={worldGroup.items.slice(0, 3).map((s) => ({
             id: s.id,
             slugId: s.slugId,
             title: s.title,
             imageUrl: getAssetUrl(s.photoPath, locale),
-          })), worldGroup.section.title)}
+          }))}
           variant="hot"
           sectionClassName="ptb-40"
         />
@@ -274,12 +210,12 @@ export default async function MimicHomePage({ params, searchParams }: PageProps)
           locale={locale}
           sectionTitle={miscGroup.section.title}
           sectionHref={`/${locale}/category/${miscGroup.section.slug}`}
-          items={applyTitles(miscGroup.items.slice(0, 3).map((s) => ({
+          items={miscGroup.items.slice(0, 3).map((s) => ({
             id: s.id,
             slugId: s.slugId,
             title: s.title,
             imageUrl: getAssetUrl(s.photoPath, locale),
-          })), miscGroup.section.title)}
+          }))}
           variant="hot"
           sectionClassName="pb-40"
         />
@@ -288,15 +224,13 @@ export default async function MimicHomePage({ params, searchParams }: PageProps)
       <MostReadStrip
         locale={locale}
         sectionTitle={mostReadLabel}
-        items={applyTitles(feed.slice(0, 12).map((f) => ({
+        items={feed.slice(0, 20).map((f) => ({
           id: f.id,
           slugId: f.slugId,
           title: f.title,
           imageUrl: getAssetUrl(f.photoPath, locale),
-        })), mostReadLabel)}
+        }))}
       />
-
-      <NewsTickerStrip label={dict.ticker.breaking} items={tickerStrip} />
     </div>
   );
 }

@@ -22,7 +22,9 @@ export function StoryCard({ href, title, summary, imageUrl, eyebrow, compact = f
           height={675}
           placeholder="blur"
           blurDataURL={shimmerPlaceholder(1200, 675)}
-          className={compact ? "aspect-[16/11] w-full object-cover" : "aspect-[16/10] w-full object-cover"}
+          sizes="(min-width: 1280px) 400px, (min-width: 768px) 50vw, 100vw"
+          style={{ width: "100%", height: "auto" }}
+          className={compact ? "aspect-[16/11] object-cover" : "aspect-[16/10] object-cover"}
         />
       ) : (
         <div
